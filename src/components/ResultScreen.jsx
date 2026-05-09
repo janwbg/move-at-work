@@ -1,3 +1,4 @@
+import DailyScheduleCard from './DailyScheduleCard.jsx'
 import MovementPlanCard from './MovementPlanCard.jsx'
 
 function ResultScreen({ answers, onRestart, plan }) {
@@ -43,9 +44,29 @@ function ResultScreen({ answers, onRestart, plan }) {
             </p>
           </section>
 
-          <section>
+          <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
+            <div className="mb-5">
+              <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+                Dein Tagesplan
+              </p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+                Flexible Impulse für deinen Arbeitstag
+              </h2>
+            </div>
+            <div className="grid gap-4">
+              {plan.dailySchedule.map((section, index) => (
+                <DailyScheduleCard
+                  key={section.id}
+                  section={section}
+                  stepNumber={index + 1}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
             <h2 className="mb-4 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-              Bewegungsimpulse
+              Weitere passende Impulse
             </h2>
             <div className="grid gap-4">
               {plan.movements.map((movement) => (
