@@ -51,18 +51,31 @@ const fitnessLevels = [
   },
 ]
 
+const situationOptions = [
+  'Fokusarbeit',
+  'Meeting',
+  'Telefonat',
+  'Kreativarbeit',
+  'Pause',
+  'Langer Arbeitstag',
+]
+
 const steps = [
   {
-    eyebrow: 'Schritt 1 von 3',
+    eyebrow: 'Schritt 1 von 4',
     question: 'Bevor wir einsteigen - Warum bist du hier?',
   },
   {
-    eyebrow: 'Schritt 2 von 3',
+    eyebrow: 'Schritt 2 von 4',
     question: 'Welches Setup steht dir zur Verfügung?',
   },
   {
-    eyebrow: 'Schritt 3 von 3',
+    eyebrow: 'Schritt 3 von 4',
     question: 'Wie schätzt du dein Fitnesslevel ein?',
+  },
+  {
+    eyebrow: 'Schritt 4 von 4',
+    question: 'Wie sieht dein normaler Arbeitstag aus?',
   },
 ]
 
@@ -170,6 +183,19 @@ function Onboarding({ answers, onChange, onComplete }) {
         </div>
       )}
 
+      {currentIndex === 3 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {situationOptions.map((situation) => (
+            <OptionCard
+              key={situation}
+              active={answers.situation === situation}
+              label={situation}
+              onClick={() => updateAnswer({ situation })}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <button
           type="button"
@@ -202,7 +228,11 @@ function isStepComplete(index, answers) {
     return answers.setup.length > 0
   }
 
-  return Boolean(answers.fitnessLevel)
+  if (index === 2) {
+    return Boolean(answers.fitnessLevel)
+  }
+
+  return Boolean(answers.situation)
 }
 
 export default Onboarding

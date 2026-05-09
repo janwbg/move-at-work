@@ -17,21 +17,26 @@ export function generatePlan(answers) {
         selectedFitnessLevel,
         selectedGoal,
         selectedSetup,
-        selectedSituation,
       }),
     )
-    .sort((firstRule, secondRule) => secondRule.priority - firstRule.priority)
+    .sort((firstRule, secondRule) =>
+      compareRules(firstRule, secondRule, selectedSituation),
+    )
 
   const goalBasedFallbackRules = movementRules
     .filter((rule) => hasAnySetup(rule, fallbackSetups))
     .filter((rule) => matchesGoal(rule, selectedGoal))
     .filter((rule) => matchesFitnessLevel(rule, selectedFitnessLevel))
-    .sort((firstRule, secondRule) => secondRule.priority - firstRule.priority)
+    .sort((firstRule, secondRule) =>
+      compareRules(firstRule, secondRule, selectedSituation),
+    )
 
   const broadFallbackRules = movementRules
     .filter((rule) => hasAnySetup(rule, fallbackSetups))
     .filter((rule) => matchesFitnessLevel(rule, selectedFitnessLevel))
-    .sort((firstRule, secondRule) => secondRule.priority - firstRule.priority)
+    .sort((firstRule, secondRule) =>
+      compareRules(firstRule, secondRule, selectedSituation),
+    )
 
   const candidateRules = uniqueRules([
     ...matchingRules,
@@ -43,13 +48,14 @@ export function generatePlan(answers) {
     buildBalancedSequence(candidateRules, recommendationCount),
     candidateRules,
     selectedFitnessLevel,
+    selectedSituation,
     recommendationCount,
   )
 
   return {
     summary: `Du möchtest ${selectedGoal || 'mehr Bewegung'} und nutzt ${formatList(
       selectedSetup,
-    )}. Dein Plan bleibt bewusst kurz, damit Bewegung im Arbeitsalltag realistisch wird.`,
+    )}. Für ${selectedSituation || 'deinen Arbeitstag'} bleibt der Plan bewusst kurz, damit Bewegung realistisch wird.`,
     rhythm: buildRhythm(selectedSetup, selectedFitnessLevel),
     movements: recommendations.map(toMovementCardData),
   }
@@ -57,13 +63,12 @@ export function generatePlan(answers) {
 
 function matchesRule(
   rule,
-  { selectedFitnessLevel, selectedGoal, selectedSetup, selectedSituation },
+  { selectedFitnessLevel, selectedGoal, selectedSetup },
 ) {
   return (
     hasAnySetup(rule, selectedSetup) &&
     matchesGoal(rule, selectedGoal) &&
-    matchesFitnessLevel(rule, selectedFitnessLevel) &&
-    matchesSituation(rule, selectedSituation)
+    matchesFitnessLevel(rule, selectedFitnessLevel)
   )
 }
 
@@ -85,6 +90,17 @@ function matchesFitnessLevel(rule, selectedFitnessLevel) {
 
 function matchesSituation(rule, selectedSituation) {
   return !selectedSituation || rule.situations.includes(selectedSituation)
+}
+
+function compareRules(firstRule, secondRule, selectedSituation) {
+  const firstSituationScore = matchesSituation(firstRule, selectedSituation) ? 1 : 0
+  const secondSituationScore = matchesSituation(secondRule, selectedSituation) ? 1 : 0
+
+  if (firstSituationScore !== secondSituationScore) {
+    return secondSituationScore - firstSituationScore
+  }
+
+  return secondRule.priority - firstRule.priority
 }
 
 function getRecommendationCount(fitnessLevel) {
@@ -117,6 +133,7 @@ function ensureMinimumRecommendations(
   recommendations,
   existingCandidates,
   selectedFitnessLevel,
+  selectedSituation,
   recommendationCount,
 ) {
   if (recommendations.length >= minimumRecommendations) {
@@ -124,13 +141,16 @@ function ensureMinimumRecommendations(
   }
 
   const lastResortRules = movementRules
+    .filter((rule) => hasAnySetup(rule, fallbackSetups))
     .filter((rule) => matchesFitnessLevel(rule, selectedFitnessLevel))
     .filter(
       (rule) =>
         !existingCandidates.some((candidate) => candidate.id === rule.id) &&
         !recommendations.some((recommendation) => recommendation.id === rule.id),
     )
-    .sort((firstRule, secondRule) => secondRule.priority - firstRule.priority)
+    .sort((firstRule, secondRule) =>
+      compareRules(firstRule, secondRule, selectedSituation),
+    )
 
   return buildBalancedSequence(
     [...recommendations, ...lastResortRules],

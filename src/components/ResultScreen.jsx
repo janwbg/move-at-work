@@ -13,14 +13,15 @@ function ResultScreen({ answers, onRestart, plan }) {
           </h1>
           <p className="mt-5 leading-7 text-blue-50">{plan.summary}</p>
           <p className="mt-3 rounded-lg bg-white/10 p-4 text-sm font-semibold leading-6 text-blue-50">
-            Dein Plan basiert auf deinem Setup, deinem Ziel und deinem
-            Fitnesslevel.
+            Dein Plan basiert auf deinem Setup, deinem Ziel, deinem
+            Fitnesslevel und deiner heutigen Arbeitssituation.
           </p>
 
           <dl className="mt-7 grid gap-3">
             <SelectionRow label="Ziel" value={answers.goal} />
             <SelectionRow label="Setup" value={answers.setup.join(', ')} />
             <SelectionRow label="Fitnesslevel" value={answers.fitnessLevel} />
+            <SelectionRow label="Arbeitssituation" value={answers.situation} />
           </dl>
 
           <button

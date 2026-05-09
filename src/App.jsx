@@ -12,11 +12,17 @@ function createDefaultAnswers() {
     goal: '',
     setup: [],
     fitnessLevel: '',
+    situation: '',
   }
 }
 
 function hasAnyAnswer(answers) {
-  return Boolean(answers?.goal || answers?.setup?.length || answers?.fitnessLevel)
+  return Boolean(
+    answers?.goal ||
+      answers?.setup?.length ||
+      answers?.fitnessLevel ||
+      answers?.situation,
+  )
 }
 
 function getStoredAnswers() {
@@ -33,7 +39,12 @@ function getStoredAnswers() {
 }
 
 function hasCompletedOnboarding(answers) {
-  return Boolean(answers?.goal && answers?.setup?.length && answers?.fitnessLevel)
+  return Boolean(
+    answers?.goal &&
+      answers?.setup?.length &&
+      answers?.fitnessLevel &&
+      answers?.situation,
+  )
 }
 
 function App() {
