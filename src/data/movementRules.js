@@ -41,7 +41,7 @@ export const movementRules = [
     description:
       'Lege die Hände locker ab, senke das Kinn leicht und bewege den Kopf langsam nach rechts und links.',
     duration: '3 Minuten',
-    setup: ['Sitzschreibtisch'],
+    setup: ['Sitzschreibtisch', 'Stehhocker'],
     goals: ['gegen Verspannungen'],
     fitnessLevels: ['Level 1', 'Level 2', 'Level 3', 'Level 4'],
     situations: ['Fokusarbeit', 'Deep Work', 'Lesen', 'E-Mails', 'Langer Arbeitstag'],
@@ -137,7 +137,7 @@ export const movementRules = [
     description:
       'Wechsle die Position, richte Bildschirm und Schultern neu aus und plane danach bewusst wieder eine Sitzphase ein.',
     duration: '3 Minuten',
-    setup: ['Stehschreibtisch'],
+    setup: ['Stehschreibtisch', 'Höhenverstellbarer Schreibtisch'],
     goals: ['mehr Bewegung', 'gegen Verspannungen'],
     fitnessLevels: ['Level 1', 'Level 2', 'Level 3', 'Level 4'],
     situations: ['Fokusarbeit', 'Deep Work', 'E-Mails', 'Lesen', 'Langer Arbeitstag'],
@@ -152,7 +152,7 @@ export const movementRules = [
     description:
       'Hebe und senke die Fersen im Stand langsam. Nutze den Impuls als kurze Aktivierung, nicht als lange Stehphase.',
     duration: '2 Minuten',
-    setup: ['Stehschreibtisch'],
+    setup: ['Stehschreibtisch', 'Höhenverstellbarer Schreibtisch'],
     goals: ['mehr Energie', 'mehr Bewegung'],
     fitnessLevels: ['Level 1', 'Level 2', 'Level 3', 'Level 4'],
     situations: [

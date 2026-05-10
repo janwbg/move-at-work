@@ -1,81 +1,32 @@
 import { useState } from 'react'
+import {
+  fitnessLevelOptions,
+  goalOptions,
+  setupOptions,
+  workdayOptions,
+} from '../data/profileOptions.js'
 import OptionCard from './OptionCard.jsx'
-
-const goals = [
-  'mehr Bewegung',
-  'gegen Verspannungen',
-  'Kraft aufbauen',
-  'mehr Energie',
-]
-
-const setupOptions = [
-  'Bürostuhl',
-  'Sitzschreibtisch',
-  'Kein Equipment',
-  'Boden',
-  'Stehschreibtisch',
-  'Walking Pad',
-  'Kniestuhl',
-  'Sofa/Lounge',
-  'Balance Board',
-  'Gymnastikball',
-  'Ergometer',
-  'Treppenstufen',
-]
-
-const fitnessLevels = [
-  {
-    label: 'Level 1 – Anfänger',
-    value: 'Level 1',
-    description: 'Ich bewege mich aktuell kaum und Sport fällt mir schwer.',
-  },
-  {
-    label: 'Level 2 – Einsteiger',
-    value: 'Level 2',
-    description: 'Ich bewege mich ab und zu, aber habe keine feste Routine.',
-  },
-  {
-    label: 'Level 3 – Aktiv',
-    value: 'Level 3',
-    description: 'Ich bin regelmäßig aktiv und fühle mich grundsätzlich fit.',
-  },
-  {
-    label: 'Level 4 – Sportlich',
-    value: 'Level 4',
-    description: 'Ich trainiere regelmäßig und fordere meinen Körper bewusst.',
-  },
-  {
-    label: 'Level 5 – Sehr sportlich',
-    value: 'Level 5',
-    description: 'Ich trainiere intensiv und suche gezielte Herausforderungen.',
-  },
-]
-
-const situationOptions = [
-  'Fokusarbeit',
-  'Meeting',
-  'Telefonat',
-  'Kreativarbeit',
-  'Pause',
-  'Langer Arbeitstag',
-]
 
 const steps = [
   {
     eyebrow: 'Schritt 1 von 4',
-    question: 'Bevor wir einsteigen - Warum bist du hier?',
+    helper: 'Wähle das Ziel, das dir im Arbeitsalltag am wichtigsten ist.',
+    question: 'Welches Ziel möchtest du verbessern?',
   },
   {
     eyebrow: 'Schritt 2 von 4',
+    helper: 'Wähle alles aus, was du realistisch nutzen kannst.',
     question: 'Welches Setup steht dir zur Verfügung?',
   },
   {
     eyebrow: 'Schritt 3 von 4',
-    question: 'Wie schätzt du dein Fitnesslevel ein?',
+    helper: 'Wähle die Stufe, die sich aktuell ehrlich und machbar anfühlt.',
+    question: 'Wie aktiv bist du aktuell?',
   },
   {
     eyebrow: 'Schritt 4 von 4',
-    question: 'Wie sieht dein normaler Arbeitstag aus?',
+    helper: 'Wähle den Arbeitstag, der am besten zu deiner normalen Woche passt.',
+    question: 'Wie sieht dein Arbeitstag meistens aus?',
   },
 ]
 
@@ -115,7 +66,7 @@ function Onboarding({ answers, onChange, onComplete }) {
   }
 
   return (
-    <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 sm:p-8">
+    <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 sm:p-8">
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between gap-4 text-sm font-bold text-slate-500 dark:text-slate-400">
           <span>{currentStep.eyebrow}</span>
@@ -140,11 +91,14 @@ function Onboarding({ answers, onChange, onComplete }) {
         <h1 className="mt-2 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
           {currentStep.question}
         </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400 sm:text-base">
+          {currentStep.helper}
+        </p>
       </div>
 
       {currentIndex === 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {goals.map((goal) => (
+          {goalOptions.map((goal) => (
             <OptionCard
               key={goal}
               active={answers.goal === goal}
@@ -171,7 +125,7 @@ function Onboarding({ answers, onChange, onComplete }) {
 
       {currentIndex === 2 && (
         <div className="grid gap-3">
-          {fitnessLevels.map((level) => (
+          {fitnessLevelOptions.map((level) => (
             <OptionCard
               key={level.value}
               active={answers.fitnessLevel === level.value}
@@ -185,12 +139,13 @@ function Onboarding({ answers, onChange, onComplete }) {
 
       {currentIndex === 3 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {situationOptions.map((situation) => (
+          {workdayOptions.map((situation) => (
             <OptionCard
-              key={situation}
-              active={answers.situation === situation}
-              label={situation}
-              onClick={() => updateAnswer({ situation })}
+              key={situation.value}
+              active={answers.situation === situation.value}
+              description={situation.description}
+              label={situation.label}
+              onClick={() => updateAnswer({ situation: situation.value })}
             />
           ))}
         </div>
@@ -201,7 +156,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           type="button"
           onClick={() => setCurrentIndex((index) => Math.max(0, index - 1))}
           disabled={currentIndex === 0}
-          className="rounded-full px-5 py-3 text-sm font-bold text-slate-500 transition hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-400 dark:hover:text-white"
+          className="min-h-12 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-400 dark:hover:text-white"
         >
           Zurück
         </button>
@@ -210,9 +165,13 @@ function Onboarding({ answers, onChange, onComplete }) {
           type="button"
           disabled={!canContinue}
           onClick={handleNext}
-          className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5 hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none dark:disabled:bg-slate-700"
+          className="min-h-12 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5 hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
         >
-          {currentIndex === steps.length - 1 ? 'Plan anzeigen' : 'Weiter'}
+          {canContinue
+            ? currentIndex === steps.length - 1
+              ? 'Plan anzeigen'
+              : 'Weiter'
+            : 'Bitte auswählen'}
         </button>
       </div>
     </section>

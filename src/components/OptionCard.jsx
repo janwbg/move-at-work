@@ -6,7 +6,7 @@ function OptionCard({ active, description, label, onClick, type = 'button' }) {
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`w-full rounded-lg border p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] ${
+      className={`min-h-14 w-full rounded-lg border p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] ${
         active
           ? 'border-[#2563eb] bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
           : 'border-slate-200 bg-white text-slate-900 hover:border-[#2563eb]/50 hover:bg-[#2563eb]/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-[#2563eb]/70'
