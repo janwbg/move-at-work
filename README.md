@@ -48,3 +48,30 @@ Bekannte Einschränkungen:
 - Es gibt noch keine echte Kalenderintegration.
 - Die Auswahl wird nur lokal im Browser per localStorage gespeichert.
 - Es gibt keinen Login, keine Nutzerkonten und kein Backend.
+
+## Externer MVP-Test
+
+Der externe MVP-Test soll zeigen, ob Move at work für echte Arbeitstage verständlich, hilfreich und wiederverwendbar ist. Feedback wird über einen Microsoft-Forms-Link gesammelt:
+
+https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u
+
+Lokale Funktionen:
+
+- Bewegungsprofil, Reminder-Einstellungen und Fortschritt werden im Browser per localStorage gespeichert.
+- Es gibt keine serverseitige Speicherung und keine Synchronisierung zwischen Geräten.
+
+Bekannte Einschränkungen:
+
+- kein Login
+- kein Backend
+- keine Kalenderintegration
+- keine echten Push Notifications
+- keine medizinische Beratung
+
+## Deployment
+
+Die App ist als statische Vite-App deploybar, zum Beispiel über Vercel oder Netlify.
+
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `dist`

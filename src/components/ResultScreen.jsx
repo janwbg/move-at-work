@@ -12,6 +12,9 @@ import {
   saveProgress,
 } from '../utils/progressStorage.js'
 
+const FEEDBACK_URL =
+  'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u'
+
 function ResultScreen({ answers, onChangeAnswers, plan }) {
   const [progress, setProgress] = useState(() => loadProgress())
   const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
@@ -117,15 +120,17 @@ function ResultScreen({ answers, onChangeAnswers, plan }) {
           <section className="rounded-2xl border border-dashed border-[#2563eb]/30 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10 sm:p-5">
             <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
               Du testest gerade eine frühe Version von Move at work. Dein
-              Feedback hilft dabei, die Empfehlungen besser zu machen.
+              Feedback hilft dabei, die App besser an echte Arbeitstage
+              anzupassen.
             </p>
-            <button
-              type="button"
-              disabled
-              className="mt-4 min-h-11 rounded-full bg-slate-200 px-5 py-3 text-sm font-bold text-slate-500 disabled:cursor-not-allowed dark:bg-white/10 dark:text-slate-400"
+            <a
+              href={FEEDBACK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
             >
-              Feedback-Link folgt
-            </button>
+              Feedback geben
+            </a>
           </section>
         </div>
       </div>
