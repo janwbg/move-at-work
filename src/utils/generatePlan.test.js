@@ -43,7 +43,9 @@ describe('generatePlan', () => {
     expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
     expect(
       plan.dailySchedule.filter((section) =>
-        ['mobility', 'posture', 'walking'].includes(section.movementType),
+        ['mobilize', 'sit_reset', 'walk', 'breathing', 'stretch'].includes(
+          section.movementType,
+        ),
       ).length,
     ).toBeGreaterThanOrEqual(4)
   })
@@ -74,6 +76,65 @@ describe('generatePlan', () => {
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
     expect(hasAdjacentIntenseSections(plan.dailySchedule)).toBe(false)
     expect(hasAdjacentIdenticalMovementTypes(plan.dailySchedule)).toBe(false)
+  })
+
+  it('returns movement types and explanations for every recommendation', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+    })
+
+    expect([...plan.dailySchedule, ...plan.movements].every((item) => item.movementType)).toBe(true)
+    expect([...plan.dailySchedule, ...plan.movements].every((item) => item.reason || item.explanation)).toBe(true)
+  })
+
+  it('does not place stand recommendations directly after stand recommendations', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'active',
+      goal: 'sit-less',
+      setup: ['standing-desk', 'ergonomic-support'],
+      situation: 'mixed-day',
+    })
+
+    expect(hasAdjacentMovementType(plan.dailySchedule, 'stand')).toBe(false)
+  })
+
+  it('prefers short microbreaks during focus work', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'focus',
+      setup: ['no-equipment', 'standing-desk'],
+      situation: 'focus-heavy',
+    })
+    const microbreakTypes = ['breathing', 'eyes', 'mobilize', 'sit_reset', 'walk']
+
+    expect(plan.dailySchedule.slice(0, 4).every((section) => microbreakTypes.includes(section.movementType))).toBe(true)
+    expect(plan.dailySchedule.slice(0, 4).every((section) => getLongestDuration(section.duration) <= 5)).toBe(true)
+  })
+
+  it('allows fitting walking or standing recommendations for calls and meetings', () => {
+    const meetingPlan = generatePlan({
+      currentPhase: 'meeting',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['walking-pad', 'standing-desk'],
+      situation: 'meeting-heavy',
+    })
+    const phonePlan = generatePlan({
+      currentPhase: 'phone',
+      fitnessLevel: 'balanced',
+      goal: 'more-energy',
+      setup: ['walking-pad', 'standing-desk'],
+      situation: 'meeting-heavy',
+    })
+
+    expect(hasAnyMovementType(meetingPlan.dailySchedule, ['stand', 'walking_meeting'])).toBe(true)
+    expect(hasAnyMovementType(phonePlan.dailySchedule, ['walk', 'walking_meeting', 'stand'])).toBe(true)
   })
 
   it('falls back safely when old or invalid stored values are present', () => {
@@ -130,8 +191,20 @@ function hasAdjacentIdenticalMovementTypes(sections) {
   )
 }
 
+function hasAdjacentMovementType(sections, movementType) {
+  return sections.some(
+    (section, index) =>
+      section.movementType === movementType &&
+      sections[index + 1]?.movementType === movementType,
+  )
+}
+
+function hasAnyMovementType(sections, movementTypes) {
+  return sections.some((section) => movementTypes.includes(section.movementType))
+}
+
 function isLongStanding(section) {
-  return section.movementType === 'standing' && getLongestDuration(section.duration) >= 10
+  return section.movementType === 'stand' && getLongestDuration(section.duration) >= 10
 }
 
 function isIntense(section) {

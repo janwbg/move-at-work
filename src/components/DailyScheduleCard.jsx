@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 
 const movementTypeLabels = {
-  balance: 'Stabilität',
-  cycling: 'Kreislauf',
-  mobility: 'Mobilisation',
-  posture: 'Haltung',
-  stairs: 'Aktive Pause',
-  standing: 'Positionswechsel',
-  strength: 'Kraft',
-  walking: 'Leichte Bewegung',
+  activate: 'Aktivieren',
+  breathing: 'Atmen',
+  eyes: 'Augenpause',
+  mobilize: 'Mobilisieren',
+  relax: 'Entspannen',
+  sit_reset: 'Sitz-Reset',
+  stand: 'Stehen',
+  stretch: 'Dehnen',
+  walk: 'Gehen',
+  walking_meeting: 'Walking-Meeting',
 }
 
 function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
@@ -80,6 +82,11 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
               >
                 {section.title}
               </h3>
+              {section.reason && (
+                <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">
+                  {section.reason}
+                </p>
+              )}
             </div>
           </div>
 
@@ -126,7 +133,7 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
                 onClick={resetTimer}
                 className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
               >
-                Zurücksetzen
+                Zuruecksetzen
               </button>
               <button
                 type="button"

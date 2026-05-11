@@ -90,6 +90,14 @@ const phaseTypeScores = {
   phone: { walking: 30, standing: 18, mobility: 10 },
 }
 
+const phaseMovementTypeScores = {
+  break: { activate: 26, walk: 22, stretch: 18, mobilize: 14 },
+  'between-tasks': { sit_reset: 24, mobilize: 22, walk: 18, activate: 14 },
+  focus: { eyes: 32, mobilize: 28, breathing: 26, sit_reset: 24, walk: 10 },
+  meeting: { stand: 30, walking_meeting: 30, sit_reset: 22, mobilize: 8 },
+  phone: { walk: 30, walking_meeting: 28, stand: 20, mobilize: 10 },
+}
+
 const intensityScores = {
   active: { Hoch: 20, Leicht: 4, Mittel: 18 },
   balanced: { Hoch: -12, Leicht: 14, Mittel: 16 },
@@ -172,10 +180,12 @@ function sortRulesByRelevance(rules, context) {
 
 function scoreRule(rule, context) {
   let score = rule.priority
+  const movementType = getMovementType(rule)
 
   score += goalTypeScores[context.goal]?.[rule.type] ?? 0
   score += workdayTypeScores[context.situation]?.[rule.type] ?? 0
   score += phaseTypeScores[context.currentPhase]?.[rule.type] ?? 0
+  score += phaseMovementTypeScores[context.currentPhase]?.[movementType] ?? 0
   score += intensityScores[context.fitnessLevel]?.[rule.intensity] ?? 0
 
   if (matchesAnySituation(rule, context.phaseSituations)) {
@@ -190,7 +200,10 @@ function scoreRule(rule, context) {
     score += context.setup.includes('walking-pad') ? 16 : -18
   }
 
-  if (context.currentPhase === 'focus' && ['stairs', 'cycling', 'strength'].includes(rule.type)) {
+  if (
+    context.currentPhase === 'focus' &&
+    ['activate', 'stand', 'walking_meeting'].includes(movementType)
+  ) {
     score -= 34
   }
 
@@ -386,11 +399,13 @@ function canFollow(previousItem, nextRule) {
     return true
   }
 
-  const previousType = previousItem.type ?? previousItem.movementType
+  const previousType = previousItem.ruleType ?? previousItem.type
+  const previousMovementType = previousItem.movementType ?? getMovementType(previousItem)
+  const nextMovementType = getMovementType(nextRule)
   const previousIntensity = previousItem.intensity
   const previousDuration = previousItem.duration
 
-  if (previousType === nextRule.type) {
+  if (previousMovementType === nextMovementType) {
     return false
   }
 
@@ -406,11 +421,15 @@ function canFollow(previousItem, nextRule) {
     return false
   }
 
-  if (isLongStanding(previousType, previousDuration) && isLongStanding(nextRule.type, nextRule.duration)) {
+  if (previousMovementType === 'stand' && nextMovementType === 'stand') {
     return false
   }
 
-  if (previousType === 'walking' && ['cycling', 'stairs'].includes(nextRule.type)) {
+  if (isLongStanding(previousMovementType, previousDuration) && isLongStanding(nextMovementType, nextRule.duration)) {
+    return false
+  }
+
+  if (['walk', 'walking_meeting'].includes(previousMovementType) && ['activate'].includes(nextMovementType)) {
     return false
   }
 
@@ -434,7 +453,7 @@ function isIntense(intensity) {
 }
 
 function isLongStanding(type, duration) {
-  return type === 'standing' && getLongestDuration(duration) >= 10
+  return type === 'stand' && getLongestDuration(duration) >= 10
 }
 
 function getLongestDuration(duration) {
@@ -450,30 +469,38 @@ function getRecommendationCount(context) {
 
 function toMovementCardData(rule, context) {
   const compatibleSetups = getCompatibleRuleSetups(rule, context)
+  const movementType = getMovementType(rule)
 
   return {
     description: rule.description,
     displaySetup: formatSetup(compatibleSetups),
     duration: rule.duration,
+    explanation: getReason(rule, 'Weitere Impulse', context),
     id: rule.id,
     intensity: rule.intensity,
+    movementType,
+    ruleType: rule.type,
     setup: compatibleSetups,
     title: rule.title,
-    type: rule.type,
+    type: movementType,
   }
 }
 
 function toScheduleSection(rule, timeLabel, index, context) {
   const compatibleSetups = getCompatibleRuleSetups(rule, context)
+  const movementType = getMovementType(rule)
+  const reason = getReason(rule, timeLabel, context)
 
   return {
     description: rule.description,
     duration: rule.duration,
+    explanation: reason,
     id: `${timeLabel.toLowerCase().replaceAll(' ', '-')}-${rule.id}`,
     intensity: rule.intensity,
-    movementType: rule.type,
-    reason: getReason(rule, timeLabel, context),
+    movementType,
+    reason,
     ruleId: rule.id,
+    ruleType: rule.type,
     setup: formatSetup(compatibleSetups),
     timeLabel,
     title: rule.title,
@@ -486,9 +513,30 @@ function getCompatibleRuleSetups(rule, context) {
 
 function getReason(rule, timeLabel, context) {
   const phaseLabel = getOptionLabel(workPhaseOptions, context.currentPhase)
+  const movementType = getMovementType(rule)
 
   if (matchesAnySituation(rule, context.phaseSituations)) {
     return `Passt gerade zu ${phaseLabel}, weil Dauer und Art der Bewegung gut in diesen Moment passen.`
+  }
+
+  if (movementType === 'sit_reset') {
+    return 'Hilft dir, lange Sitzphasen kurz zu unterbrechen und die Position zu wechseln.'
+  }
+
+  if (movementType === 'walking_meeting') {
+    return 'Passt gut zu Telefonaten oder Meetings, weil du dich dabei leicht bewegen kannst.'
+  }
+
+  if (movementType === 'walk') {
+    return 'Ideal zwischen zwei Aufgaben, um kurz neue Energie aufzubauen.'
+  }
+
+  if (movementType === 'stand') {
+    return 'Unterbricht Sitzen, ohne direkt in weiteres statisches Stehen zu kippen.'
+  }
+
+  if (['mobilize', 'stretch', 'eyes', 'breathing'].includes(movementType)) {
+    return 'Gut nach laengerer Bildschirmarbeit oder Fokusphasen.'
   }
 
   if (context.goal === 'back-neck' && ['mobility', 'posture'].includes(rule.type)) {
@@ -592,4 +640,54 @@ function normalizeWorkPhase(workPhase) {
   return workPhaseOptions.some((option) => option.id === workPhase)
     ? workPhase
     : 'between-tasks'
+}
+
+function getMovementType(rule) {
+  if (rule.movementType) {
+    return rule.movementType
+  }
+
+  const movementTypesByRuleId = {
+    'balance-board-focus-break': 'activate',
+    'balance-board-weight-shift': 'activate',
+    'chair-shoulder-reset': 'mobilize',
+    'chair-sit-to-stand': 'activate',
+    'desk-neck-release': 'mobilize',
+    'desk-posture-switch': 'sit_reset',
+    'ergometer-easy-spin': 'activate',
+    'ergometer-power-minute': 'activate',
+    'exercise-ball-core-sit': 'sit_reset',
+    'exercise-ball-pelvic-circles': 'mobilize',
+    'floor-core-activation': 'activate',
+    'floor-hip-mobility': 'stretch',
+    'kneeling-chair-hip-reset': 'stretch',
+    'no-equipment-breath-mobility': 'breathing',
+    'no-equipment-learning-energizer': 'mobilize',
+    'no-equipment-walk-loop': 'walk',
+    'sofa-lounge-glute-activation': 'activate',
+    'sofa-lounge-spine-reset': 'sit_reset',
+    'stairs-light-interval': 'activate',
+    'stairs-strength-step-ups': 'activate',
+    'standing-desk-calf-pump': 'activate',
+    'standing-desk-position-change': 'stand',
+    'walking-pad-focus-walk': 'walk',
+    'walking-pad-meeting-light': 'walking_meeting',
+  }
+
+  if (movementTypesByRuleId[rule.id]) {
+    return movementTypesByRuleId[rule.id]
+  }
+
+  const movementTypesByLegacyType = {
+    balance: 'activate',
+    cycling: 'activate',
+    mobility: 'mobilize',
+    posture: 'sit_reset',
+    stairs: 'activate',
+    standing: 'stand',
+    strength: 'activate',
+    walking: 'walk',
+  }
+
+  return movementTypesByLegacyType[rule.type] ?? 'mobilize'
 }

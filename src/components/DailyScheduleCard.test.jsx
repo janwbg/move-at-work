@@ -6,7 +6,7 @@ const section = {
   description: 'Kurz bewegen und Schultern lockern.',
   duration: '2 Minuten',
   id: 'morning-mobility',
-  movementType: 'mobility',
+  movementType: 'mobilize',
   reason: 'Hilft beim Start in den Arbeitstag.',
   setup: 'Kein spezielles Equipment',
   timeLabel: 'Morgens',
@@ -27,5 +27,19 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Erledigt')
     expect(html).toContain('bg-emerald')
     expect(html).not.toContain('Offen')
+  })
+
+  it('shows the recommendation reason in the compact card', () => {
+    const html = renderToStaticMarkup(
+      <DailyScheduleCard
+        completed={false}
+        onComplete={() => {}}
+        section={section}
+        stepNumber={1}
+      />,
+    )
+
+    expect(html).toContain('Hilft beim Start in den Arbeitstag.')
+    expect(html).toContain('Mobilisieren')
   })
 })
