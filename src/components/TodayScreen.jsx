@@ -1,16 +1,23 @@
 import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import MovementPlanCard from './MovementPlanCard.jsx'
-import { workPhaseOptions } from '../data/profileOptions.js'
+import {
+  getOptionLabel,
+  workplaceOptions,
+  workPhaseOptions,
+} from '../data/profileOptions.js'
 
 function TodayScreen({
   activeWorkPhase,
+  activeWorkplace,
   completedIds,
   feedbackUrl,
   onComplete,
   onWorkPhaseChange,
+  onWorkplaceChange,
   plan,
   progressSummary,
+  workplaces,
 }) {
   const [quickHint, setQuickHint] = useState('')
   const openSections = plan.dailySchedule.filter(
@@ -21,6 +28,8 @@ function TodayScreen({
   )
   const nextSection = openSections[0]
   const openCount = openSections.length
+  const workplaceTodayLabel = getOptionLabel(workplaceOptions, activeWorkplace)
+  const canSwitchWorkplace = workplaces?.length > 1
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.75fr_1.25fr]">
@@ -102,6 +111,49 @@ function TodayScreen({
               )
             })}
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+                Arbeitsort heute
+              </p>
+              <p className="mt-2 text-lg font-extrabold text-slate-950 dark:text-white">
+                {workplaceTodayLabel}
+              </p>
+            </div>
+            {canSwitchWorkplace && (
+              <div className="flex flex-wrap gap-2">
+                {workplaceOptions
+                  .filter((workplace) => workplaces.includes(workplace.id))
+                  .map((workplace) => {
+                  const isActive = activeWorkplace === workplace.id
+
+                  return (
+                    <button
+                      key={workplace.id}
+                      type="button"
+                      onClick={() => onWorkplaceChange(workplace.id)}
+                      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+                        isActive
+                          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+                      }`}
+                    >
+                      {workplace.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          {canSwitchWorkplace && (
+            <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Diese Tagesauswahl passt nur den heutigen Plan an und aendert dein
+              Profil nicht.
+            </p>
+          )}
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">

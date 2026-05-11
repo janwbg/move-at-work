@@ -148,6 +148,56 @@ describe('generatePlan', () => {
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
     expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
   })
+
+  it('uses office as the effective workplace for mixed profiles', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+      workplaceProfile: 'mixed',
+    })
+
+    expect(plan.summary).toContain('Buero')
+  })
+
+  it('accepts workplace profiles and reflects homeoffice in the recommendation context', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+      workplaceProfile: 'homeoffice',
+    })
+
+    expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
+    expect(plan.summary).toContain('Homeoffice')
+    expect(
+      plan.dailySchedule.some((section) =>
+        section.reason.includes('Im Homeoffice fehlen oft natuerliche Wege'),
+      ),
+    ).toBe(true)
+  })
+
+  it('reflects office context in reasons or summary', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+      workplaceProfile: 'office',
+    })
+
+    expect(plan.summary).toContain('Buero')
+    expect(
+      plan.dailySchedule.some((section) =>
+        section.reason.includes('Im Buero lassen sich kurze Wege gut nutzen'),
+      ),
+    ).toBe(true)
+  })
 })
 
 function hasSetup(plan, setup) {

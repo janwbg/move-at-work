@@ -3,7 +3,10 @@ import BottomNavigation from './BottomNavigation.jsx'
 import ProgressScreen from './ProgressScreen.jsx'
 import SettingsScreen from './SettingsScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
-import { deriveWorkPhaseFromWorkday } from '../data/profileOptions.js'
+import {
+  deriveWorkPhaseFromWorkday,
+  normalizeProfileAnswers,
+} from '../data/profileOptions.js'
 import { generatePlan } from '../utils/generatePlan.js'
 import {
   calculateProgressSummary,
@@ -17,16 +20,29 @@ const FEEDBACK_URL =
   'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u'
 
 function ResultScreen({ answers, onChangeAnswers }) {
+  const normalizedAnswers = normalizeProfileAnswers(answers)
   const [activeTab, setActiveTab] = useState('today')
-  const defaultWorkPhase = deriveWorkPhaseFromWorkday(answers.situation)
+  const defaultWorkPhase = deriveWorkPhaseFromWorkday(normalizedAnswers.situation)
+  const defaultWorkplace = normalizedAnswers.defaultWorkplace
   const [selectedWorkPhase, setSelectedWorkPhase] = useState(defaultWorkPhase)
+  const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
   const [phaseWasChanged, setPhaseWasChanged] = useState(false)
+  const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
   const [successState, setSuccessState] = useState(null)
   const activeWorkPhase = phaseWasChanged ? selectedWorkPhase : defaultWorkPhase
+  const activeWorkplace =
+    workplaceWasChanged && normalizedAnswers.workplaces.includes(selectedWorkplace)
+      ? selectedWorkplace
+      : defaultWorkplace
   const plan = useMemo(
-    () => generatePlan({ ...answers, currentPhase: activeWorkPhase }),
-    [activeWorkPhase, answers],
+    () =>
+      generatePlan({
+        ...normalizedAnswers,
+        currentPhase: activeWorkPhase,
+        currentWorkplace: activeWorkplace,
+      }),
+    [activeWorkPhase, activeWorkplace, normalizedAnswers],
   )
   const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
   const progressSummary = useMemo(
@@ -37,6 +53,11 @@ function ResultScreen({ answers, onChangeAnswers }) {
   function handleWorkPhaseChange(workPhase) {
     setSelectedWorkPhase(workPhase)
     setPhaseWasChanged(true)
+  }
+
+  function handleWorkplaceChange(workplace) {
+    setSelectedWorkplace(workplace)
+    setWorkplaceWasChanged(true)
   }
 
   function handleComplete(exerciseId, exerciseTitle) {
@@ -66,7 +87,10 @@ function ResultScreen({ answers, onChangeAnswers }) {
           plan={plan}
           progressSummary={progressSummary}
           activeWorkPhase={activeWorkPhase}
+          activeWorkplace={activeWorkplace}
           onWorkPhaseChange={handleWorkPhaseChange}
+          onWorkplaceChange={handleWorkplaceChange}
+          workplaces={normalizedAnswers.workplaces}
         />
       )}
 
@@ -78,7 +102,7 @@ function ResultScreen({ answers, onChangeAnswers }) {
       )}
 
       {activeTab === 'settings' && (
-        <SettingsScreen answers={answers} onChangeAnswers={onChangeAnswers} />
+        <SettingsScreen answers={normalizedAnswers} onChangeAnswers={onChangeAnswers} />
       )}
 
       <BottomNavigation activeTab={activeTab} onChange={setActiveTab} />

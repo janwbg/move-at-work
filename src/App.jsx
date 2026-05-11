@@ -10,18 +10,26 @@ const storageKey = 'move-at-work-onboarding'
 function createDefaultAnswers() {
   return {
     goal: '',
-    setup: [],
     fitnessLevel: '',
     situation: '',
+    workplaces: [],
+    defaultWorkplace: '',
+    currentWorkplace: '',
+    workplaceSetups: {
+      office: [],
+      homeoffice: [],
+    },
   }
 }
 
 function hasAnyAnswer(answers) {
   return Boolean(
     answers?.goal ||
-      answers?.setup?.length ||
       answers?.fitnessLevel ||
-      answers?.situation,
+      answers?.situation ||
+      answers?.workplaces?.length ||
+      answers?.workplaceSetups?.office?.length ||
+      answers?.workplaceSetups?.homeoffice?.length,
   )
 }
 
@@ -49,9 +57,13 @@ function normalizeStoredAnswers(answers) {
 function hasCompletedOnboarding(answers) {
   return Boolean(
     answers?.goal &&
-      answers?.setup?.length &&
       answers?.fitnessLevel &&
-      answers?.situation,
+      answers?.situation &&
+      answers?.workplaces?.length &&
+      answers.workplaces.every(
+        (workplace) => answers.workplaceSetups?.[workplace]?.length,
+      ) &&
+      answers?.defaultWorkplace,
   )
 }
 

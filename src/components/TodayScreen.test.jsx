@@ -26,12 +26,15 @@ describe('TodayScreen', () => {
     const html = renderToStaticMarkup(
       <TodayScreen
         activeWorkPhase="focus"
+        activeWorkplace="office"
         completedIds={[]}
         feedbackUrl="https://example.com"
         onComplete={() => {}}
         onWorkPhaseChange={() => {}}
+        onWorkplaceChange={() => {}}
         plan={plan}
         progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+        workplaces={['office']}
       />,
     )
 
@@ -40,5 +43,27 @@ describe('TodayScreen', () => {
     expect(html).toContain('Meeting')
     expect(html).toContain('Zwischen zwei Aufgaben')
     expect(html).toContain('Passt gerade nicht?')
+  })
+
+  it('shows the workplace used for the day', () => {
+    const html = renderToStaticMarkup(
+      <TodayScreen
+        activeWorkPhase="focus"
+        activeWorkplace="office"
+        completedIds={[]}
+        feedbackUrl="https://example.com"
+        onComplete={() => {}}
+        onWorkPhaseChange={() => {}}
+        onWorkplaceChange={() => {}}
+        plan={plan}
+        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+        workplaces={['office', 'homeoffice']}
+      />,
+    )
+
+    expect(html).toContain('Arbeitsort heute')
+    expect(html).toContain('Buero')
+    expect(html).toContain('Homeoffice')
+    expect(html).toContain('Diese Tagesauswahl passt nur den heutigen Plan an')
   })
 })

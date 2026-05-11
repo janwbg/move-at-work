@@ -1,9 +1,32 @@
+export const workplaceIds = ['office', 'homeoffice']
+
 export const defaultProfile = {
   goal: 'habit',
   setup: ['no-equipment'],
   fitnessLevel: 'balanced',
   situation: 'mixed-day',
+  workplaces: ['office'],
+  defaultWorkplace: 'office',
+  currentWorkplace: 'office',
+  workplaceSetups: {
+    office: ['no-equipment'],
+    homeoffice: ['no-equipment'],
+  },
 }
+
+export const workplaceOptions = [
+  {
+    id: 'office',
+    label: 'Buero',
+    description:
+      'Ich arbeite regelmaessig im Buero oder an einem festen Arbeitsplatz im Unternehmen.',
+  },
+  {
+    id: 'homeoffice',
+    label: 'Homeoffice',
+    description: 'Ich arbeite regelmaessig von zuhause.',
+  },
+]
 
 export const goalOptions = [
   {
@@ -153,7 +176,7 @@ const goalAliases = {
   'Mehr Bewegung im Arbeitsalltag': 'sit-less',
   'Ruecken & Nacken entlasten': 'back-neck',
   'Weniger Rueckenschmerzen': 'back-neck',
-  'Weniger RÃ¼ckenschmerzen': 'back-neck',
+  'Weniger RÃƒÂ¼ckenschmerzen': 'back-neck',
   'Weniger sitzen': 'sit-less',
   'gegen Verspannungen': 'back-neck',
   'mehr Bewegung': 'sit-less',
@@ -163,14 +186,14 @@ const goalAliases = {
 const setupAliases = {
   'Balance Board': 'small-equipment',
   Boden: 'exercise-space',
-  'BÃ¼rostuhl': 'no-equipment',
+  'BÃƒÂ¼rostuhl': 'no-equipment',
   Buerostuhl: 'no-equipment',
-  'Bürostuhl': 'no-equipment',
+  'BÃ¼rostuhl': 'no-equipment',
   Ergometer: 'small-equipment',
   Gymnastikball: 'small-equipment',
   'Hoehenverstellbarer Schreibtisch': 'standing-desk',
+  'HÃƒÂ¶henverstellbarer Schreibtisch': 'standing-desk',
   'HÃ¶henverstellbarer Schreibtisch': 'standing-desk',
-  'Höhenverstellbarer Schreibtisch': 'standing-desk',
   Kniestuhl: 'ergonomic-support',
   'Kein Equipment': 'no-equipment',
   'Kein besonderes Equipment': 'no-equipment',
@@ -220,22 +243,53 @@ const workdayAliases = {
   'Viele Meetings': 'meeting-heavy',
 }
 
+const workplaceAliases = {
+  Buero: 'office',
+  Gemischt: 'mixed',
+  Homeoffice: 'homeoffice',
+  office: 'office',
+  mixed: 'mixed',
+  homeoffice: 'homeoffice',
+}
+
 const validGoalIds = new Set(goalOptions.map((option) => option.id))
 const validSetupIds = new Set(setupOptions.map((option) => option.id))
 const validIntensityIds = new Set(intensityOptions.map((option) => option.id))
 const validWorkdayIds = new Set(workdayOptions.map((option) => option.id))
+const validWorkplaceIds = new Set(workplaceIds)
 
-export function normalizeProfileAnswers(answers) {
+export function normalizeProfileAnswers(answers = {}) {
+  const rawAnswers = answers
   const normalized = {
     ...defaultProfile,
     ...answers,
   }
+  const workplaces = normalizeWorkplaces(rawAnswers)
+  const defaultWorkplace = normalizeDefaultWorkplace(
+    normalized.defaultWorkplace,
+    workplaces,
+  )
+  const currentWorkplace = normalizeCurrentWorkplace(
+    normalized.currentWorkplace,
+    workplaces,
+    defaultWorkplace,
+  )
+  const workplaceSetups = normalizeWorkplaceSetups(
+    rawAnswers.workplaceSetups,
+    workplaces,
+    rawAnswers.setup,
+    defaultWorkplace,
+  )
 
   return {
     goal: normalizeGoal(normalized.goal),
-    setup: normalizeSetup(normalized.setup),
+    setup: workplaceSetups[defaultWorkplace],
     fitnessLevel: normalizeIntensity(normalized.fitnessLevel),
     situation: normalizeWorkday(normalized.situation),
+    workplaces,
+    defaultWorkplace,
+    currentWorkplace,
+    workplaceSetups,
   }
 }
 
@@ -255,6 +309,43 @@ export function toggleSetupSelection(currentSetup, setupId) {
   return nextSetup.length ? nextSetup : ['no-equipment']
 }
 
+export function toggleWorkplaceSelection(profile, workplaceId) {
+  const currentWorkplaces = getSelectedWorkplaces(profile, true)
+  const exists = currentWorkplaces.includes(workplaceId)
+  const nextWorkplaces = exists
+    ? currentWorkplaces.filter((workplace) => workplace !== workplaceId)
+    : [...currentWorkplaces, workplaceId]
+  const workplaces = nextWorkplaces.length ? nextWorkplaces : currentWorkplaces
+
+  return normalizeProfileAnswers({
+    ...profile,
+    workplaces,
+  })
+}
+
+export function updateWorkplaceSetup(profile, workplaceId, setupId) {
+  const normalized = normalizeProfileAnswers(profile)
+
+  return normalizeProfileAnswers({
+    ...normalized,
+    workplaceSetups: {
+      ...normalized.workplaceSetups,
+      [workplaceId]: toggleSetupSelection(
+        normalized.workplaceSetups[workplaceId],
+        setupId,
+      ),
+    },
+  })
+}
+
+export function updateDefaultWorkplace(profile, workplaceId) {
+  return normalizeProfileAnswers({
+    ...profile,
+    defaultWorkplace: workplaceId,
+    currentWorkplace: workplaceId,
+  })
+}
+
 export function deriveWorkPhaseFromWorkday(workday) {
   const normalizedWorkday = normalizeWorkday(workday)
 
@@ -271,6 +362,39 @@ export function deriveWorkPhaseFromWorkday(workday) {
 
 export function getOptionLabel(options, id) {
   return options.find((option) => option.id === id)?.label ?? id
+}
+
+export function getEffectiveWorkplace(profileOrWorkplace) {
+  if (typeof profileOrWorkplace === 'string') {
+    return workplaceAliases[profileOrWorkplace] === 'homeoffice'
+      ? 'homeoffice'
+      : 'office'
+  }
+
+  return normalizeProfileAnswers(profileOrWorkplace).currentWorkplace
+}
+
+export function getSelectedWorkplaces(profile, allowEmpty = false) {
+  const rawWorkplaces = Array.isArray(profile?.workplaces)
+    ? profile.workplaces
+    : workplacesFromLegacyProfile(profile?.workplaceProfile ?? profile?.workplace)
+  const workplaces = rawWorkplaces.filter((workplace) =>
+    validWorkplaceIds.has(workplace),
+  )
+
+  if (workplaces.length || allowEmpty) {
+    return [...new Set(workplaces)]
+  }
+
+  return defaultProfile.workplaces
+}
+
+export function getWorkplaceTodayLabel(profile, currentWorkplace) {
+  const normalized = normalizeProfileAnswers({
+    ...profile,
+    currentWorkplace,
+  })
+  return getOptionLabel(workplaceOptions, normalized.currentWorkplace)
 }
 
 function normalizeGoal(goal) {
@@ -314,4 +438,69 @@ function normalizeWorkday(situation) {
   }
 
   return workdayAliases[situation] ?? defaultProfile.situation
+}
+
+function normalizeWorkplaces(profile) {
+  const workplaces = getSelectedWorkplaces(profile)
+  return workplaces.length ? workplaces : defaultProfile.workplaces
+}
+
+function normalizeDefaultWorkplace(defaultWorkplace, workplaces) {
+  if (workplaces.includes(defaultWorkplace)) {
+    return defaultWorkplace
+  }
+
+  return workplaces[0] ?? defaultProfile.defaultWorkplace
+}
+
+function normalizeCurrentWorkplace(
+  currentWorkplace,
+  workplaces,
+  defaultWorkplace,
+) {
+  if (workplaces.includes(currentWorkplace)) {
+    return currentWorkplace
+  }
+
+  return defaultWorkplace
+}
+
+function normalizeWorkplaceSetups(
+  workplaceSetups,
+  workplaces,
+  legacySetup,
+  defaultWorkplace,
+) {
+  const normalizedSetups = {
+    office: normalizeSetup(workplaceSetups?.office),
+    homeoffice: normalizeSetup(workplaceSetups?.homeoffice),
+  }
+
+  if (!workplaceSetups && legacySetup?.length) {
+    normalizedSetups[defaultWorkplace] = normalizeSetup(legacySetup)
+  }
+
+  for (const workplace of workplaces) {
+    normalizedSetups[workplace] = normalizeSetup(normalizedSetups[workplace])
+  }
+
+  return normalizedSetups
+}
+
+function workplacesFromLegacyProfile(workplaceProfile) {
+  const normalizedWorkplace = workplaceAliases[workplaceProfile]
+
+  if (normalizedWorkplace === 'mixed') {
+    return ['office', 'homeoffice']
+  }
+
+  if (normalizedWorkplace === 'homeoffice') {
+    return ['homeoffice']
+  }
+
+  if (normalizedWorkplace === 'office') {
+    return ['office']
+  }
+
+  return []
 }

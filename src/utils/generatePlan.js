@@ -6,6 +6,7 @@ import {
   intensityOptions,
   normalizeProfileAnswers,
   setupOptions,
+  workplaceOptions,
   workdayOptions,
   workPhaseOptions,
 } from '../data/profileOptions.js'
@@ -98,6 +99,11 @@ const phaseMovementTypeScores = {
   phone: { walk: 30, walking_meeting: 28, stand: 20, mobilize: 10 },
 }
 
+const workplaceMovementTypeScores = {
+  homeoffice: { activate: 14, breathing: 10, mobilize: 12, sit_reset: 8, walk: 18 },
+  office: { activate: 10, sit_reset: 12, stand: 16, walk: 18, walking_meeting: 18 },
+}
+
 const intensityScores = {
   active: { Hoch: 20, Leicht: 4, Mittel: 18 },
   balanced: { Hoch: -12, Leicht: 14, Mittel: 16 },
@@ -136,11 +142,18 @@ function normalizeContext(answers) {
   const currentPhase = normalizeWorkPhase(
     answers?.currentPhase ?? deriveWorkPhaseFromWorkday(profile.situation),
   )
+  const requestedWorkplace = answers?.currentWorkplace ?? profile.currentWorkplace
+  const currentWorkplace = profile.workplaces.includes(requestedWorkplace)
+    ? requestedWorkplace
+    : profile.defaultWorkplace
+  const setup = profile.workplaceSetups[currentWorkplace] ?? ['no-equipment']
 
   return {
     ...profile,
+    setup,
     currentPhase,
-    allowedRuleSetups: getAllowedRuleSetups(profile.setup),
+    currentWorkplace,
+    allowedRuleSetups: getAllowedRuleSetups(setup),
     phaseSituations: phaseSituations[currentPhase] ?? phaseSituations['between-tasks'],
     workdaySituations: workdaySituationMap[profile.situation] ?? workdaySituationMap['mixed-day'],
   }
@@ -186,6 +199,7 @@ function scoreRule(rule, context) {
   score += workdayTypeScores[context.situation]?.[rule.type] ?? 0
   score += phaseTypeScores[context.currentPhase]?.[rule.type] ?? 0
   score += phaseMovementTypeScores[context.currentPhase]?.[movementType] ?? 0
+  score += workplaceMovementTypeScores[context.currentWorkplace]?.[movementType] ?? 0
   score += intensityScores[context.fitnessLevel]?.[rule.intensity] ?? 0
 
   if (matchesAnySituation(rule, context.phaseSituations)) {
@@ -515,6 +529,20 @@ function getReason(rule, timeLabel, context) {
   const phaseLabel = getOptionLabel(workPhaseOptions, context.currentPhase)
   const movementType = getMovementType(rule)
 
+  if (
+    context.currentWorkplace === 'homeoffice' &&
+    ['activate', 'breathing', 'mobilize', 'sit_reset', 'walk'].includes(movementType)
+  ) {
+    return 'Im Homeoffice fehlen oft natuerliche Wege wie Arbeitsweg, Meetingraum oder Kantine. Diese Empfehlung schafft bewusst einen Bewegungsanlass.'
+  }
+
+  if (
+    context.currentWorkplace === 'office' &&
+    ['activate', 'sit_reset', 'stand', 'walk', 'walking_meeting'].includes(movementType)
+  ) {
+    return 'Im Buero lassen sich kurze Wege gut nutzen, um lange Sitzphasen zu unterbrechen.'
+  }
+
   if (matchesAnySituation(rule, context.phaseSituations)) {
     return `Passt gerade zu ${phaseLabel}, weil Dauer und Art der Bewegung gut in diesen Moment passen.`
   }
@@ -590,11 +618,12 @@ function buildSummary(context) {
   const goalLabel = getOptionLabel(goalOptions, context.goal)
   const workdayLabel = getOptionLabel(workdayOptions, context.situation)
   const intensityLabel = getOptionLabel(intensityOptions, context.fitnessLevel)
+  const workplaceLabel = getOptionLabel(workplaceOptions, context.currentWorkplace)
   const setupLabel = context.setup
     .map((setup) => getOptionLabel(setupOptions, setup))
     .join(', ')
 
-  return `${goalLabel} mit ${intensityLabel.toLowerCase()}en Empfehlungen: dein Plan orientiert sich an ${setupLabel} und ${workdayLabel.toLowerCase()}.`
+  return `${goalLabel} mit ${intensityLabel.toLowerCase()}en Empfehlungen: dein Plan orientiert sich an ${setupLabel}, ${workdayLabel.toLowerCase()} und ${workplaceLabel}.`
 }
 
 function formatSetup(setups) {

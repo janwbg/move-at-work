@@ -1,55 +1,72 @@
 import { useState } from 'react'
 import {
   goalOptions,
+  getSelectedWorkplaces,
   intensityOptions,
+  normalizeProfileAnswers,
   setupOptions,
   toggleSetupSelection,
+  workplaceOptions,
   workdayOptions,
 } from '../data/profileOptions.js'
 import OptionCard from './OptionCard.jsx'
-
-const steps = [
-  {
-    eyebrow: 'Schritt 1 von 4',
-    helper:
-      'Waehle dein wichtigstes Ziel. Du kannst es spaeter in den Einstellungen aendern.',
-    question: 'Was moechtest du mit Move at work erreichen?',
-  },
-  {
-    eyebrow: 'Schritt 2 von 4',
-    helper:
-      'Waehle alles aus, was du regelmaessig nutzen kannst. Du kannst deine Auswahl spaeter in den Einstellungen aendern.',
-    question: 'Was steht dir an deinem Arbeitsplatz zur Verfuegung?',
-  },
-  {
-    eyebrow: 'Schritt 3 von 4',
-    helper:
-      'Waehle, was sich fuer dich im Arbeitsalltag realistisch anfuehlt. Du kannst es spaeter in den Einstellungen aendern.',
-    question: 'Wie aktiv sollen deine Bewegungsempfehlungen sein?',
-  },
-  {
-    eyebrow: 'Schritt 4 von 4',
-    helper:
-      'Diese Auswahl hilft Move at work, deinen Tagesplan grob zu strukturieren.',
-    question: 'Wie sieht dein Arbeitstag meistens aus?',
-  },
-]
+import { getOnboardingSteps } from './onboardingSteps.js'
 
 function Onboarding({ answers, onChange, onComplete }) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const currentStep = steps[currentIndex]
-  const canContinue = isStepComplete(currentIndex, answers)
-  const progressPercent = ((currentIndex + 1) / steps.length) * 100
+  const onboardingSteps = getOnboardingSteps(answers)
+  const currentStep = onboardingSteps[Math.min(currentIndex, onboardingSteps.length - 1)]
+  const canContinue = isStepComplete(currentStep, answers)
+  const progressPercent = ((currentIndex + 1) / onboardingSteps.length) * 100
 
   function updateAnswer(nextAnswer) {
     onChange((current) => ({ ...current, ...nextAnswer }))
   }
 
-  function toggleSetup(optionId) {
-    onChange((current) => ({
-      ...current,
-      setup: toggleSetupSelection(current.setup, optionId),
-    }))
+  function toggleWorkplace(workplaceId) {
+    onChange((current) => {
+      const currentWorkplaces = getSelectedWorkplaces(current, true)
+      const exists = currentWorkplaces.includes(workplaceId)
+      const nextWorkplaces = exists
+        ? currentWorkplaces.filter((workplace) => workplace !== workplaceId)
+        : [...currentWorkplaces, workplaceId]
+      const normalizedWorkplaces = nextWorkplaces.length
+        ? nextWorkplaces
+        : currentWorkplaces
+      const normalized = normalizeProfileAnswers({
+        ...current,
+        workplaces: normalizedWorkplaces,
+      })
+
+      return {
+        ...current,
+        workplaces: normalized.workplaces,
+        defaultWorkplace: normalized.defaultWorkplace,
+        currentWorkplace: normalized.currentWorkplace,
+        workplaceSetups: normalized.workplaceSetups,
+      }
+    })
+    setCurrentIndex(0)
+  }
+
+  function toggleWorkplaceSetup(workplaceId, setupId) {
+    onChange((current) => {
+      const normalized = normalizeProfileAnswers(current)
+
+      return {
+        ...current,
+        workplaces: normalized.workplaces,
+        defaultWorkplace: normalized.defaultWorkplace,
+        currentWorkplace: normalized.currentWorkplace,
+        workplaceSetups: {
+          ...normalized.workplaceSetups,
+          [workplaceId]: toggleSetupSelection(
+            normalized.workplaceSetups[workplaceId],
+            setupId,
+          ),
+        },
+      }
+    })
   }
 
   function handleNext() {
@@ -57,7 +74,7 @@ function Onboarding({ answers, onChange, onComplete }) {
       return
     }
 
-    if (currentIndex === steps.length - 1) {
+    if (currentIndex === onboardingSteps.length - 1) {
       onComplete()
       return
     }
@@ -74,7 +91,7 @@ function Onboarding({ answers, onChange, onComplete }) {
         </div>
         <div
           aria-label={currentStep.eyebrow}
-          aria-valuemax={steps.length}
+          aria-valuemax={onboardingSteps.length}
           aria-valuemin="1"
           aria-valuenow={currentIndex + 1}
           className="mb-5 h-2 rounded-full bg-slate-100 dark:bg-white/10"
@@ -86,7 +103,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           />
         </div>
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-          {currentIndex === 1 ? 'Mehrfachauswahl moeglich' : 'Eine Auswahl'}
+          {getSelectionLabel(currentStep)}
         </p>
         <h1 className="mt-2 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
           {currentStep.question}
@@ -96,7 +113,57 @@ function Onboarding({ answers, onChange, onComplete }) {
         </p>
       </div>
 
-      {currentIndex === 0 && (
+      {currentStep.kind === 'workplaces' && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {workplaceOptions.map((workplace) => (
+            <OptionCard
+              key={workplace.id}
+              active={getSelectedWorkplaces(answers, true).includes(workplace.id)}
+              description={workplace.description}
+              label={workplace.label}
+              onClick={() => toggleWorkplace(workplace.id)}
+              type="checkbox"
+            />
+          ))}
+        </div>
+      )}
+
+      {currentStep.kind.startsWith('setup-') && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {setupOptions.map((option) => (
+            <OptionCard
+              key={option.id}
+              active={getWorkplaceSetup(answers, currentStep.workplace).includes(
+                option.id,
+              )}
+              description={option.description}
+              label={option.label}
+              onClick={() => toggleWorkplaceSetup(currentStep.workplace, option.id)}
+              type="checkbox"
+            />
+          ))}
+        </div>
+      )}
+
+      {currentStep.kind === 'default-workplace' && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {getSelectedWorkplaces(answers).map((workplace) => (
+            <OptionCard
+              key={workplace}
+              active={answers.defaultWorkplace === workplace}
+              label={workplace === 'homeoffice' ? 'Homeoffice' : 'Buero'}
+              onClick={() =>
+                updateAnswer({
+                  defaultWorkplace: workplace,
+                  currentWorkplace: workplace,
+                })
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      {currentStep.kind === 'goal' && (
         <div className="grid gap-3 sm:grid-cols-2">
           {goalOptions.map((goal) => (
             <OptionCard
@@ -110,22 +177,7 @@ function Onboarding({ answers, onChange, onComplete }) {
         </div>
       )}
 
-      {currentIndex === 1 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {setupOptions.map((option) => (
-            <OptionCard
-              key={option.id}
-              active={answers.setup.includes(option.id)}
-              description={option.description}
-              label={option.label}
-              onClick={() => toggleSetup(option.id)}
-              type="checkbox"
-            />
-          ))}
-        </div>
-      )}
-
-      {currentIndex === 2 && (
+      {currentStep.kind === 'intensity' && (
         <div className="grid gap-3">
           {intensityOptions.map((level) => (
             <OptionCard
@@ -139,7 +191,7 @@ function Onboarding({ answers, onChange, onComplete }) {
         </div>
       )}
 
-      {currentIndex === 3 && (
+      {currentStep.kind === 'workday' && (
         <div className="grid gap-3 sm:grid-cols-2">
           {workdayOptions.map((situation) => (
             <OptionCard
@@ -170,7 +222,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           className="min-h-12 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5 hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
         >
           {canContinue
-            ? currentIndex === steps.length - 1
+            ? currentIndex === onboardingSteps.length - 1
               ? 'Plan anzeigen'
               : 'Weiter'
             : 'Bitte auswaehlen'}
@@ -180,20 +232,40 @@ function Onboarding({ answers, onChange, onComplete }) {
   )
 }
 
-function isStepComplete(index, answers) {
-  if (index === 0) {
+function getSelectionLabel(step) {
+  if (step.kind === 'workplaces' || step.kind.startsWith('setup-')) {
+    return 'Mehrfachauswahl moeglich'
+  }
+
+  return 'Eine Auswahl'
+}
+
+function isStepComplete(step, answers) {
+  if (step.kind === 'workplaces') {
+    return getSelectedWorkplaces(answers, true).length > 0
+  }
+
+  if (step.kind.startsWith('setup-')) {
+    return getWorkplaceSetup(answers, step.workplace).length > 0
+  }
+
+  if (step.kind === 'default-workplace') {
+    return getSelectedWorkplaces(answers).includes(answers.defaultWorkplace)
+  }
+
+  if (step.kind === 'goal') {
     return Boolean(answers.goal)
   }
 
-  if (index === 1) {
-    return answers.setup.length > 0
-  }
-
-  if (index === 2) {
+  if (step.kind === 'intensity') {
     return Boolean(answers.fitnessLevel)
   }
 
   return Boolean(answers.situation)
+}
+
+function getWorkplaceSetup(answers, workplace) {
+  return normalizeProfileAnswers(answers).workplaceSetups[workplace] ?? []
 }
 
 export default Onboarding

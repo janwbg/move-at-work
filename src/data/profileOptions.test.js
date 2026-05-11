@@ -6,6 +6,7 @@ import {
   setupOptions,
   toggleSetupSelection,
   workdayOptions,
+  workplaceOptions,
   workPhaseOptions,
 } from './profileOptions.js'
 
@@ -64,6 +65,17 @@ describe('profileOptions', () => {
     ])
   })
 
+  it('contains the workplace profile options', () => {
+    expect(workplaceOptions.map((option) => option.id)).toEqual([
+      'office',
+      'homeoffice',
+    ])
+    expect(workplaceOptions.map((option) => option.label)).toEqual([
+      'Buero',
+      'Homeoffice',
+    ])
+  })
+
   it('migrates old stored profile values to current ids', () => {
     expect(
       normalizeProfileAnswers({
@@ -77,6 +89,19 @@ describe('profileOptions', () => {
       goal: 'back-neck',
       setup: ['walking-pad'],
       situation: 'focus-heavy',
+      workplaces: ['office'],
+      defaultWorkplace: 'office',
+      currentWorkplace: 'office',
+      workplaceSetups: {
+        office: ['walking-pad'],
+        homeoffice: ['no-equipment'],
+      },
     })
+  })
+
+  it('keeps existing workplace profiles and falls back safely', () => {
+    expect(normalizeProfileAnswers({ workplaceProfile: 'homeoffice' }).workplaces).toEqual(['homeoffice'])
+    expect(normalizeProfileAnswers({ workplaceProfile: 'mixed' }).workplaces).toEqual(['office', 'homeoffice'])
+    expect(normalizeProfileAnswers({ workplaceProfile: 'unknown' }).workplaces).toEqual(['office'])
   })
 })
