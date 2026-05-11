@@ -15,7 +15,7 @@ describe('profileOptions', () => {
     expect(goalOptions.map((option) => option.label)).toEqual([
       'Weniger sitzen',
       'Mehr Energie im Arbeitstag',
-      'Ruecken & Nacken entlasten',
+      'Rücken & Nacken entlasten',
       'Konzentration halten',
       'Bewegung zur Gewohnheit machen',
     ])
@@ -71,7 +71,7 @@ describe('profileOptions', () => {
       'homeoffice',
     ])
     expect(workplaceOptions.map((option) => option.label)).toEqual([
-      'Buero',
+      'Büro',
       'Homeoffice',
     ])
   })

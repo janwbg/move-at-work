@@ -15,7 +15,7 @@ const minimumRecommendations = 3
 const maximumRecommendations = 5
 
 const fallbackSetups = [
-  'BÃ¼rostuhl',
+  'Bürostuhl',
   'Buerostuhl',
   'Bürostuhl',
   'Sitzschreibtisch',
@@ -28,7 +28,7 @@ const setupRuleMap = {
   'standing-desk': [
     'Stehschreibtisch',
     'Hoehenverstellbarer Schreibtisch',
-    'HÃ¶henverstellbarer Schreibtisch',
+    'Höhenverstellbarer Schreibtisch',
     'Höhenverstellbarer Schreibtisch',
   ],
   'walking-pad': ['Walking Pad'],
@@ -533,14 +533,14 @@ function getReason(rule, timeLabel, context) {
     context.currentWorkplace === 'homeoffice' &&
     ['activate', 'breathing', 'mobilize', 'sit_reset', 'walk'].includes(movementType)
   ) {
-    return 'Im Homeoffice fehlen oft natuerliche Wege wie Arbeitsweg, Meetingraum oder Kantine. Diese Empfehlung schafft bewusst einen Bewegungsanlass.'
+    return 'Im Homeoffice fehlen oft natürliche Wege wie Arbeitsweg, Meetingraum oder Kantine. Diese Empfehlung schafft bewusst einen Bewegungsanlass.'
   }
 
   if (
     context.currentWorkplace === 'office' &&
     ['activate', 'sit_reset', 'stand', 'walk', 'walking_meeting'].includes(movementType)
   ) {
-    return 'Im Buero lassen sich kurze Wege gut nutzen, um lange Sitzphasen zu unterbrechen.'
+    return 'Im Büro lassen sich kurze Wege gut nutzen, um lange Sitzphasen zu unterbrechen.'
   }
 
   if (matchesAnySituation(rule, context.phaseSituations)) {
@@ -564,11 +564,11 @@ function getReason(rule, timeLabel, context) {
   }
 
   if (['mobilize', 'stretch', 'eyes', 'breathing'].includes(movementType)) {
-    return 'Gut nach laengerer Bildschirmarbeit oder Fokusphasen.'
+    return 'Gut nach längerer Bildschirmarbeit oder Fokusphasen.'
   }
 
   if (context.goal === 'back-neck' && ['mobility', 'posture'].includes(rule.type)) {
-    return 'Sanfte Mobilisation und Positionswechsel entlasten Schultern, Nacken und Ruecken im Arbeitsalltag.'
+    return 'Sanfte Mobilisation und Positionswechsel entlasten Schultern, Nacken und Rücken im Arbeitsalltag.'
   }
 
   if (context.goal === 'sit-less' && ['standing', 'walking', 'posture'].includes(rule.type)) {
@@ -576,19 +576,19 @@ function getReason(rule, timeLabel, context) {
   }
 
   if (context.goal === 'focus' && timeLabel.includes('Vormittag')) {
-    return 'Kurz, ruhig und passend fuer konzentrierte Arbeit ohne grossen Bruch.'
+    return 'Kurz, ruhig und passend für konzentrierte Arbeit ohne großen Bruch.'
   }
 
   if (timeLabel === 'Mittagspause') {
     return 'In der Pause darf der Impuls etwas aktiver sein, bevor du wieder in ruhigere Arbeit wechselst.'
   }
 
-  return 'Die Empfehlung passt zu deinem Setup und haelt den Tagesrhythmus abwechslungsreich.'
+  return 'Die Empfehlung passt zu deinem Setup und hält den Tagesrhythmus abwechslungsreich.'
 }
 
 function buildRhythm(context) {
   if (context.currentPhase === 'meeting') {
-    return 'Fuer Meetings stehen ruhige Positionswechsel im Vordergrund. Walking Pad wird nur genutzt, wenn es in deinem Setup vorhanden ist.'
+    return 'Für Meetings stehen ruhige Positionswechsel im Vordergrund. Walking Pad wird nur genutzt, wenn es in deinem Setup vorhanden ist.'
   }
 
   if (context.currentPhase === 'phone') {
@@ -596,22 +596,22 @@ function buildRhythm(context) {
   }
 
   if (context.situation === 'focus-heavy') {
-    return 'Plane kurze, ruhige Microbreaks zwischen Fokusbloecken. Der Plan bleibt bewusst unauffaellig.'
+    return 'Plane kurze, ruhige Microbreaks zwischen Fokusblöcken. Der Plan bleibt bewusst unauffällig.'
   }
 
   if (context.situation === 'meeting-heavy') {
-    return 'Nutze kleine Resets vor oder nach Terminen und wechsle regelmaessig zwischen Sitzen und Stehen.'
+    return 'Nutze kleine Resets vor oder nach Terminen und wechsle regelmäßig zwischen Sitzen und Stehen.'
   }
 
   if (context.setup.includes('standing-desk')) {
-    return 'Wechsle regelmaessig zwischen Sitzen und Stehen und kombiniere das mit kurzen Mobilisationsimpulsen.'
+    return 'Wechsle regelmäßig zwischen Sitzen und Stehen und kombiniere das mit kurzen Mobilisationsimpulsen.'
   }
 
   if (context.fitnessLevel === 'gentle') {
-    return 'Plane alle 60 bis 90 Minuten einen sehr kurzen Bewegungsimpuls. Zwei bis drei Minuten reichen fuer den Start.'
+    return 'Plane alle 60 bis 90 Minuten einen sehr kurzen Bewegungsimpuls. Zwei bis drei Minuten reichen für den Start.'
   }
 
-  return 'Setze ueber den Tag mehrere kurze Wechsel: mobilisieren, leicht gehen, sitzen, kurz aktivieren und wieder entlasten.'
+  return 'Setze über den Tag mehrere kurze Wechsel: mobilisieren, leicht gehen, sitzen, kurz aktivieren und wieder entlasten.'
 }
 
 function buildSummary(context) {
@@ -636,10 +636,10 @@ function formatSetup(setups) {
       if (
         setup.includes('Stehschreibtisch') ||
         setup.includes('Hoehenverstellbarer') ||
-        setup.includes('HÃ¶henverstellbarer') ||
+        setup.includes('Höhenverstellbarer') ||
         setup.includes('Höhenverstellbarer')
       ) {
-        return 'Hoehenverstellbarer Schreibtisch'
+        return 'Höhenverstellbarer Schreibtisch'
       }
 
       if (setup === 'Treppenstufen') {
@@ -655,7 +655,7 @@ function formatSetup(setups) {
       }
 
       if (setup === 'Boden') {
-        return 'Platz fuer kurze Uebungen'
+        return 'Platz für kurze Übungen'
       }
 
       return setup

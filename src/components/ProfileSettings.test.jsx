@@ -22,10 +22,10 @@ describe('ProfileSettings', () => {
     )
 
     expect(html).toContain('Arbeitsorte und Setup')
-    expect(html).toContain('Buero')
+    expect(html).toContain('Büro')
     expect(html).toContain('Homeoffice')
     expect(html).toContain('Standard-Arbeitsort')
-    expect(html).toContain('Setup im Buero')
+    expect(html).toContain('Setup im Büro')
     expect(html).toContain('Setup im Homeoffice')
     expect(html).toContain('jederzeit anpassen')
   })

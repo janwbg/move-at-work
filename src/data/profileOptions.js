@@ -17,14 +17,14 @@ export const defaultProfile = {
 export const workplaceOptions = [
   {
     id: 'office',
-    label: 'Buero',
+    label: 'Büro',
     description:
-      'Ich arbeite regelmaessig im Buero oder an einem festen Arbeitsplatz im Unternehmen.',
+      'Ich arbeite regelmäßig im Büro oder an einem festen Arbeitsplatz im Unternehmen.',
   },
   {
     id: 'homeoffice',
     label: 'Homeoffice',
-    description: 'Ich arbeite regelmaessig von zuhause.',
+    description: 'Ich arbeite regelmäßig von zuhause.',
   },
 ]
 
@@ -33,17 +33,17 @@ export const goalOptions = [
     id: 'sit-less',
     label: 'Weniger sitzen',
     description:
-      'Lange Sitzphasen unterbrechen und oefter die Position wechseln.',
+      'Lange Sitzphasen unterbrechen und öfter die Position wechseln.',
   },
   {
     id: 'more-energy',
     label: 'Mehr Energie im Arbeitstag',
-    description: 'Dich wacher, aktiver und weniger traege fuehlen.',
+    description: 'Dich wacher, aktiver und weniger träge fühlen.',
   },
   {
     id: 'back-neck',
-    label: 'Ruecken & Nacken entlasten',
-    description: 'Schultern, Nacken und Ruecken regelmaessig mobilisieren.',
+    label: 'Rücken & Nacken entlasten',
+    description: 'Schultern, Nacken und Rücken regelmäßig mobilisieren.',
   },
   {
     id: 'focus',
@@ -54,7 +54,7 @@ export const goalOptions = [
   {
     id: 'habit',
     label: 'Bewegung zur Gewohnheit machen',
-    description: 'Mit kleinen Schritten regelmaessig aktiver werden.',
+    description: 'Mit kleinen Schritten regelmäßig aktiver werden.',
   },
 ]
 
@@ -66,19 +66,19 @@ export const setupOptions = [
   },
   {
     id: 'standing-desk',
-    label: 'Hoehenverstellbarer Schreibtisch',
-    description: 'Fuer Sitz-Steh-Wechsel und kurze Stehphasen.',
+    label: 'Höhenverstellbarer Schreibtisch',
+    description: 'Für Sitz-Steh-Wechsel und kurze Stehphasen.',
   },
   {
     id: 'walking-pad',
     label: 'Walking Pad',
-    description: 'Fuer langsames Gehen waehrend geeigneter Aufgaben.',
+    description: 'Für langsames Gehen während geeigneter Aufgaben.',
   },
   {
     id: 'exercise-space',
-    label: 'Platz fuer kurze Uebungen',
+    label: 'Platz für kurze Übungen',
     description:
-      'Fuer Mobilisation und kurze Bewegungspausen neben dem Schreibtisch.',
+      'Für Mobilisation und kurze Bewegungspausen neben dem Schreibtisch.',
   },
   {
     id: 'small-equipment',
@@ -88,8 +88,8 @@ export const setupOptions = [
   },
   {
     id: 'stairs-hallway',
-    label: 'Treppe oder Flur in der Naehe',
-    description: 'Fuer kurze Gehimpulse und Mini-Pausen.',
+    label: 'Treppe oder Flur in der Nähe',
+    description: 'Für kurze Gehimpulse und Mini-Pausen.',
   },
   {
     id: 'ergonomic-support',
@@ -108,13 +108,13 @@ export const intensityOptions = [
     id: 'balanced',
     label: 'Ausgeglichen',
     description:
-      'Alltagstaugliche Bewegung, die aktiviert, aber nicht ueberfordert.',
+      'Alltagstaugliche Bewegung, die aktiviert, aber nicht überfordert.',
   },
   {
     id: 'active',
     label: 'Aktiv',
     description:
-      'Dynamischere Impulse, laengere Gehphasen und etwas mehr Intensitaet.',
+      'Dynamischere Impulse, längere Gehphasen und etwas mehr Intensität.',
   },
 ]
 
@@ -124,7 +124,7 @@ export const workdayOptions = [
   {
     id: 'focus-heavy',
     label: 'Viel Fokusarbeit',
-    description: 'Du arbeitest haeufig laengere Zeit konzentriert an Aufgaben.',
+    description: 'Du arbeitest häufig längere Zeit konzentriert an Aufgaben.',
   },
   {
     id: 'meeting-heavy',
@@ -145,27 +145,27 @@ export const workPhaseOptions = [
     id: 'focus',
     label: 'Fokusarbeit',
     description:
-      'Fuer konzentriertes Arbeiten mit moeglichst wenig Unterbrechung.',
+      'Für konzentriertes Arbeiten mit möglichst wenig Unterbrechung.',
   },
   {
     id: 'meeting',
     label: 'Meeting',
-    description: 'Fuer Termine, Calls oder Abstimmungen.',
+    description: 'Für Termine, Calls oder Abstimmungen.',
   },
   {
     id: 'phone',
     label: 'Telefonat',
-    description: 'Fuer Gespraeche, bei denen du dich nebenbei bewegen kannst.',
+    description: 'Für Gespräche, bei denen du dich nebenbei bewegen kannst.',
   },
   {
     id: 'break',
     label: 'Pause',
-    description: 'Fuer kurze aktive Erholung weg vom Schreibtisch.',
+    description: 'Für kurze aktive Erholung weg vom Schreibtisch.',
   },
   {
     id: 'between-tasks',
     label: 'Zwischen zwei Aufgaben',
-    description: 'Fuer einen kurzen Reset, bevor du weitermachst.',
+    description: 'Für einen kurzen Reset, bevor du weitermachst.',
   },
 ]
 
@@ -176,7 +176,7 @@ const goalAliases = {
   'Mehr Bewegung im Arbeitsalltag': 'sit-less',
   'Ruecken & Nacken entlasten': 'back-neck',
   'Weniger Rueckenschmerzen': 'back-neck',
-  'Weniger RÃƒÂ¼ckenschmerzen': 'back-neck',
+  'Weniger Rückenschmerzen': 'back-neck',
   'Weniger sitzen': 'sit-less',
   'gegen Verspannungen': 'back-neck',
   'mehr Bewegung': 'sit-less',
@@ -186,14 +186,12 @@ const goalAliases = {
 const setupAliases = {
   'Balance Board': 'small-equipment',
   Boden: 'exercise-space',
-  'BÃƒÂ¼rostuhl': 'no-equipment',
+  'Bürostuhl': 'no-equipment',
   Buerostuhl: 'no-equipment',
-  'BÃ¼rostuhl': 'no-equipment',
   Ergometer: 'small-equipment',
   Gymnastikball: 'small-equipment',
   'Hoehenverstellbarer Schreibtisch': 'standing-desk',
-  'HÃƒÂ¶henverstellbarer Schreibtisch': 'standing-desk',
-  'HÃ¶henverstellbarer Schreibtisch': 'standing-desk',
+  'Höhenverstellbarer Schreibtisch': 'standing-desk',
   Kniestuhl: 'ergonomic-support',
   'Kein Equipment': 'no-equipment',
   'Kein besonderes Equipment': 'no-equipment',

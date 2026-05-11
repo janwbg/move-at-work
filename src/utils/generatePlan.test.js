@@ -60,7 +60,7 @@ describe('generatePlan', () => {
     })
 
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
-    expect(hasDisplaySetup(plan, 'Hoehenverstellbarer Schreibtisch')).toBe(true)
+    expect(hasDisplaySetup(plan, 'Höhenverstellbarer Schreibtisch')).toBe(true)
     expect(hasAdjacentLongStandingSections(plan.dailySchedule)).toBe(false)
   })
 
@@ -159,7 +159,7 @@ describe('generatePlan', () => {
       workplaceProfile: 'mixed',
     })
 
-    expect(plan.summary).toContain('Buero')
+    expect(plan.summary).toContain('Büro')
   })
 
   it('accepts workplace profiles and reflects homeoffice in the recommendation context', () => {
@@ -176,7 +176,7 @@ describe('generatePlan', () => {
     expect(plan.summary).toContain('Homeoffice')
     expect(
       plan.dailySchedule.some((section) =>
-        section.reason.includes('Im Homeoffice fehlen oft natuerliche Wege'),
+        section.reason.includes('Im Homeoffice fehlen oft natürliche Wege'),
       ),
     ).toBe(true)
   })
@@ -191,10 +191,10 @@ describe('generatePlan', () => {
       workplaceProfile: 'office',
     })
 
-    expect(plan.summary).toContain('Buero')
+    expect(plan.summary).toContain('Büro')
     expect(
       plan.dailySchedule.some((section) =>
-        section.reason.includes('Im Buero lassen sich kurze Wege gut nutzen'),
+        section.reason.includes('Im Büro lassen sich kurze Wege gut nutzen'),
       ),
     ).toBe(true)
   })

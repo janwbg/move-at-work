@@ -61,7 +61,7 @@ function ProfileSettings({ answers, onChange }) {
         />
 
         <SelectField
-          label="Intensitaet"
+          label="Intensität"
           value={normalizedAnswers.fitnessLevel}
           options={intensityOptions}
           onChange={(fitnessLevel) => updateAnswer({ fitnessLevel })}
@@ -128,7 +128,7 @@ function WorkplaceSettings({
               id: workplace,
               label: getOptionLabel(workplaceOptions, workplace),
             }))}
-            helper="Diesen Arbeitsort nutzt Move at work standardmaessig fuer den Tagesplan."
+            helper="Diesen Arbeitsort nutzt Move at work standardmäßig für den Tagesplan."
             onChange={onDefaultChange}
           />
         </div>
@@ -139,7 +139,7 @@ function WorkplaceSettings({
           <SetupFieldset
             key={workplace}
             setup={answers.workplaceSetups[workplace]}
-            title={`Setup ${workplace === 'homeoffice' ? 'im Homeoffice' : 'im Buero'}`}
+            title={`Setup ${workplace === 'homeoffice' ? 'im Homeoffice' : 'im Büro'}`}
             onToggle={(setupId) => onSetupToggle(workplace, setupId)}
           />
         ))}

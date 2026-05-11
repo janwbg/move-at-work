@@ -151,7 +151,7 @@ function Onboarding({ answers, onChange, onComplete }) {
             <OptionCard
               key={workplace}
               active={answers.defaultWorkplace === workplace}
-              label={workplace === 'homeoffice' ? 'Homeoffice' : 'Buero'}
+              label={workplace === 'homeoffice' ? 'Homeoffice' : 'Büro'}
               onClick={() =>
                 updateAnswer({
                   defaultWorkplace: workplace,
@@ -212,7 +212,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           disabled={currentIndex === 0}
           className="min-h-12 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-400 dark:hover:text-white"
         >
-          Zurueck
+          Zurück
         </button>
 
         <button
@@ -225,7 +225,7 @@ function Onboarding({ answers, onChange, onComplete }) {
             ? currentIndex === onboardingSteps.length - 1
               ? 'Plan anzeigen'
               : 'Weiter'
-            : 'Bitte auswaehlen'}
+            : 'Bitte auswählen'}
         </button>
       </div>
     </section>
@@ -234,7 +234,7 @@ function Onboarding({ answers, onChange, onComplete }) {
 
 function getSelectionLabel(step) {
   if (step.kind === 'workplaces' || step.kind.startsWith('setup-')) {
-    return 'Mehrfachauswahl moeglich'
+    return 'Mehrfachauswahl möglich'
   }
 
   return 'Eine Auswahl'

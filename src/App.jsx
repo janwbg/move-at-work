@@ -116,7 +116,11 @@ function App() {
           )}
 
           {step === 'result' && (
-            <ResultScreen answers={answers} onChangeAnswers={setAnswers} />
+            <ResultScreen
+              answers={answers}
+              onChangeAnswers={setAnswers}
+              onRestartOnboarding={() => setStep('onboarding')}
+            />
           )}
         </div>
       </div>

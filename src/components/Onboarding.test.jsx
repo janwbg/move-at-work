@@ -6,10 +6,10 @@ describe('Onboarding', () => {
     const steps = getOnboardingSteps({})
 
     expect(steps.map((step) => step.question)).toContain(
-      'Wo arbeitest du regelmaessig?',
+      'Wo arbeitest du regelmäßig?',
     )
     expect(
-      steps.find((step) => step.question === 'Wo arbeitest du regelmaessig?')
+      steps.find((step) => step.question === 'Wo arbeitest du regelmäßig?')
         ?.helper,
     ).toContain('beiden Orten')
   })
@@ -20,13 +20,13 @@ describe('Onboarding', () => {
     })
 
     expect(steps.map((step) => step.question)).toContain(
-      'Welches Setup steht dir im Buero zur Verfuegung?',
+      'Welches Setup steht dir im Büro zur Verfügung?',
     )
     expect(steps.map((step) => step.question)).toContain(
-      'Welches Setup steht dir im Homeoffice zur Verfuegung?',
+      'Welches Setup steht dir im Homeoffice zur Verfügung?',
     )
     expect(steps.map((step) => step.question)).toContain(
-      'Welcher Arbeitsort soll standardmaessig fuer deinen Tagesplan verwendet werden?',
+      'Welcher Arbeitsort soll standardmäßig für deinen Tagesplan verwendet werden?',
     )
   })
 })

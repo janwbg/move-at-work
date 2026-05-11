@@ -19,5 +19,12 @@ describe('ProgressScreen', () => {
     expect(html).toContain('3/5')
     expect(html).toContain('12')
     expect(html).toContain('4 Tage')
+    expect(countOccurrences(html, 'Heute erledigt')).toBe(1)
+    expect(countOccurrences(html, 'Diese Woche')).toBe(1)
+    expect(countOccurrences(html, 'Tagesstreak')).toBe(1)
   })
 })
+
+function countOccurrences(value, search) {
+  return value.split(search).length - 1
+}

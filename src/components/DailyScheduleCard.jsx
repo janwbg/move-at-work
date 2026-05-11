@@ -133,7 +133,7 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
                 onClick={resetTimer}
                 className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
               >
-                Zuruecksetzen
+                Zurücksetzen
               </button>
               <button
                 type="button"

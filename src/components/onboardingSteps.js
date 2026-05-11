@@ -6,9 +6,9 @@ export function getOnboardingSteps(answers) {
     {
       eyebrow: 'Arbeitsort',
       helper:
-        'Waehle aus, ob du im Buero, im Homeoffice oder an beiden Orten arbeitest. Du kannst das spaeter jederzeit in den Einstellungen anpassen.',
+        'Wähle aus, ob du im Büro, im Homeoffice oder an beiden Orten arbeitest. Du kannst das später jederzeit in den Einstellungen anpassen.',
       kind: 'workplaces',
-      question: 'Wo arbeitest du regelmaessig?',
+      question: 'Wo arbeitest du regelmäßig?',
     },
   ]
 
@@ -16,9 +16,9 @@ export function getOnboardingSteps(answers) {
     steps.push({
       eyebrow: 'Setup',
       helper:
-        'Waehle alles aus, was du an diesem Arbeitsort regelmaessig nutzen kannst.',
+        'Wähle alles aus, was du an diesem Arbeitsort regelmäßig nutzen kannst.',
       kind: `setup-${workplace}`,
-      question: `Welches Setup steht dir ${getSetupQuestionPlace(workplace)} zur Verfuegung?`,
+      question: `Welches Setup steht dir ${getSetupQuestionPlace(workplace)} zur Verfügung?`,
       workplace,
     })
   }
@@ -27,10 +27,10 @@ export function getOnboardingSteps(answers) {
     steps.push({
       eyebrow: 'Standard',
       helper:
-        'Du kannst den Arbeitsort fuer einzelne Tage spaeter direkt im Heute-Bereich wechseln.',
+        'Du kannst den Arbeitsort für einzelne Tage später direkt im Heute-Bereich wechseln.',
       kind: 'default-workplace',
       question:
-        'Welcher Arbeitsort soll standardmaessig fuer deinen Tagesplan verwendet werden?',
+        'Welcher Arbeitsort soll standardmäßig für deinen Tagesplan verwendet werden?',
     })
   }
 
@@ -39,14 +39,14 @@ export function getOnboardingSteps(answers) {
     {
       eyebrow: 'Ziel',
       helper:
-        'Waehle dein wichtigstes Ziel. Du kannst es spaeter in den Einstellungen aendern.',
+        'Wähle dein wichtigstes Ziel. Du kannst es später in den Einstellungen ändern.',
       kind: 'goal',
-      question: 'Was moechtest du mit Move at work erreichen?',
+      question: 'Was möchtest du mit Move at work erreichen?',
     },
     {
-      eyebrow: 'Intensitaet',
+      eyebrow: 'Intensität',
       helper:
-        'Waehle, was sich fuer dich im Arbeitsalltag realistisch anfuehlt. Du kannst es spaeter in den Einstellungen aendern.',
+        'Wähle, was sich für dich im Arbeitsalltag realistisch anfühlt. Du kannst es später in den Einstellungen ändern.',
       kind: 'intensity',
       question: 'Wie aktiv sollen deine Bewegungsempfehlungen sein?',
     },

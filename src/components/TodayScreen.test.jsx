@@ -62,8 +62,42 @@ describe('TodayScreen', () => {
     )
 
     expect(html).toContain('Arbeitsort heute')
-    expect(html).toContain('Buero')
+    expect(html).toContain('Arbeitsort heute: Büro')
     expect(html).toContain('Homeoffice')
-    expect(html).toContain('Diese Tagesauswahl passt nur den heutigen Plan an')
+    expect(html).toContain('Diese Auswahl gilt nur für den heutigen Plan.')
+  })
+
+  it('shows the workplace switch only when both workplaces are active', () => {
+    const singleWorkplaceHtml = renderToStaticMarkup(
+      <TodayScreen
+        activeWorkPhase="focus"
+        activeWorkplace="office"
+        completedIds={[]}
+        feedbackUrl="https://example.com"
+        onComplete={() => {}}
+        onWorkPhaseChange={() => {}}
+        onWorkplaceChange={() => {}}
+        plan={plan}
+        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+        workplaces={['office']}
+      />,
+    )
+    const twoWorkplaceHtml = renderToStaticMarkup(
+      <TodayScreen
+        activeWorkPhase="focus"
+        activeWorkplace="office"
+        completedIds={[]}
+        feedbackUrl="https://example.com"
+        onComplete={() => {}}
+        onWorkPhaseChange={() => {}}
+        onWorkplaceChange={() => {}}
+        plan={plan}
+        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+        workplaces={['office', 'homeoffice']}
+      />,
+    )
+
+    expect(singleWorkplaceHtml).not.toContain('Homeoffice</button>')
+    expect(twoWorkplaceHtml).toContain('Homeoffice</button>')
   })
 })

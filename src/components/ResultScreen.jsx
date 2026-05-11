@@ -19,7 +19,7 @@ import {
 const FEEDBACK_URL =
   'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u'
 
-function ResultScreen({ answers, onChangeAnswers }) {
+function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const normalizedAnswers = normalizeProfileAnswers(answers)
   const [activeTab, setActiveTab] = useState('today')
   const defaultWorkPhase = deriveWorkPhaseFromWorkday(normalizedAnswers.situation)
@@ -102,7 +102,11 @@ function ResultScreen({ answers, onChangeAnswers }) {
       )}
 
       {activeTab === 'settings' && (
-        <SettingsScreen answers={normalizedAnswers} onChangeAnswers={onChangeAnswers} />
+        <SettingsScreen
+          answers={normalizedAnswers}
+          onChangeAnswers={onChangeAnswers}
+          onRestartOnboarding={onRestartOnboarding}
+        />
       )}
 
       <BottomNavigation activeTab={activeTab} onChange={setActiveTab} />
@@ -137,18 +141,18 @@ function SuccessDialog({ onClose, summary, title, totalToday }) {
               id="success-title"
               className="text-xl font-extrabold tracking-normal text-slate-950 dark:text-white"
             >
-              Stark, Uebung erledigt!
+              Stark, Übung erledigt!
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
               {title} ist abgehakt. Du hast heute {summary.completedToday} von{' '}
-              {totalToday} Uebungen geschafft.
+              {totalToday} Übungen geschafft.
             </p>
           </div>
         </div>
 
         <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-100">
           Aktueller Tagesstreak: {summary.streak} Tage. Jede kurze Bewegung
-          zaehlt.
+          zählt.
         </div>
 
         <button
@@ -156,7 +160,7 @@ function SuccessDialog({ onClose, summary, title, totalToday }) {
           onClick={onClose}
           className="mt-5 min-h-11 w-full rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
         >
-          Zurueck zum Tagesplan
+          Zurück zum Tagesplan
         </button>
       </div>
     </div>
