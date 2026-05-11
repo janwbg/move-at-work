@@ -3,20 +3,9 @@ import AppHeader from './components/AppHeader.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ResultScreen from './components/ResultScreen.jsx'
 import StartScreen from './components/StartScreen.jsx'
-import { generatePlan } from './utils/generatePlan.js'
+import { normalizeProfileAnswers } from './data/profileOptions.js'
 
 const storageKey = 'move-at-work-onboarding'
-
-const situationMigration = {
-  Fokusarbeit: 'Fokustag',
-  'Meeting Kamera an': 'Meetingtag',
-  'Meeting Kamera aus': 'Meetingtag',
-  Meeting: 'Meetingtag',
-  Telefonat: 'Meetingtag',
-  Kreativarbeit: 'Mixed Day',
-  'Langer Arbeitstag': 'Mixed Day',
-  Pause: 'Mixed Day',
-}
 
 function createDefaultAnswers() {
   return {
@@ -54,12 +43,7 @@ function normalizeStoredAnswers(answers) {
     return null
   }
 
-  return {
-    ...createDefaultAnswers(),
-    ...answers,
-    setup: Array.isArray(answers.setup) ? answers.setup : [],
-    situation: situationMigration[answers.situation] ?? answers.situation ?? '',
-  }
+  return normalizeProfileAnswers(answers)
 }
 
 function hasCompletedOnboarding(answers) {
@@ -98,8 +82,6 @@ function App() {
     window.localStorage.setItem(storageKey, JSON.stringify(answers))
   }, [answers])
 
-  const plan = generatePlan(answers)
-
   return (
     <main className="min-h-svh bg-[#f7f8fb] text-slate-950 transition-colors dark:bg-[#121212] dark:text-white">
       <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
@@ -122,7 +104,7 @@ function App() {
           )}
 
           {step === 'result' && (
-            <ResultScreen plan={plan} answers={answers} onChangeAnswers={setAnswers} />
+            <ResultScreen answers={answers} onChangeAnswers={setAnswers} />
           )}
         </div>
       </div>

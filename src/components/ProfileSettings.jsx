@@ -1,7 +1,8 @@
 import {
-  fitnessLevelOptions,
   goalOptions,
+  intensityOptions,
   setupOptions,
+  toggleSetupSelection,
   workdayOptions,
 } from '../data/profileOptions.js'
 
@@ -10,21 +11,11 @@ function ProfileSettings({ answers, onChange }) {
     onChange((current) => ({ ...current, ...nextAnswer }))
   }
 
-  function toggleSetup(setup) {
-    onChange((current) => {
-      const exists = current.setup.includes(setup)
-
-      if (exists && current.setup.length === 1) {
-        return current
-      }
-
-      return {
-        ...current,
-        setup: exists
-          ? current.setup.filter((item) => item !== setup)
-          : [...current.setup, setup],
-      }
-    })
+  function toggleSetup(setupId) {
+    onChange((current) => ({
+      ...current,
+      setup: toggleSetupSelection(current.setup, setupId),
+    }))
   }
 
   return (
@@ -45,7 +36,7 @@ function ProfileSettings({ answers, onChange }) {
         <SelectField
           label="Ziel"
           value={answers.goal}
-          options={goalOptions.map((goal) => ({ label: goal, value: goal }))}
+          options={goalOptions}
           onChange={(goal) => updateAnswer({ goal })}
         />
 
@@ -56,38 +47,37 @@ function ProfileSettings({ answers, onChange }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {setupOptions.map((setup) => (
               <label
-                key={setup}
-                className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                key={setup.id}
+                className="flex min-h-14 items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
               >
                 <input
                   type="checkbox"
-                  checked={answers.setup.includes(setup)}
-                  onChange={() => toggleSetup(setup)}
-                  className="h-4 w-4 accent-[#2563eb]"
+                  checked={answers.setup.includes(setup.id)}
+                  onChange={() => toggleSetup(setup.id)}
+                  className="mt-1 h-4 w-4 accent-[#2563eb]"
                 />
-                {setup}
+                <span>
+                  <span className="block font-bold">{setup.label}</span>
+                  <span className="mt-1 block leading-5 text-slate-500 dark:text-slate-400">
+                    {setup.description}
+                  </span>
+                </span>
               </label>
             ))}
           </div>
         </fieldset>
 
         <SelectField
-          label="Fitnesslevel"
+          label="Intensitaet"
           value={answers.fitnessLevel}
-          options={fitnessLevelOptions.map((level) => ({
-            label: level.label,
-            value: level.value,
-          }))}
+          options={intensityOptions}
           onChange={(fitnessLevel) => updateAnswer({ fitnessLevel })}
         />
 
         <SelectField
           label="Typischer Arbeitstag"
           value={answers.situation}
-          options={workdayOptions.map((workday) => ({
-            label: `${workday.label} - ${workday.description}`,
-            value: workday.value,
-          }))}
+          options={workdayOptions}
           onChange={(situation) => updateAnswer({ situation })}
         />
       </div>
@@ -107,11 +97,14 @@ function SelectField({ label, onChange, options, value }) {
         className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 dark:border-white/10 dark:bg-[#1b1b1b] dark:text-white"
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.id} value={option.id}>
             {option.label}
           </option>
         ))}
       </select>
+      <span className="text-sm leading-5 text-slate-500 dark:text-slate-400">
+        {options.find((option) => option.id === value)?.description}
+      </span>
     </label>
   )
 }

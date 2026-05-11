@@ -42,7 +42,13 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
   }
 
   return (
-    <article className="relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-5">
+    <article
+      className={`relative rounded-lg border p-4 shadow-sm transition sm:p-5 ${
+        completed
+          ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10'
+          : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.04]'
+      }`}
+    >
       <button
         type="button"
         onClick={() => setExpanded((current) => !current)}
@@ -51,14 +57,27 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3 sm:gap-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-sm font-extrabold text-white">
-              {stepNumber}
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+                completed
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-[#2563eb] text-white'
+              }`}
+              aria-hidden="true"
+            >
+              {completed ? '✓' : stepNumber}
             </span>
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
                 {section.timeLabel}
               </p>
-              <h3 className="mt-1 text-lg font-extrabold tracking-normal text-slate-950 dark:text-white">
+              <h3
+                className={`mt-1 text-lg font-extrabold tracking-normal ${
+                  completed
+                    ? 'text-slate-600 dark:text-slate-300'
+                    : 'text-slate-950 dark:text-white'
+                }`}
+              >
                 {section.title}
               </h3>
             </div>
@@ -67,7 +86,9 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <Badge>{section.duration}</Badge>
             <Badge>{movementTypeLabels[section.movementType] ?? section.movementType}</Badge>
-            <Badge>{completed ? 'Erledigt' : 'Offen'}</Badge>
+            <Badge tone={completed ? 'success' : 'neutral'}>
+              {completed ? '✓ Erledigt' : 'Offen'}
+            </Badge>
           </div>
         </div>
       </button>
@@ -111,9 +132,13 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
                 type="button"
                 onClick={onComplete}
                 disabled={completed}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:bg-white dark:text-slate-950"
+                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                  completed
+                    ? 'cursor-not-allowed bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100'
+                    : 'bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950'
+                }`}
               >
-                {completed ? 'Erledigt' : 'Als erledigt markieren'}
+                {completed ? '✓ Erledigt' : 'Als erledigt markieren'}
               </button>
             </div>
           </div>
@@ -123,9 +148,15 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
   )
 }
 
-function Badge({ children }) {
+function Badge({ children, tone = 'neutral' }) {
   return (
-    <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">
+    <span
+      className={`w-fit rounded-full px-3 py-1 text-sm font-bold ${
+        tone === 'success'
+          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100'
+          : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300'
+      }`}
+    >
       {children}
     </span>
   )

@@ -1,113 +1,166 @@
 import { movementRules } from '../data/movementRules.js'
+import {
+  deriveWorkPhaseFromWorkday,
+  getOptionLabel,
+  goalOptions,
+  intensityOptions,
+  normalizeProfileAnswers,
+  setupOptions,
+  workdayOptions,
+  workPhaseOptions,
+} from '../data/profileOptions.js'
 
-const fallbackSetups = ['Kein Equipment', 'Kein spezielles Equipment']
 const minimumRecommendations = 3
 const maximumRecommendations = 5
+
+const fallbackSetups = [
+  'BÃ¼rostuhl',
+  'Buerostuhl',
+  'Bürostuhl',
+  'Sitzschreibtisch',
+  'Kein Equipment',
+  'Kein spezielles Equipment',
+]
+
+const setupRuleMap = {
+  'no-equipment': fallbackSetups,
+  'standing-desk': [
+    'Stehschreibtisch',
+    'Hoehenverstellbarer Schreibtisch',
+    'HÃ¶henverstellbarer Schreibtisch',
+    'Höhenverstellbarer Schreibtisch',
+  ],
+  'walking-pad': ['Walking Pad'],
+  'exercise-space': ['Boden', ...fallbackSetups],
+  'small-equipment': ['Balance Board', 'Gymnastikball'],
+  'stairs-hallway': ['Treppenstufen', 'Kein Equipment', 'Kein spezielles Equipment'],
+  'ergonomic-support': ['Kniestuhl', 'Stehhocker', 'Sofa/Lounge'],
+}
 
 const daySlots = [
   'Start in den Arbeitstag',
   'Vormittag',
-  'Später Vormittag',
+  'Spaeter Vormittag',
   'Mittagspause',
-  'Früher Nachmittag',
+  'Frueher Nachmittag',
   'Nachmittag',
   'Abschluss des Arbeitstages',
 ]
 
-const beginnerLevels = ['Level 1', 'Level 2']
-const activeLevels = ['Level 3', 'Level 4', 'Level 5']
-const intenseValues = ['Mittel', 'Hoch']
-
-const goalAliases = {
-  'Bessere Haltung': 'gegen Verspannungen',
-  'Bessere Konzentration': 'mehr Energie',
-  'Mehr Bewegung im Arbeitsalltag': 'mehr Bewegung',
-  'Weniger Rückenschmerzen': 'gegen Verspannungen',
+const phaseSituations = {
+  break: ['Pause'],
+  'between-tasks': ['Warten (zwischen Terminen)', 'Kreativarbeit', 'Brainstorming'],
+  focus: ['Fokusarbeit', 'Deep Work', 'E-Mails', 'Lesen', 'Lernen'],
+  meeting: ['Meeting', 'Meeting Kamera an', 'Meeting Kamera aus'],
+  phone: ['Telefonat'],
 }
 
-const fitnessLevelAliases = {
-  Aktiv: 'Level 3',
-  Einsteiger: 'Level 2',
-  Fortgeschritten: 'Level 3',
+const workdaySituationMap = {
+  'focus-heavy': ['Fokusarbeit', 'Deep Work', 'E-Mails', 'Lesen', 'Lernen'],
+  'meeting-heavy': ['Meeting', 'Meeting Kamera an', 'Meeting Kamera aus', 'Telefonat'],
+  'mixed-day': [
+    'Fokusarbeit',
+    'Meeting',
+    'Kreativarbeit',
+    'Pause',
+    'Telefonat',
+    'Warten (zwischen Terminen)',
+  ],
 }
 
-const setupAliases = {
-  'Höhenverstellbarer Schreibtisch': 'Stehschreibtisch',
+const goalTypeScores = {
+  'back-neck': { mobility: 34, posture: 30, standing: 10 },
+  focus: { mobility: 24, posture: 22, standing: 12, walking: 6 },
+  habit: { mobility: 18, posture: 18, standing: 16, walking: 14 },
+  'more-energy': { walking: 34, stairs: 28, cycling: 20, standing: 18, mobility: 10 },
+  'sit-less': { standing: 32, walking: 26, posture: 18, mobility: 12 },
 }
 
-const situationAliases = {
-  Fokustag: ['Fokusarbeit', 'Deep Work', 'Lernen'],
-  Meetingtag: ['Meeting', 'Meeting Kamera an', 'Meeting Kamera aus', 'Telefonat'],
-  'Mixed Day': ['Fokusarbeit', 'Meeting', 'Kreativarbeit', 'Pause', 'Telefonat'],
+const workdayTypeScores = {
+  'focus-heavy': { mobility: 20, posture: 18, standing: 12 },
+  'meeting-heavy': { standing: 22, walking: 20, posture: 14 },
+  'mixed-day': { mobility: 14, walking: 14, posture: 12, standing: 12 },
+}
+
+const phaseTypeScores = {
+  break: { walking: 28, stairs: 22, mobility: 16, strength: 12 },
+  'between-tasks': { mobility: 24, posture: 20, standing: 18, walking: 14 },
+  focus: { mobility: 26, posture: 22, standing: 12 },
+  meeting: { standing: 26, posture: 20, walking: 14 },
+  phone: { walking: 30, standing: 18, mobility: 10 },
+}
+
+const intensityScores = {
+  active: { Hoch: 20, Leicht: 4, Mittel: 18 },
+  balanced: { Hoch: -12, Leicht: 14, Mittel: 16 },
+  gentle: { Hoch: -80, Leicht: 28, Mittel: -20 },
+}
+
+const allowedIntensities = {
+  active: ['Leicht', 'Mittel', 'Hoch'],
+  balanced: ['Leicht', 'Mittel'],
+  gentle: ['Leicht'],
 }
 
 export function generatePlan(answers) {
   const context = normalizeContext(answers)
-  const recommendationCount = getRecommendationCount(context.fitnessLevel)
+  const recommendationCount = getRecommendationCount(context)
   const matchingRules = getMatchingRules(context)
-  const fallbackRules = getFallbackRules(context)
-  const candidateRules = uniqueRules([...matchingRules, ...fallbackRules])
-  const sortedRules = sortRulesByRelevance(candidateRules, context)
-
+  const sortedRules = sortRulesByRelevance(matchingRules, context)
   const recommendations = ensureMinimumRecommendations(
     avoidBadSequences(sortedRules, recommendationCount),
     sortedRules,
     context,
     recommendationCount,
   )
-
   const dailySchedule = buildDailySchedule(sortedRules, context)
 
   return {
     dailySchedule,
-    summary: `Du möchtest ${context.goal || 'mehr Bewegung'} und nutzt ${formatList(
-      context.setup,
-    )}. Für ${context.situation || 'deinen Arbeitstag'} bleibt der Plan bewusst kurz, damit Bewegung realistisch wird.`,
+    summary: buildSummary(context),
     rhythm: buildRhythm(context),
-    movements: recommendations.map(toMovementCardData),
+    movements: recommendations.map((rule) => toMovementCardData(rule, context)),
   }
 }
 
 function normalizeContext(answers) {
-  const rawSetup = answers.setup ?? []
+  const profile = normalizeProfileAnswers(answers)
+  const currentPhase = normalizeWorkPhase(
+    answers?.currentPhase ?? deriveWorkPhaseFromWorkday(profile.situation),
+  )
 
   return {
-    fitnessLevel: fitnessLevelAliases[answers.fitnessLevel] ?? answers.fitnessLevel,
-    goal: goalAliases[answers.goal] ?? answers.goal,
-    originalGoal: answers.goal,
-    setup: uniqueValues([
-      ...rawSetup,
-      ...rawSetup.map((setup) => setupAliases[setup]).filter(Boolean),
-    ]),
-    situation: answers.situation,
-    situationMatches: situationAliases[answers.situation] ?? [answers.situation],
+    ...profile,
+    currentPhase,
+    allowedRuleSetups: getAllowedRuleSetups(profile.setup),
+    phaseSituations: phaseSituations[currentPhase] ?? phaseSituations['between-tasks'],
+    workdaySituations: workdaySituationMap[profile.situation] ?? workdaySituationMap['mixed-day'],
   }
 }
 
-function getMatchingRules(context) {
-  return movementRules.filter(
-    (rule) =>
-      hasAnySetup(rule, context.setup) &&
-      matchesGoal(rule, context.goal) &&
-      matchesFitnessLevel(rule, context.fitnessLevel),
-  )
+function getAllowedRuleSetups(selectedSetup) {
+  return [
+    ...new Set([
+      ...fallbackSetups,
+      ...selectedSetup.flatMap((setup) => setupRuleMap[setup] ?? []),
+    ]),
+  ]
 }
 
-function getFallbackRules(context) {
-  const goalBasedFallbacks = movementRules.filter(
+function getMatchingRules(context) {
+  const directMatches = movementRules.filter(
     (rule) =>
-      hasAnySetup(rule, fallbackSetups) &&
-      matchesGoal(rule, context.goal) &&
-      matchesFitnessLevel(rule, context.fitnessLevel),
+      hasAnySetup(rule, context.allowedRuleSetups) &&
+      matchesIntensity(rule, context.fitnessLevel),
   )
 
-  const broadFallbacks = movementRules.filter(
-    (rule) =>
-      hasAnySetup(rule, fallbackSetups) &&
-      matchesFitnessLevel(rule, context.fitnessLevel),
-  )
+  if (directMatches.length >= minimumRecommendations) {
+    return directMatches
+  }
 
-  return uniqueRules([...goalBasedFallbacks, ...broadFallbacks])
+  return movementRules.filter(
+    (rule) => hasAnySetup(rule, fallbackSetups) && rule.intensity === 'Leicht',
+  )
 }
 
 function sortRulesByRelevance(rules, context) {
@@ -120,36 +173,33 @@ function sortRulesByRelevance(rules, context) {
 function scoreRule(rule, context) {
   let score = rule.priority
 
-  if (matchesSituation(rule, context.situationMatches)) {
-    score += 35
+  score += goalTypeScores[context.goal]?.[rule.type] ?? 0
+  score += workdayTypeScores[context.situation]?.[rule.type] ?? 0
+  score += phaseTypeScores[context.currentPhase]?.[rule.type] ?? 0
+  score += intensityScores[context.fitnessLevel]?.[rule.intensity] ?? 0
+
+  if (matchesAnySituation(rule, context.phaseSituations)) {
+    score += 28
   }
 
-  if (matchesGoal(rule, context.goal)) {
-    score += 20
-  }
-
-  if (prefersMobility(context) && ['mobility', 'posture'].includes(rule.type)) {
-    score += 24
-  }
-
-  if (prefersFocus(context) && ['walking', 'mobility'].includes(rule.type)) {
-    score += 18
-  }
-
-  if (context.situation === 'Meetingtag' && ['walking', 'standing', 'posture'].includes(rule.type)) {
+  if (matchesAnySituation(rule, context.workdaySituations)) {
     score += 12
   }
 
-  if (context.situation === 'Mixed Day' && ['mobility', 'posture', 'walking'].includes(rule.type)) {
-    score += 18
+  if (context.currentPhase === 'meeting' && rule.type === 'walking') {
+    score += context.setup.includes('walking-pad') ? 16 : -18
   }
 
-  if (beginnerLevels.includes(context.fitnessLevel) && rule.intensity === 'Leicht') {
-    score += 16
+  if (context.currentPhase === 'focus' && ['stairs', 'cycling', 'strength'].includes(rule.type)) {
+    score -= 34
   }
 
-  if (activeLevels.includes(context.fitnessLevel) && ['Mittel', 'Hoch'].includes(rule.intensity)) {
-    score += 8
+  if (context.goal === 'focus' && getLongestDuration(rule.duration) > 5) {
+    score -= 24
+  }
+
+  if (context.goal === 'habit' && rule.intensity === 'Leicht') {
+    score += 12
   }
 
   return score
@@ -161,7 +211,6 @@ function buildDailySchedule(sortedRules, context) {
   const slotCandidates = slotLabels.map((timeLabel) =>
     sortRulesBySlot(sortedRules, timeLabel, context),
   )
-
   const schedule = []
 
   for (const [index, timeLabel] of slotLabels.entries()) {
@@ -181,11 +230,15 @@ function buildDailySchedule(sortedRules, context) {
 }
 
 function getScheduleLength(context) {
-  if (beginnerLevels.includes(context.fitnessLevel)) {
+  if (context.fitnessLevel === 'gentle') {
     return 5
   }
 
-  return context.situation === 'Mixed Day' ? 7 : 6
+  if (context.fitnessLevel === 'active' || context.situation === 'mixed-day') {
+    return 7
+  }
+
+  return 6
 }
 
 function getTimeLabels(scheduleLength) {
@@ -203,9 +256,9 @@ function getTimeLabels(scheduleLength) {
     return [
       'Start in den Arbeitstag',
       'Vormittag',
-      'Später Vormittag',
+      'Spaeter Vormittag',
       'Mittagspause',
-      'Früher Nachmittag',
+      'Frueher Nachmittag',
       'Abschluss des Arbeitstages',
     ]
   }
@@ -232,20 +285,20 @@ function scoreRuleForSlot(rule, timeLabel, context) {
     score -= 48
   }
 
-  if (timeLabel.includes('Vormittag') && prefersFocus(context)) {
-    score += ['walking', 'mobility'].includes(rule.type) ? 14 : 0
+  if (timeLabel.includes('Vormittag') && context.currentPhase === 'focus') {
+    score += ['mobility', 'posture'].includes(rule.type) ? 16 : 0
   }
 
   if (timeLabel === 'Mittagspause' && ['walking', 'stairs', 'cycling', 'strength'].includes(rule.type)) {
-    score += 18
+    score += context.fitnessLevel === 'gentle' ? 0 : 18
   }
 
-  if (timeLabel === 'Früher Nachmittag' && ['walking', 'mobility'].includes(rule.type)) {
+  if (timeLabel === 'Frueher Nachmittag' && ['walking', 'mobility'].includes(rule.type)) {
     score += 12
   }
 
-  if (timeLabel === 'Nachmittag' && context.situation === 'Mixed Day') {
-    score += ['mobility', 'posture'].includes(rule.type) ? 16 : 0
+  if (timeLabel === 'Nachmittag' && context.situation === 'mixed-day') {
+    score += ['mobility', 'posture', 'walking'].includes(rule.type) ? 16 : 0
   }
 
   if (timeLabel === 'Abschluss des Arbeitstages' && ['mobility', 'posture'].includes(rule.type)) {
@@ -272,9 +325,9 @@ function pickNextRule(candidates, currentSchedule, context, allowReuse = false) 
     }
 
     if (
-      context.situation === 'Meetingtag' &&
+      context.currentPhase === 'meeting' &&
       candidate.type === 'walking' &&
-      currentSchedule.some((section) => section.movementType === 'walking')
+      !context.setup.includes('walking-pad')
     ) {
       return false
     }
@@ -315,7 +368,7 @@ function ensureMinimumRecommendations(
 
   const lastResortRules = movementRules
     .filter((rule) => hasAnySetup(rule, fallbackSetups))
-    .filter((rule) => matchesFitnessLevel(rule, context.fitnessLevel))
+    .filter((rule) => matchesIntensity(rule, context.fitnessLevel))
     .filter(
       (rule) =>
         !existingCandidates.some((candidate) => candidate.id === rule.id) &&
@@ -364,8 +417,20 @@ function canFollow(previousItem, nextRule) {
   return true
 }
 
+function hasAnySetup(rule, selectedSetup) {
+  return rule.setup.some((setup) => selectedSetup.includes(setup))
+}
+
+function matchesIntensity(rule, selectedIntensity) {
+  return allowedIntensities[selectedIntensity]?.includes(rule.intensity) ?? true
+}
+
+function matchesAnySituation(rule, situations) {
+  return situations.some((situation) => rule.situations.includes(situation))
+}
+
 function isIntense(intensity) {
-  return intenseValues.includes(intensity)
+  return ['Mittel', 'Hoch'].includes(intensity)
 }
 
 function isLongStanding(type, duration) {
@@ -377,70 +442,30 @@ function getLongestDuration(duration) {
   return numbers.length ? Math.max(...numbers) : 0
 }
 
-function hasAnySetup(rule, selectedSetup) {
-  if (!selectedSetup.length) {
-    return false
-  }
-
-  return rule.setup.some((setup) => selectedSetup.includes(setup))
-}
-
-function matchesGoal(rule, selectedGoal) {
-  return !selectedGoal || rule.goals.includes(selectedGoal)
-}
-
-function matchesFitnessLevel(rule, selectedFitnessLevel) {
-  return !selectedFitnessLevel || rule.fitnessLevels.includes(selectedFitnessLevel)
-}
-
-function matchesSituation(rule, selectedSituations) {
-  const situations = Array.isArray(selectedSituations)
-    ? selectedSituations
-    : [selectedSituations]
-
-  return !situations[0] || situations.some((situation) => rule.situations.includes(situation))
-}
-
-function prefersMobility(context) {
-  return ['gegen Verspannungen', 'Weniger Rückenschmerzen', 'Bessere Haltung'].includes(
-    context.originalGoal ?? context.goal,
-  )
-}
-
-function prefersFocus(context) {
-  return context.originalGoal === 'Bessere Konzentration' || context.situation === 'Fokustag'
-}
-
-function getRecommendationCount(fitnessLevel) {
-  return beginnerLevels.includes(fitnessLevel)
+function getRecommendationCount(context) {
+  return context.fitnessLevel === 'gentle'
     ? minimumRecommendations
     : maximumRecommendations
 }
 
-function uniqueRules(rules) {
-  return rules.filter(
-    (rule, index, list) => rule && list.findIndex((item) => item.id === rule.id) === index,
-  )
-}
+function toMovementCardData(rule, context) {
+  const compatibleSetups = getCompatibleRuleSetups(rule, context)
 
-function uniqueValues(values) {
-  return [...new Set(values)]
-}
-
-function toMovementCardData(rule) {
   return {
     description: rule.description,
-    displaySetup: formatSetup(rule.setup),
+    displaySetup: formatSetup(compatibleSetups),
     duration: rule.duration,
     id: rule.id,
     intensity: rule.intensity,
-    setup: rule.setup,
+    setup: compatibleSetups,
     title: rule.title,
     type: rule.type,
   }
 }
 
 function toScheduleSection(rule, timeLabel, index, context) {
+  const compatibleSetups = getCompatibleRuleSetups(rule, context)
+
   return {
     description: rule.description,
     duration: rule.duration,
@@ -449,65 +474,122 @@ function toScheduleSection(rule, timeLabel, index, context) {
     movementType: rule.type,
     reason: getReason(rule, timeLabel, context),
     ruleId: rule.id,
-    setup: formatSetup(rule.setup),
+    setup: formatSetup(compatibleSetups),
     timeLabel,
     title: rule.title,
   }
 }
 
+function getCompatibleRuleSetups(rule, context) {
+  return rule.setup.filter((setup) => context.allowedRuleSetups.includes(setup))
+}
+
 function getReason(rule, timeLabel, context) {
-  if (context.situation === 'Mixed Day') {
-    return 'Der Impuls bringt Wechsel in einen abwechslungsreichen Tag, ohne eine Belastung zu lange am Stück zu halten.'
+  const phaseLabel = getOptionLabel(workPhaseOptions, context.currentPhase)
+
+  if (matchesAnySituation(rule, context.phaseSituations)) {
+    return `Passt gerade zu ${phaseLabel}, weil Dauer und Art der Bewegung gut in diesen Moment passen.`
   }
 
-  if (matchesSituation(rule, context.situationMatches)) {
-    return `Passt gut zu ${context.situation}, weil Dauer und Intensität in diesen Arbeitsabschnitt passen.`
+  if (context.goal === 'back-neck' && ['mobility', 'posture'].includes(rule.type)) {
+    return 'Sanfte Mobilisation und Positionswechsel entlasten Schultern, Nacken und Ruecken im Arbeitsalltag.'
   }
 
-  if (prefersMobility(context) && ['mobility', 'posture'].includes(rule.type)) {
-    return 'Mobilisation und Haltungswechsel entlasten Rücken, Nacken und Schultern besonders gut.'
+  if (context.goal === 'sit-less' && ['standing', 'walking', 'posture'].includes(rule.type)) {
+    return 'Der Impuls unterbricht langes Sitzen und bringt einen einfachen Positionswechsel in den Tag.'
+  }
+
+  if (context.goal === 'focus' && timeLabel.includes('Vormittag')) {
+    return 'Kurz, ruhig und passend fuer konzentrierte Arbeit ohne grossen Bruch.'
   }
 
   if (timeLabel === 'Mittagspause') {
     return 'In der Pause darf der Impuls etwas aktiver sein, bevor du wieder in ruhigere Arbeit wechselst.'
   }
 
-  return 'Die Empfehlung ergänzt dein Setup und hält den Tagesrhythmus abwechslungsreich.'
-}
-
-function formatSetup(setups) {
-  const visibleSetups = setups.filter((setup) => setup !== 'Kein spezielles Equipment')
-  return visibleSetups.length ? visibleSetups.join(', ') : 'Kein Equipment'
+  return 'Die Empfehlung passt zu deinem Setup und haelt den Tagesrhythmus abwechslungsreich.'
 }
 
 function buildRhythm(context) {
-  if (context.situation === 'Mixed Day') {
-    return 'Plane über den Tag mehrere kurze Wechsel ein: mobilisieren, leicht gehen, sitzen, kurz aktivieren und am Ende wieder entlasten.'
+  if (context.currentPhase === 'meeting') {
+    return 'Fuer Meetings stehen ruhige Positionswechsel im Vordergrund. Walking Pad wird nur genutzt, wenn es in deinem Setup vorhanden ist.'
   }
 
-  if (context.setup.includes('Walking Pad')) {
-    return 'Starte ruhig, nutze maximal eine Walking-Phase für Meeting oder Fokusarbeit und wechsle danach bewusst zurück zu Sitz- oder Mobilisationsimpulsen.'
+  if (context.currentPhase === 'phone') {
+    return 'Bei Telefonaten eignen sich lockeres Gehen, Stehen oder einfache Mobilisation besonders gut.'
   }
 
-  if (context.setup.includes('Stehschreibtisch')) {
-    return 'Wechsle alle 45 bis 60 Minuten zwischen Sitzen und Stehen. Nach längeren Stehphasen folgt bewusst wieder eine Sitz- oder Mobilisationsphase.'
+  if (context.situation === 'focus-heavy') {
+    return 'Plane kurze, ruhige Microbreaks zwischen Fokusbloecken. Der Plan bleibt bewusst unauffaellig.'
   }
 
-  if (beginnerLevels.includes(context.fitnessLevel)) {
-    return 'Plane alle 60 bis 90 Minuten einen sehr kurzen Bewegungsimpuls. Zwei bis drei Minuten reichen für den Start vollkommen aus.'
+  if (context.situation === 'meeting-heavy') {
+    return 'Nutze kleine Resets vor oder nach Terminen und wechsle regelmaessig zwischen Sitzen und Stehen.'
   }
 
-  return 'Arbeite in Fokusblöcken von 45 bis 60 Minuten und setze danach kurze aktive Pausen, die Mobilität, Kreislauf und Haltung abwechseln.'
+  if (context.setup.includes('standing-desk')) {
+    return 'Wechsle regelmaessig zwischen Sitzen und Stehen und kombiniere das mit kurzen Mobilisationsimpulsen.'
+  }
+
+  if (context.fitnessLevel === 'gentle') {
+    return 'Plane alle 60 bis 90 Minuten einen sehr kurzen Bewegungsimpuls. Zwei bis drei Minuten reichen fuer den Start.'
+  }
+
+  return 'Setze ueber den Tag mehrere kurze Wechsel: mobilisieren, leicht gehen, sitzen, kurz aktivieren und wieder entlasten.'
 }
 
-function formatList(items) {
-  if (!items?.length) {
-    return 'kein spezielles Setup'
-  }
+function buildSummary(context) {
+  const goalLabel = getOptionLabel(goalOptions, context.goal)
+  const workdayLabel = getOptionLabel(workdayOptions, context.situation)
+  const intensityLabel = getOptionLabel(intensityOptions, context.fitnessLevel)
+  const setupLabel = context.setup
+    .map((setup) => getOptionLabel(setupOptions, setup))
+    .join(', ')
 
-  if (items.length === 1) {
-    return items[0]
-  }
+  return `${goalLabel} mit ${intensityLabel.toLowerCase()}en Empfehlungen: dein Plan orientiert sich an ${setupLabel} und ${workdayLabel.toLowerCase()}.`
+}
 
-  return `${items.slice(0, -1).join(', ')} und ${items.at(-1)}`
+function formatSetup(setups) {
+  const labels = setups
+    .map((setup) => {
+      if (fallbackSetups.includes(setup)) {
+        return 'Kein besonderes Equipment'
+      }
+
+      if (
+        setup.includes('Stehschreibtisch') ||
+        setup.includes('Hoehenverstellbarer') ||
+        setup.includes('HÃ¶henverstellbarer') ||
+        setup.includes('Höhenverstellbarer')
+      ) {
+        return 'Hoehenverstellbarer Schreibtisch'
+      }
+
+      if (setup === 'Treppenstufen') {
+        return 'Treppe oder Flur'
+      }
+
+      if (['Balance Board', 'Gymnastikball'].includes(setup)) {
+        return 'Kleines Bewegungsequipment'
+      }
+
+      if (['Kniestuhl', 'Stehhocker', 'Sofa/Lounge'].includes(setup)) {
+        return 'Ergonomische Sitz- oder Stehhilfe'
+      }
+
+      if (setup === 'Boden') {
+        return 'Platz fuer kurze Uebungen'
+      }
+
+      return setup
+    })
+    .filter(Boolean)
+
+  return [...new Set(labels)].join(', ')
+}
+
+function normalizeWorkPhase(workPhase) {
+  return workPhaseOptions.some((option) => option.id === workPhase)
+    ? workPhase
+    : 'between-tasks'
 }

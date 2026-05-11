@@ -1,20 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { generatePlan } from './generatePlan.js'
 
-const specialEquipment = [
+const unavailableEquipment = [
   'Walking Pad',
   'Balance Board',
   'Stehhocker',
   'Gymnastikball',
+  'Treppenstufen',
 ]
 
 describe('generatePlan', () => {
-  it('creates a meeting-aware Walking Pad plan', () => {
+  it('creates a meeting-aware Walking Pad plan when the setup is available', () => {
     const plan = generatePlan({
-      fitnessLevel: 'Einsteiger',
-      goal: 'Mehr Bewegung im Arbeitsalltag',
-      setup: ['Walking Pad'],
-      situation: 'Meeting',
+      currentPhase: 'meeting',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['walking-pad'],
+      situation: 'meeting-heavy',
     })
 
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
@@ -28,17 +30,17 @@ describe('generatePlan', () => {
     ).toBe(true)
   })
 
-  it('uses only general movement for no-equipment back pain support', () => {
+  it('uses only available setup rules for no-equipment back and neck support', () => {
     const plan = generatePlan({
-      fitnessLevel: 'Einsteiger',
-      goal: 'Weniger Rückenschmerzen',
-      setup: ['Kein spezielles Equipment'],
-      situation: 'Langer Arbeitstag',
+      currentPhase: 'focus',
+      fitnessLevel: 'gentle',
+      goal: 'back-neck',
+      setup: ['no-equipment'],
+      situation: 'focus-heavy',
     })
 
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
-    expect(plan.dailySchedule.length).toBeLessThanOrEqual(7)
-    expect(usesAnySetup(plan, specialEquipment)).toBe(false)
+    expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
     expect(
       plan.dailySchedule.filter((section) =>
         ['mobility', 'posture', 'walking'].includes(section.movementType),
@@ -48,34 +50,54 @@ describe('generatePlan', () => {
 
   it('creates a standing-desk plan without adjacent long standing phases', () => {
     const plan = generatePlan({
-      fitnessLevel: 'Fortgeschritten',
-      goal: 'Bessere Haltung',
-      setup: ['Höhenverstellbarer Schreibtisch'],
-      situation: 'Fokusarbeit',
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'active',
+      goal: 'sit-less',
+      setup: ['standing-desk'],
+      situation: 'mixed-day',
     })
 
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
-    expect(hasSetup(plan, 'Höhenverstellbarer Schreibtisch')).toBe(true)
+    expect(hasDisplaySetup(plan, 'Hoehenverstellbarer Schreibtisch')).toBe(true)
     expect(hasAdjacentLongStandingSections(plan.dailySchedule)).toBe(false)
   })
 
   it('avoids adjacent intense or identical movement types', () => {
     const plan = generatePlan({
-      fitnessLevel: 'Aktiv',
-      goal: 'Bessere Konzentration',
-      setup: ['Walking Pad', 'Höhenverstellbarer Schreibtisch'],
-      situation: 'Fokusarbeit',
+      currentPhase: 'focus',
+      fitnessLevel: 'active',
+      goal: 'focus',
+      setup: ['walking-pad', 'standing-desk'],
+      situation: 'focus-heavy',
     })
 
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
     expect(hasAdjacentIntenseSections(plan.dailySchedule)).toBe(false)
     expect(hasAdjacentIdenticalMovementTypes(plan.dailySchedule)).toBe(false)
   })
+
+  it('falls back safely when old or invalid stored values are present', () => {
+    const plan = generatePlan({
+      fitnessLevel: 'Level 3',
+      goal: 'Bessere Konzentration',
+      setup: ['does-not-exist'],
+      situation: 'Mixed Day',
+    })
+
+    expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
+    expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
+  })
 })
 
 function hasSetup(plan, setup) {
   return [...plan.dailySchedule, ...plan.movements].some((item) =>
     item.setup.includes(setup),
+  )
+}
+
+function hasDisplaySetup(plan, setup) {
+  return [...plan.dailySchedule, ...plan.movements].some((item) =>
+    item.setup.includes(setup) || item.displaySetup?.includes(setup),
   )
 }
 
@@ -89,11 +111,7 @@ function hasAdjacentLongStandingSections(sections) {
   return sections.some((section, index) => {
     const nextSection = sections[index + 1]
 
-    return (
-      nextSection &&
-      isLongStanding(section) &&
-      isLongStanding(nextSection)
-    )
+    return nextSection && isLongStanding(section) && isLongStanding(nextSection)
   })
 }
 

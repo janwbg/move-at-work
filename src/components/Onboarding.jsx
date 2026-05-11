@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import {
-  fitnessLevelOptions,
   goalOptions,
+  intensityOptions,
   setupOptions,
+  toggleSetupSelection,
   workdayOptions,
 } from '../data/profileOptions.js'
 import OptionCard from './OptionCard.jsx'
@@ -10,22 +11,26 @@ import OptionCard from './OptionCard.jsx'
 const steps = [
   {
     eyebrow: 'Schritt 1 von 4',
-    helper: 'Wähle das Ziel, das dir im Arbeitsalltag am wichtigsten ist.',
-    question: 'Welches Ziel möchtest du verbessern?',
+    helper:
+      'Waehle dein wichtigstes Ziel. Du kannst es spaeter in den Einstellungen aendern.',
+    question: 'Was moechtest du mit Move at work erreichen?',
   },
   {
     eyebrow: 'Schritt 2 von 4',
-    helper: 'Wähle alles aus, was du realistisch nutzen kannst.',
-    question: 'Welches Setup steht dir zur Verfügung?',
+    helper:
+      'Waehle alles aus, was du regelmaessig nutzen kannst. Du kannst deine Auswahl spaeter in den Einstellungen aendern.',
+    question: 'Was steht dir an deinem Arbeitsplatz zur Verfuegung?',
   },
   {
     eyebrow: 'Schritt 3 von 4',
-    helper: 'Wähle die Stufe, die sich aktuell ehrlich und machbar anfühlt.',
-    question: 'Wie aktiv bist du aktuell?',
+    helper:
+      'Waehle, was sich fuer dich im Arbeitsalltag realistisch anfuehlt. Du kannst es spaeter in den Einstellungen aendern.',
+    question: 'Wie aktiv sollen deine Bewegungsempfehlungen sein?',
   },
   {
     eyebrow: 'Schritt 4 von 4',
-    helper: 'Wähle den Arbeitstag, der am besten zu deiner normalen Woche passt.',
+    helper:
+      'Diese Auswahl hilft Move at work, deinen Tagesplan grob zu strukturieren.',
     question: 'Wie sieht dein Arbeitstag meistens aus?',
   },
 ]
@@ -40,16 +45,11 @@ function Onboarding({ answers, onChange, onComplete }) {
     onChange((current) => ({ ...current, ...nextAnswer }))
   }
 
-  function toggleSetup(option) {
-    onChange((current) => {
-      const exists = current.setup.includes(option)
-      return {
-        ...current,
-        setup: exists
-          ? current.setup.filter((item) => item !== option)
-          : [...current.setup, option],
-      }
-    })
+  function toggleSetup(optionId) {
+    onChange((current) => ({
+      ...current,
+      setup: toggleSetupSelection(current.setup, optionId),
+    }))
   }
 
   function handleNext() {
@@ -86,7 +86,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           />
         </div>
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-          {currentIndex === 1 ? 'Mehrfachauswahl möglich' : 'Eine Auswahl'}
+          {currentIndex === 1 ? 'Mehrfachauswahl moeglich' : 'Eine Auswahl'}
         </p>
         <h1 className="mt-2 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
           {currentStep.question}
@@ -100,10 +100,11 @@ function Onboarding({ answers, onChange, onComplete }) {
         <div className="grid gap-3 sm:grid-cols-2">
           {goalOptions.map((goal) => (
             <OptionCard
-              key={goal}
-              active={answers.goal === goal}
-              label={goal}
-              onClick={() => updateAnswer({ goal })}
+              key={goal.id}
+              active={answers.goal === goal.id}
+              description={goal.description}
+              label={goal.label}
+              onClick={() => updateAnswer({ goal: goal.id })}
             />
           ))}
         </div>
@@ -113,10 +114,11 @@ function Onboarding({ answers, onChange, onComplete }) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {setupOptions.map((option) => (
             <OptionCard
-              key={option}
-              active={answers.setup.includes(option)}
-              label={option}
-              onClick={() => toggleSetup(option)}
+              key={option.id}
+              active={answers.setup.includes(option.id)}
+              description={option.description}
+              label={option.label}
+              onClick={() => toggleSetup(option.id)}
               type="checkbox"
             />
           ))}
@@ -125,13 +127,13 @@ function Onboarding({ answers, onChange, onComplete }) {
 
       {currentIndex === 2 && (
         <div className="grid gap-3">
-          {fitnessLevelOptions.map((level) => (
+          {intensityOptions.map((level) => (
             <OptionCard
-              key={level.value}
-              active={answers.fitnessLevel === level.value}
+              key={level.id}
+              active={answers.fitnessLevel === level.id}
               description={level.description}
               label={level.label}
-              onClick={() => updateAnswer({ fitnessLevel: level.value })}
+              onClick={() => updateAnswer({ fitnessLevel: level.id })}
             />
           ))}
         </div>
@@ -141,11 +143,11 @@ function Onboarding({ answers, onChange, onComplete }) {
         <div className="grid gap-3 sm:grid-cols-2">
           {workdayOptions.map((situation) => (
             <OptionCard
-              key={situation.value}
-              active={answers.situation === situation.value}
+              key={situation.id}
+              active={answers.situation === situation.id}
               description={situation.description}
               label={situation.label}
-              onClick={() => updateAnswer({ situation: situation.value })}
+              onClick={() => updateAnswer({ situation: situation.id })}
             />
           ))}
         </div>
@@ -158,7 +160,7 @@ function Onboarding({ answers, onChange, onComplete }) {
           disabled={currentIndex === 0}
           className="min-h-12 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-400 dark:hover:text-white"
         >
-          Zurück
+          Zurueck
         </button>
 
         <button
@@ -171,7 +173,7 @@ function Onboarding({ answers, onChange, onComplete }) {
             ? currentIndex === steps.length - 1
               ? 'Plan anzeigen'
               : 'Weiter'
-            : 'Bitte auswählen'}
+            : 'Bitte auswaehlen'}
         </button>
       </div>
     </section>
