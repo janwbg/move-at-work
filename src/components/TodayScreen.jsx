@@ -95,7 +95,10 @@ function TodayScreen({
           value={`${progressSummary.completedToday} von ${plan.dailySchedule.length}`}
         />
         <StatusCard label="Offen" value={String(openCount)} />
-        <StatusCard label="Tagesstreak" value={`${progressSummary.streak} Tage`} />
+        <StatusCard
+          label="Arbeitsstreak"
+          value={`${progressSummary.streak} ${progressSummary.streak === 1 ? 'Arbeitstag' : 'Arbeitstage'}`}
+        />
       </section>
 
       {nextSection && (

@@ -12,8 +12,8 @@ function ProgressScreen({ summary, totalToday }) {
         </h1>
         <p className="mt-4 max-w-2xl leading-7 text-blue-50">
           Dein Fortschritt bleibt lokal in diesem Browser gespeichert und zeigt
-          dir, wie regelmäßig du heute und diese Woche in Bewegung gekommen
-          bist.
+          dir, wie regelmäßig du im Arbeitsalltag kurze Sitzphasen
+          unterbrichst. Wochenenden unterbrechen deine Streak nicht.
         </p>
       </section>
 

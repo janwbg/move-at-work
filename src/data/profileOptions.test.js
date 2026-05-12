@@ -28,9 +28,13 @@ describe('profileOptions', () => {
       'walking-pad',
       'exercise-space',
       'small-equipment',
-      'stairs-hallway',
+      'hallway',
+      'stairs',
       'ergonomic-support',
     ])
+    expect(setupOptions.map((option) => option.label)).not.toContain(
+      'Treppe oder Flur in der Nähe',
+    )
   })
 
   it('keeps no-equipment exclusive in setup multi-select', () => {
@@ -40,6 +44,26 @@ describe('profileOptions', () => {
     expect(toggleSetupSelection(['walking-pad'], 'no-equipment')).toEqual([
       'no-equipment',
     ])
+    expect(toggleSetupSelection(['hallway', 'stairs'], 'no-equipment')).toEqual([
+      'no-equipment',
+    ])
+  })
+
+  it('migrates the old combined hallway and stairs setup per workplace', () => {
+    expect(
+      normalizeProfileAnswers({
+        workplaces: ['office', 'homeoffice'],
+        defaultWorkplace: 'office',
+        currentWorkplace: 'homeoffice',
+        workplaceSetups: {
+          office: ['stairs-hallway'],
+          homeoffice: ['Treppe oder Flur in der Nähe', 'hallway'],
+        },
+      }).workplaceSetups,
+    ).toEqual({
+      office: ['hallway', 'stairs'],
+      homeoffice: ['hallway', 'stairs'],
+    })
   })
 
   it('contains the final intensity and workday options', () => {

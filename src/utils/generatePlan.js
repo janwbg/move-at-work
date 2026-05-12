@@ -34,7 +34,8 @@ const setupRuleMap = {
   'walking-pad': ['Walking Pad'],
   'exercise-space': ['Boden', ...fallbackSetups],
   'small-equipment': ['Balance Board', 'Gymnastikball'],
-  'stairs-hallway': ['Treppenstufen', 'Kein Equipment', 'Kein spezielles Equipment'],
+  hallway: ['Kein Equipment', 'Kein spezielles Equipment'],
+  stairs: ['Treppenstufen'],
   'ergonomic-support': ['Kniestuhl', 'Stehhocker', 'Sofa/Lounge'],
 }
 
@@ -229,6 +230,23 @@ function scoreRule(rule, context) {
     score += 12
   }
 
+  if (context.setup.includes('hallway') && rule.type === 'walking') {
+    score += 20
+  }
+
+  if (context.setup.includes('stairs') && rule.type === 'stairs') {
+    score += 28
+  }
+
+  if (
+    context.setup.includes('stairs') &&
+    !context.setup.includes('hallway') &&
+    !context.setup.includes('no-equipment') &&
+    rule.id === 'no-equipment-walk-loop'
+  ) {
+    score -= 30
+  }
+
   return score
 }
 
@@ -351,13 +369,14 @@ function pickNextRule(candidates, currentSchedule, context, allowReuse = false) 
       return false
     }
 
-    if (
-      context.currentPhase === 'meeting' &&
-      candidate.type === 'walking' &&
-      !context.setup.includes('walking-pad')
-    ) {
-      return false
-    }
+  if (
+    context.currentPhase === 'meeting' &&
+    candidate.type === 'walking' &&
+    !context.setup.includes('walking-pad') &&
+    !context.setup.includes('hallway')
+  ) {
+    return false
+  }
 
     return true
   })
@@ -529,6 +548,14 @@ function getReason(rule, timeLabel, context) {
   const phaseLabel = getOptionLabel(workPhaseOptions, context.currentPhase)
   const movementType = getMovementType(rule)
 
+  if (context.setup.includes('stairs') && rule.type === 'stairs') {
+    return 'Die Treppe passt gut für einen kurzen aktivierenden Impuls, ohne daraus ein Workout zu machen.'
+  }
+
+  if (context.setup.includes('hallway') && rule.type === 'walking') {
+    return 'Ein kurzer Weg oder Flur-Gang hilft dir, Sitzphasen unaufdringlich zu unterbrechen.'
+  }
+
   if (
     context.currentWorkplace === 'homeoffice' &&
     ['activate', 'breathing', 'mobilize', 'sit_reset', 'walk'].includes(movementType)
@@ -607,6 +634,14 @@ function buildRhythm(context) {
     return 'Wechsle regelmäßig zwischen Sitzen und Stehen und kombiniere das mit kurzen Mobilisationsimpulsen.'
   }
 
+  if (context.setup.includes('hallway')) {
+    return 'Nutze kurze Wege bewusst als Microbreak, besonders zwischen Aufgaben oder bei Telefonaten.'
+  }
+
+  if (context.setup.includes('stairs')) {
+    return 'Treppenimpulse bleiben kurz und aktivierend, damit sie in den Arbeitstag passen.'
+  }
+
   if (context.fitnessLevel === 'gentle') {
     return 'Plane alle 60 bis 90 Minuten einen sehr kurzen Bewegungsimpuls. Zwei bis drei Minuten reichen für den Start.'
   }
@@ -643,7 +678,7 @@ function formatSetup(setups) {
       }
 
       if (setup === 'Treppenstufen') {
-        return 'Treppe oder Flur'
+        return 'Treppe in der Nähe'
       }
 
       if (['Balance Board', 'Gymnastikball'].includes(setup)) {

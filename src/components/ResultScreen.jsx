@@ -151,8 +151,9 @@ function SuccessDialog({ onClose, summary, title, totalToday }) {
         </div>
 
         <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-100">
-          Aktueller Tagesstreak: {summary.streak} Tage. Jede kurze Bewegung
-          zählt.
+          Aktueller Arbeitsstreak: {summary.streak}{' '}
+          {summary.streak === 1 ? 'Arbeitstag' : 'Arbeitstage'} in Folge.
+          Jede kurze Bewegung zählt.
         </div>
 
         <button

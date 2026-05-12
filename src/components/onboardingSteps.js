@@ -4,6 +4,13 @@ export function getOnboardingSteps(answers) {
   const workplaces = getSelectedWorkplaces(answers, true)
   const steps = [
     {
+      eyebrow: 'Ziel',
+      helper:
+        'Wähle dein wichtigstes Ziel. Du kannst es später in den Einstellungen ändern.',
+      kind: 'goal',
+      question: 'Was möchtest du mit Move at work erreichen?',
+    },
+    {
       eyebrow: 'Arbeitsort',
       helper:
         'Wähle aus, ob du im Büro, im Homeoffice oder an beiden Orten arbeitest. Du kannst das später jederzeit in den Einstellungen anpassen.',
@@ -36,13 +43,6 @@ export function getOnboardingSteps(answers) {
 
   return [
     ...steps,
-    {
-      eyebrow: 'Ziel',
-      helper:
-        'Wähle dein wichtigstes Ziel. Du kannst es später in den Einstellungen ändern.',
-      kind: 'goal',
-      question: 'Was möchtest du mit Move at work erreichen?',
-    },
     {
       eyebrow: 'Intensität',
       helper:

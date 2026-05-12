@@ -19,19 +19,42 @@ describe('progressStorage helpers', () => {
     expect(getCompletedIdsForDate(progress, date)).toEqual(['morning-mobility'])
   })
 
-  it('calculates today, weekly count, and streak', () => {
+  it('calculates today, workweek count, and work streak', () => {
     const progress = {
       completedByDate: {
-        '2026-05-08': ['a'],
-        '2026-05-09': ['b', 'c'],
-        '2026-05-10': ['d'],
+        '2026-05-11': ['a'],
+        '2026-05-12': ['b'],
+        '2026-05-13': ['c', 'd'],
       },
     }
 
-    expect(calculateProgressSummary(progress, new Date(2026, 4, 10))).toEqual({
-      completedToday: 1,
+    expect(calculateProgressSummary(progress, new Date(2026, 4, 13))).toEqual({
+      completedToday: 2,
       completedThisWeek: 4,
       streak: 3,
     })
+  })
+
+  it('treats weekends as neutral for the work streak', () => {
+    const progress = {
+      completedByDate: {
+        '2026-05-08': ['friday'],
+        '2026-05-11': ['monday'],
+      },
+    }
+
+    expect(calculateProgressSummary(progress, new Date(2026, 4, 11)).streak).toBe(2)
+    expect(calculateProgressSummary(progress, new Date(2026, 4, 10)).streak).toBe(1)
+  })
+
+  it('breaks the work streak when a weekday has no completion', () => {
+    const progress = {
+      completedByDate: {
+        '2026-05-08': ['friday'],
+        '2026-05-12': ['tuesday'],
+      },
+    }
+
+    expect(calculateProgressSummary(progress, new Date(2026, 4, 12)).streak).toBe(1)
   })
 })

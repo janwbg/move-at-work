@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import ProgressScreen from './ProgressScreen.jsx'
 
 describe('ProgressScreen', () => {
-  it('shows progress values from the provided summary', () => {
+  it('shows the workday progress values from the provided summary without duplicates', () => {
     const html = renderToStaticMarkup(
       <ProgressScreen
         summary={{
@@ -17,11 +17,38 @@ describe('ProgressScreen', () => {
 
     expect(html).toContain('Fortschritt')
     expect(html).toContain('3/5')
+    expect(html).toContain('3 von 5 Microbreaks erledigt')
     expect(html).toContain('12')
-    expect(html).toContain('4 Tage')
+    expect(html).toContain('4 Arbeitstage in Folge')
+    expect(html).toContain('<svg')
+    expect(html).toContain('Arbeitsstreak')
+    expect(html).toContain('Diese Arbeitswoche')
+    expect(html).toContain('Wochenenden unterbrechen deine Streak nicht.')
+    expect(html).not.toContain('Tagesstreak')
     expect(countOccurrences(html, 'Heute erledigt')).toBe(1)
-    expect(countOccurrences(html, 'Diese Woche')).toBe(1)
-    expect(countOccurrences(html, 'Tagesstreak')).toBe(1)
+    expect(countOccurrences(html, 'Diese Arbeitswoche')).toBe(1)
+    expect(countOccurrences(html, 'Arbeitsstreak')).toBe(1)
+  })
+
+  it.each([
+    [0, 5, '0/5'],
+    [1, 5, '1/5'],
+    [5, 5, '5/5'],
+    [0, 0, 'Noch kein Tagesplan verfügbar'],
+  ])('renders the progress ring safely for %i of %i', (completedToday, totalToday, expectedText) => {
+    const html = renderToStaticMarkup(
+      <ProgressScreen
+        summary={{
+          completedToday,
+          completedThisWeek: completedToday,
+          streak: completedToday > 0 ? 1 : 0,
+        }}
+        totalToday={totalToday}
+      />,
+    )
+
+    expect(html).toContain('<svg')
+    expect(html).toContain(expectedText)
   })
 })
 

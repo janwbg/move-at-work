@@ -149,6 +149,65 @@ describe('generatePlan', () => {
     expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
   })
 
+  it('uses hallway for walking impulses without creating stair recommendations', () => {
+    const plan = generatePlan({
+      currentPhase: 'phone',
+      fitnessLevel: 'balanced',
+      goal: 'more-energy',
+      setup: ['hallway'],
+      situation: 'meeting-heavy',
+    })
+
+    expect(hasAnyMovementType(plan.dailySchedule, ['walk'])).toBe(true)
+    expect(hasSetup(plan, 'Treppenstufen')).toBe(false)
+    expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(false)
+  })
+
+  it('uses stairs for stair impulses when stairs are available', () => {
+    const plan = generatePlan({
+      currentPhase: 'break',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      setup: ['stairs'],
+      situation: 'mixed-day',
+    })
+
+    expect(hasSetup(plan, 'Treppenstufen')).toBe(true)
+    expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(true)
+  })
+
+  it('uses only the setup of the current workplace', () => {
+    const homeofficePlan = generatePlan({
+      currentPhase: 'break',
+      currentWorkplace: 'homeoffice',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      situation: 'mixed-day',
+      workplaces: ['office', 'homeoffice'],
+      workplaceSetups: {
+        office: ['stairs'],
+        homeoffice: ['hallway'],
+      },
+    })
+    const officePlan = generatePlan({
+      currentPhase: 'break',
+      currentWorkplace: 'office',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      situation: 'mixed-day',
+      workplaces: ['office', 'homeoffice'],
+      workplaceSetups: {
+        office: ['stairs'],
+        homeoffice: ['hallway'],
+      },
+    })
+
+    expect(hasSetup(homeofficePlan, 'Treppenstufen')).toBe(false)
+    expect(hasSetup(officePlan, 'Treppenstufen')).toBe(true)
+  })
+
   it('uses office as the effective workplace for mixed profiles', () => {
     const plan = generatePlan({
       currentPhase: 'between-tasks',

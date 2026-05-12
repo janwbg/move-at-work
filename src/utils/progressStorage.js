@@ -52,7 +52,7 @@ export function calculateProgressSummary(progress, date = new Date()) {
   return {
     completedToday: getCompletedIdsForDate(progress, date).length,
     completedThisWeek: getCompletedThisWeek(progress, date),
-    streak: getDailyStreak(progress, date),
+    streak: getWorkStreak(progress, date),
   }
 }
 
@@ -68,7 +68,7 @@ function getCompletedThisWeek(progress, date) {
     (total, [dateKey, exerciseIds]) => {
       const currentDate = parseDateKey(dateKey)
 
-      if (currentDate >= weekStart && currentDate <= weekEnd) {
+      if (currentDate >= weekStart && currentDate <= weekEnd && isWorkday(currentDate)) {
         return total + exerciseIds.length
       }
 
@@ -78,13 +78,13 @@ function getCompletedThisWeek(progress, date) {
   )
 }
 
-function getDailyStreak(progress, date) {
+function getWorkStreak(progress, date) {
   let streak = 0
-  let cursor = stripTime(date)
+  let cursor = getCurrentOrPreviousWorkday(date)
 
   while (getCompletedIdsForDate(progress, cursor).length > 0) {
     streak += 1
-    cursor = addDays(cursor, -1)
+    cursor = getPreviousWorkday(cursor)
   }
 
   return streak
@@ -105,6 +105,31 @@ function addDays(date, days) {
   const nextDate = new Date(date)
   nextDate.setDate(nextDate.getDate() + days)
   return nextDate
+}
+
+function getCurrentOrPreviousWorkday(date) {
+  let cursor = stripTime(date)
+
+  while (!isWorkday(cursor)) {
+    cursor = addDays(cursor, -1)
+  }
+
+  return cursor
+}
+
+function getPreviousWorkday(date) {
+  let cursor = addDays(stripTime(date), -1)
+
+  while (!isWorkday(cursor)) {
+    cursor = addDays(cursor, -1)
+  }
+
+  return cursor
+}
+
+function isWorkday(date) {
+  const day = date.getDay()
+  return day >= 1 && day <= 5
 }
 
 function parseDateKey(dateKey) {

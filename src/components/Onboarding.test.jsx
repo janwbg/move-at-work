@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { getOnboardingSteps } from './onboardingSteps.js'
 
 describe('Onboarding', () => {
+  it('shows the goal selection as the first onboarding step', () => {
+    const steps = getOnboardingSteps({})
+
+    expect(steps[0]).toMatchObject({
+      kind: 'goal',
+      question: 'Was möchtest du mit Move at work erreichen?',
+    })
+    expect(steps[1]).toMatchObject({
+      kind: 'workplaces',
+      question: 'Wo arbeitest du regelmäßig?',
+    })
+  })
+
   it('contains the workplace selection step', () => {
     const steps = getOnboardingSteps({})
 

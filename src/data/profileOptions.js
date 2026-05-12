@@ -87,9 +87,16 @@ export const setupOptions = [
       'Zum Beispiel Widerstandsband, Balancekissen oder Gymnastikball.',
   },
   {
-    id: 'stairs-hallway',
-    label: 'Treppe oder Flur in der Nähe',
-    description: 'Für kurze Gehimpulse und Mini-Pausen.',
+    id: 'hallway',
+    label: 'Flur oder kurzer Weg in der Nähe',
+    description:
+      'Du kannst kurze Gehpausen oder Wege im Büro/Homeoffice nutzen.',
+  },
+  {
+    id: 'stairs',
+    label: 'Treppe in der Nähe',
+    description:
+      'Du kannst Treppen für kurze aktivierende Bewegungsimpulse nutzen.',
   },
   {
     id: 'ergonomic-support',
@@ -202,8 +209,15 @@ const setupAliases = {
   'Sofa/Lounge': 'ergonomic-support',
   Stehschreibtisch: 'standing-desk',
   Stehhocker: 'ergonomic-support',
-  Treppenstufen: 'stairs-hallway',
-  'Treppe oder Flur in der Naehe': 'stairs-hallway',
+  hallway: 'hallway',
+  Flur: 'hallway',
+  'Flur oder kurzer Weg in der Nähe': 'hallway',
+  stairs: 'stairs',
+  Treppenstufen: 'stairs',
+  'Treppe in der Nähe': 'stairs',
+  'stairs-hallway': ['hallway', 'stairs'],
+  'Treppe oder Flur in der Naehe': ['hallway', 'stairs'],
+  'Treppe oder Flur in der Nähe': ['hallway', 'stairs'],
   'Walking Pad': 'walking-pad',
 }
 
@@ -406,7 +420,13 @@ function normalizeGoal(goal) {
 function normalizeSetup(setup) {
   const rawSetup = Array.isArray(setup) ? setup : [setup].filter(Boolean)
   const normalizedSetup = rawSetup
-    .map((item) => (validSetupIds.has(item) ? item : setupAliases[item]))
+    .flatMap((item) => {
+      if (validSetupIds.has(item)) {
+        return item
+      }
+
+      return setupAliases[item] ?? []
+    })
     .filter(Boolean)
 
   if (!normalizedSetup.length) {
