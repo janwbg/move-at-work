@@ -3,10 +3,10 @@ import { generatePlan } from './generatePlan.js'
 
 const unavailableEquipment = [
   'Walking Pad',
-  'Balance Board',
-  'Stehhocker',
-  'Gymnastikball',
-  'Treppenstufen',
+  'Flur oder kurzer Weg in der Nähe',
+  'Treppe in der Nähe',
+  'Höhenverstellbarer Schreibtisch',
+  'Kleines Bewegungsequipment',
 ]
 
 describe('generatePlan', () => {
@@ -48,6 +48,27 @@ describe('generatePlan', () => {
         ),
       ).length,
     ).toBeGreaterThanOrEqual(4)
+  })
+
+  it('creates a useful homeoffice plan without special equipment', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      currentWorkplace: 'homeoffice',
+      defaultWorkplace: 'homeoffice',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      situation: 'focus-heavy',
+      workplaces: ['homeoffice'],
+      workplaceSetups: {
+        office: ['walking-pad', 'hallway', 'stairs'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+
+    expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
+    expect(usesAnySetup(plan, unavailableEquipment)).toBe(false)
+    expect(plan.dailySchedule.some((section) => section.ruleId.startsWith('home-'))).toBe(true)
+    expect(plan.dailySchedule.every((section) => section.reason || section.explanation)).toBe(true)
   })
 
   it('creates a standing-desk plan without adjacent long standing phases', () => {
@@ -159,7 +180,8 @@ describe('generatePlan', () => {
     })
 
     expect(hasAnyMovementType(plan.dailySchedule, ['walk'])).toBe(true)
-    expect(hasSetup(plan, 'Treppenstufen')).toBe(false)
+    expect(hasRule(plan, 'office-hallway-loop')).toBe(true)
+    expect(hasSetup(plan, 'Treppe in der Nähe')).toBe(false)
     expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(false)
   })
 
@@ -172,8 +194,10 @@ describe('generatePlan', () => {
       situation: 'mixed-day',
     })
 
-    expect(hasSetup(plan, 'Treppenstufen')).toBe(true)
+    expect(hasSetup(plan, 'Treppe in der Nähe')).toBe(true)
     expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(true)
+    expect(hasRule(plan, 'office-hallway-loop')).toBe(false)
+    expect(hasRule(plan, 'walking-call-hallway')).toBe(false)
   })
 
   it('uses only the setup of the current workplace', () => {
@@ -204,8 +228,40 @@ describe('generatePlan', () => {
       },
     })
 
-    expect(hasSetup(homeofficePlan, 'Treppenstufen')).toBe(false)
-    expect(hasSetup(officePlan, 'Treppenstufen')).toBe(true)
+    expect(hasSetup(homeofficePlan, 'Treppe in der Nähe')).toBe(false)
+    expect(hasSetup(officePlan, 'Treppe in der Nähe')).toBe(true)
+  })
+
+  it('allows Walking Pad only at the current workplace', () => {
+    const officePlan = generatePlan({
+      currentPhase: 'meeting',
+      currentWorkplace: 'office',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      situation: 'meeting-heavy',
+      workplaces: ['office', 'homeoffice'],
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['walking-pad'],
+      },
+    })
+    const homeofficePlan = generatePlan({
+      currentPhase: 'meeting',
+      currentWorkplace: 'homeoffice',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      situation: 'meeting-heavy',
+      workplaces: ['office', 'homeoffice'],
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['walking-pad'],
+      },
+    })
+
+    expect(hasSetup(officePlan, 'Walking Pad')).toBe(false)
+    expect(hasSetup(homeofficePlan, 'Walking Pad')).toBe(true)
   })
 
   it('uses office as the effective workplace for mixed profiles', () => {
@@ -253,7 +309,7 @@ describe('generatePlan', () => {
     expect(plan.summary).toContain('Büro')
     expect(
       plan.dailySchedule.some((section) =>
-        section.reason.includes('Im Büro lassen sich kurze Wege gut nutzen'),
+        section.reason.includes('Im Büro lassen sich kurze Wechsel gut nutzen'),
       ),
     ).toBe(true)
   })
@@ -268,6 +324,12 @@ function hasSetup(plan, setup) {
 function hasDisplaySetup(plan, setup) {
   return [...plan.dailySchedule, ...plan.movements].some((item) =>
     item.setup.includes(setup) || item.displaySetup?.includes(setup),
+  )
+}
+
+function hasRule(plan, ruleId) {
+  return [...plan.dailySchedule, ...plan.movements].some(
+    (item) => item.ruleId === ruleId || item.id === ruleId,
   )
 }
 
