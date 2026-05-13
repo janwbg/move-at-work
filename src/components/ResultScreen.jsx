@@ -7,7 +7,7 @@ import {
   deriveWorkPhaseFromWorkday,
   normalizeProfileAnswers,
 } from '../data/profileOptions.js'
-import { generatePlan } from '../utils/generatePlan.js'
+import { generatePlan, replaceRecommendationInPlan } from '../utils/generatePlan.js'
 import {
   calculateProgressSummary,
   getCompletedIdsForDate,
@@ -34,25 +34,25 @@ const feedbackReasons = [
 ]
 
 function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
-  const normalizedAnswers = normalizeProfileAnswers(answers)
+  const normalizedAnswers = useMemo(() => normalizeProfileAnswers(answers), [answers])
   const [activeTab, setActiveTab] = useState('today')
   const defaultWorkPhase = deriveWorkPhaseFromWorkday(normalizedAnswers.situation)
   const defaultWorkplace = normalizedAnswers.defaultWorkplace
-  const [selectedWorkPhase, setSelectedWorkPhase] = useState(defaultWorkPhase)
   const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
-  const [phaseWasChanged, setPhaseWasChanged] = useState(false)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
   const [recommendationFeedback, setRecommendationFeedback] = useState(() =>
     loadRecommendationFeedback(),
   )
   const [successState, setSuccessState] = useState(null)
-  const activeWorkPhase = phaseWasChanged ? selectedWorkPhase : defaultWorkPhase
+  const [planOverride, setPlanOverride] = useState(null)
+  const [replacementMessage, setReplacementMessage] = useState(null)
+  const activeWorkPhase = defaultWorkPhase
   const activeWorkplace =
     workplaceWasChanged && normalizedAnswers.workplaces.includes(selectedWorkplace)
       ? selectedWorkplace
       : defaultWorkplace
-  const plan = useMemo(
+  const basePlan = useMemo(
     () =>
       generatePlan({
         ...normalizedAnswers,
@@ -61,6 +61,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
       }),
     [activeWorkPhase, activeWorkplace, normalizedAnswers],
   )
+  const planContextKey = `${activeWorkPhase}:${activeWorkplace}:${JSON.stringify(normalizedAnswers)}`
+  const plan = planOverride?.contextKey === planContextKey ? planOverride.plan : basePlan
+  const currentReplacementMessage =
+    replacementMessage?.contextKey === planContextKey ? replacementMessage.message : ''
   const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
   const progressSummary = useMemo(
     () => calculateProgressSummary(progress),
@@ -71,14 +75,47 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     [recommendationFeedback],
   )
 
-  function handleWorkPhaseChange(workPhase) {
-    setSelectedWorkPhase(workPhase)
-    setPhaseWasChanged(true)
-  }
-
   function handleWorkplaceChange(workplace) {
     setSelectedWorkplace(workplace)
     setWorkplaceWasChanged(true)
+  }
+
+  function handleReplaceRecommendation(indexToReplace, reason) {
+    const originalSection = plan.dailySchedule[indexToReplace]
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace,
+      profile: normalizedAnswers,
+      currentWorkplace: activeWorkplace,
+      currentPhase: activeWorkPhase,
+      reason,
+    })
+
+    if (!result.replaced) {
+      setReplacementMessage({
+        contextKey: planContextKey,
+        message: 'Ich habe gerade keine passendere Alternative gefunden.',
+      })
+      return
+    }
+
+    setPlanOverride({ contextKey: planContextKey, plan: result.plan })
+    setReplacementMessage(null)
+    setRecommendationFeedback(
+      recordRecommendationFeedback({
+        recommendationId: originalSection.ruleId ?? originalSection.id,
+        scheduleSectionId: originalSection.id,
+        workplace: activeWorkplace,
+        currentWorkplace: activeWorkplace,
+        phase: activeWorkPhase,
+        currentPhase: activeWorkPhase,
+        workdayType: normalizedAnswers.situation,
+        intensity: originalSection.intensity ?? normalizedAnswers.fitnessLevel,
+        feedback: 'not-fit',
+        reason,
+        action: 'replaced',
+      }),
+    )
   }
 
   function handleComplete(section) {
@@ -123,10 +160,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
           onComplete={handleComplete}
           plan={plan}
           progressSummary={progressSummary}
-          activeWorkPhase={activeWorkPhase}
           activeWorkplace={activeWorkplace}
-          onWorkPhaseChange={handleWorkPhaseChange}
+          onReplaceRecommendation={handleReplaceRecommendation}
           onWorkplaceChange={handleWorkplaceChange}
+          replacementMessage={currentReplacementMessage}
           workplaces={normalizedAnswers.workplaces}
         />
       )}

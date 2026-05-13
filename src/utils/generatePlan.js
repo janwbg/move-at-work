@@ -136,6 +136,71 @@ export function generatePlan(answers) {
   }
 }
 
+export function replaceRecommendationInPlan({
+  plan,
+  indexToReplace,
+  profile = {},
+  currentWorkplace,
+  currentPhase,
+  reason = '',
+}) {
+  const currentSchedule = Array.isArray(plan?.dailySchedule)
+    ? plan.dailySchedule
+    : []
+  const originalSection = currentSchedule[indexToReplace]
+
+  if (!originalSection) {
+    return {
+      plan,
+      replaced: false,
+      replacement: null,
+      message: 'Ich habe gerade keine passendere Alternative gefunden.',
+    }
+  }
+
+  const context = normalizeContext({
+    ...profile,
+    currentPhase,
+    currentWorkplace,
+  })
+  const replacement = pickReplacementRecommendation({
+    context,
+    currentSchedule,
+    indexToReplace,
+    originalSection,
+    reason,
+  })
+
+  if (!replacement) {
+    return {
+      plan,
+      replaced: false,
+      replacement: null,
+      message: 'Ich habe gerade keine passendere Alternative gefunden.',
+    }
+  }
+
+  const replacementSection = toScheduleSection(
+    replacement,
+    originalSection.timeLabel,
+    context,
+  )
+  const nextSchedule = currentSchedule.map((section, index) =>
+    index === indexToReplace ? replacementSection : section,
+  )
+
+  return {
+    plan: {
+      ...plan,
+      dailySchedule: nextSchedule,
+    },
+    replaced: true,
+    replacement: replacementSection,
+    replacedSection: originalSection,
+    message: '',
+  }
+}
+
 function normalizeContext(answers) {
   const profile = normalizeProfileAnswers(answers)
   const currentPhase = normalizeWorkPhase(
@@ -180,6 +245,92 @@ function getMatchingRecommendations(context) {
       canUseRecommendationSetup(recommendation, context),
     ),
   ])
+}
+
+function pickReplacementRecommendation({
+  context,
+  currentSchedule,
+  indexToReplace,
+  originalSection,
+  reason,
+}) {
+  const originalRuleId = originalSection.ruleId ?? originalSection.id
+  const existingRuleIds = new Set(
+    currentSchedule
+      .filter((_, index) => index !== indexToReplace)
+      .map((section) => section.ruleId ?? section.id),
+  )
+  const slotRole = getSlotRole(currentSchedule.length, indexToReplace)
+  const scheduleContext = currentSchedule.filter((_, index) => index !== indexToReplace)
+  const availableCandidates = movementRecommendations
+    .filter((recommendation) => canUseRecommendationSetup(recommendation, context))
+    .filter((recommendation) =>
+      relaxedIntensities[context.fitnessLevel]?.includes(recommendation.intensity),
+    )
+    .filter((recommendation) => recommendation.id !== originalRuleId)
+
+  const candidatePools = [
+    availableCandidates.filter(
+      (recommendation) =>
+        !existingRuleIds.has(recommendation.id) &&
+        recommendation.similarityGroup !== originalSection.similarityGroup,
+    ),
+    availableCandidates.filter(
+      (recommendation) => !existingRuleIds.has(recommendation.id),
+    ),
+    availableCandidates.filter(
+      (recommendation) =>
+        recommendation.similarityGroup !== originalSection.similarityGroup,
+    ),
+    availableCandidates,
+    availableCandidates.filter(
+      (recommendation) =>
+        !existingRuleIds.has(recommendation.id) &&
+        hasNoSpecialSetup(recommendation.requiredSetup) &&
+        ['gentle', 'balanced'].includes(recommendation.intensity),
+    ),
+  ]
+
+  const candidates = candidatePools.find((pool) => pool.length > 0) ?? []
+
+  if (!candidates.length) {
+    return null
+  }
+
+  return [...candidates].sort(
+    (first, second) =>
+      scoreReplacementRecommendation(
+        second,
+        context,
+        scheduleContext,
+        slotRole,
+        originalSection,
+        reason,
+      ) -
+      scoreReplacementRecommendation(
+        first,
+        context,
+        scheduleContext,
+        slotRole,
+        originalSection,
+        reason,
+      ),
+  )[0]
+}
+
+function scoreReplacementRecommendation(
+  recommendation,
+  context,
+  schedule,
+  slotRole,
+  originalSection,
+  reason,
+) {
+  return (
+    scoreRecommendation(recommendation, context, schedule, slotRole) +
+    getReplacementReasonScore(recommendation, reason, originalSection, context) +
+    getReplacementDiversityScore(recommendation, originalSection)
+  )
 }
 
 function isRecommendationAvailable(recommendation, context) {
@@ -509,6 +660,11 @@ function isTooSimilar(recommendation, schedule) {
 
 function getScheduleLength() {
   return 5
+}
+
+function getSlotRole(scheduleLength, index) {
+  const slotRoles = slotRolesByLength[scheduleLength] ?? slotRolesByLength[5]
+  return slotRoles[index] ?? 'movement'
 }
 
 function getTimeLabels(scheduleLength) {
@@ -923,6 +1079,91 @@ function exceedsSoftDiversityLimit(recommendation, schedule) {
       countSpecialSetupRecommendations(schedule) >= 2
     )
   )
+}
+
+function getReplacementReasonScore(recommendation, reason, originalSection, context) {
+  let score = 0
+
+  if (reason === 'meeting') {
+    score += recommendation.visibilityLevel === 'discreet' ? 90 : 0
+    score += recommendation.visibilityLevel === 'normal' ? 10 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -130 : 0
+    score += ['breathing', 'sit_reset', 'mobilize'].includes(
+      recommendation.movementType,
+    )
+      ? 55
+      : 0
+    score += ['walk', 'activate'].includes(recommendation.movementType) ? -45 : 0
+    score += recommendation.intensity === 'active' ? -35 : 0
+  }
+
+  if (reason === 'calmer') {
+    score += recommendation.intensity === 'gentle' ? 95 : 0
+    score += recommendation.intensity === 'active' ? -95 : 0
+    score += ['breathing', 'sit_reset', 'mobilize'].includes(
+      recommendation.movementType,
+    )
+      ? 60
+      : 0
+    score += ['stairs', 'activate'].includes(recommendation.movementType) ? -55 : 0
+    score += recommendation.position === 'stairs' ? -70 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -45 : 0
+  }
+
+  if (reason === 'no-time') {
+    score += recommendation.durationMinutes <= 2 ? 100 : 0
+    score += recommendation.durationMinutes === 3 ? 45 : 0
+    score += recommendation.durationMinutes > 5 ? -100 : 0
+    score += hasNoSpecialSetup(recommendation.requiredSetup) ? 45 : -35
+  }
+
+  if (reason === 'too-visible') {
+    score += recommendation.visibilityLevel === 'discreet' ? 110 : 0
+    score += recommendation.visibilityLevel === 'normal' ? 15 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -130 : 0
+    score +=
+      context.currentWorkplace === 'office' &&
+      recommendation.visibilityLevel === 'discreet'
+        ? 30
+        : 0
+  }
+
+  if (reason === 'too-hard') {
+    score += recommendation.intensity === 'gentle' ? 100 : 0
+    score += recommendation.intensity === 'balanced' ? 15 : 0
+    score += recommendation.intensity === 'active' ? -120 : 0
+    score += recommendation.position === 'stairs' ? -80 : 0
+    score += recommendation.movementType === 'activate' ? -55 : 0
+  }
+
+  if (reason === 'setup-mismatch') {
+    score += hasNoSpecialSetup(recommendation.requiredSetup) ? 130 : -110
+  }
+
+  if (reason === 'not-appealing') {
+    score +=
+      recommendation.similarityGroup === originalSection.similarityGroup ? -120 : 35
+    score += recommendation.movementType === originalSection.movementType ? -70 : 30
+    score -= countBodyAreaOverlap(recommendation.bodyArea, originalSection.bodyArea) * 35
+  }
+
+  return score
+}
+
+function getReplacementDiversityScore(recommendation, originalSection) {
+  let score = 0
+
+  if (recommendation.similarityGroup !== originalSection.similarityGroup) {
+    score += 28
+  }
+
+  if (recommendation.movementType !== originalSection.movementType) {
+    score += 18
+  }
+
+  score -= countBodyAreaOverlap(recommendation.bodyArea, originalSection.bodyArea) * 8
+
+  return score
 }
 
 function formatDuration(durationMinutes) {

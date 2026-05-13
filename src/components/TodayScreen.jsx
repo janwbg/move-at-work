@@ -1,32 +1,25 @@
-import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import MovementPlanCard from './MovementPlanCard.jsx'
-import {
-  getOptionLabel,
-  workplaceOptions,
-  workPhaseOptions,
-} from '../data/profileOptions.js'
+import { getOptionLabel, workplaceOptions } from '../data/profileOptions.js'
 
 function TodayScreen({
-  activeWorkPhase,
   activeWorkplace,
   completedIds,
   feedbackUrl,
   onComplete,
-  onWorkPhaseChange,
+  onReplaceRecommendation = () => {},
   onWorkplaceChange,
   plan,
   progressSummary,
+  replacementMessage = '',
   workplaces,
 }) {
-  const [quickHint, setQuickHint] = useState('')
   const openSections = plan.dailySchedule.filter(
     (section) => !completedIds.includes(section.id),
   )
   const completedSections = plan.dailySchedule.filter((section) =>
     completedIds.includes(section.id),
   )
-  const nextSection = openSections[0]
   const openCount = openSections.length
   const workplaceTodayLabel = getOptionLabel(workplaceOptions, activeWorkplace)
   const canSwitchWorkplace = workplaces?.length > 1
@@ -101,100 +94,6 @@ function TodayScreen({
         />
       </section>
 
-      {nextSection && (
-        <section className="rounded-2xl border border-[#2563eb]/20 bg-[#2563eb]/5 p-5 dark:bg-[#2563eb]/10 sm:p-6">
-          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-            Als Nächstes
-          </p>
-          <h2 className="mt-2 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-            {nextSection.title}
-          </h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-            {nextSection.timeLabel} · {nextSection.duration}
-          </p>
-          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {nextSection.reason}
-          </p>
-
-          <div className="mt-5">
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-              Passt gerade nicht?
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <QuickAction
-                onClick={() => {
-                  onWorkPhaseChange('meeting')
-                  setQuickHint('Okay, die nächste Empfehlung passt sich an Meetings an.')
-                }}
-              >
-                Ich bin im Meeting
-              </QuickAction>
-              <QuickAction
-                onClick={() => {
-                  onWorkPhaseChange('focus')
-                  setQuickHint('Ich markiere ruhigere Impulse für den nächsten Schritt.')
-                }}
-              >
-                Ich brauche etwas Ruhigeres
-              </QuickAction>
-              <QuickAction
-                onClick={() =>
-                  setQuickHint('Alles gut. Nimm dir den Impuls später vor.')
-                }
-              >
-                Ich habe gerade keine Zeit
-              </QuickAction>
-              <QuickAction
-                onClick={() =>
-                  setQuickHint(
-                    'Nutze bei Bedarf den Reminder in den Einstellungen.',
-                  )
-                }
-              >
-                Später erinnern
-              </QuickAction>
-            </div>
-            {quickHint && (
-              <p className="mt-3 rounded-lg bg-white p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-white/10 dark:text-slate-200">
-                {quickHint}
-              </p>
-            )}
-          </div>
-        </section>
-      )}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
-        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-          Was passt gerade?
-        </p>
-        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-          Passe den nächsten Bewegungsimpuls an deine aktuelle Situation an.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {workPhaseOptions.map((phase) => {
-            const isActive = activeWorkPhase === phase.id
-
-            return (
-              <button
-                key={phase.id}
-                type="button"
-                onClick={() => {
-                  onWorkPhaseChange(phase.id)
-                  setQuickHint('')
-                }}
-                className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
-                  isActive
-                    ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-                }`}
-              >
-                {phase.label}
-              </button>
-            )
-          })}
-        </div>
-      </section>
-
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -202,7 +101,7 @@ function TodayScreen({
               Tagesplan
             </p>
             <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-              Weitere Empfehlungen
+              Deine Empfehlungen
             </h2>
           </div>
           <p className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
@@ -210,12 +109,19 @@ function TodayScreen({
           </p>
         </div>
 
+        {replacementMessage && (
+          <p className="mb-4 rounded-lg bg-slate-100 p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-white/10 dark:text-slate-200">
+            {replacementMessage}
+          </p>
+        )}
+
         <div className="grid gap-4">
           {plan.dailySchedule.map((section, index) => (
             <DailyScheduleCard
               completed={completedIds.includes(section.id)}
               key={section.id}
               onComplete={() => onComplete(section)}
+              onReplace={(reason) => onReplaceRecommendation(index, reason)}
               section={section}
               stepNumber={index + 1}
             />
@@ -268,18 +174,6 @@ function StatusCard({ label, value }) {
         {value}
       </p>
     </article>
-  )
-}
-
-function QuickAction({ children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="min-h-9 rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
-    >
-      {children}
-    </button>
   )
 }
 

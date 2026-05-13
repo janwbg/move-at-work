@@ -9,11 +9,22 @@ const plan = {
       duration: '2 Minuten',
       id: 'morning-reset',
       intensity: 'Leicht',
-      movementType: 'mobility',
+      movementType: 'mobilize',
       reason: 'Passt gerade zu Fokusarbeit.',
       setup: 'Kein besonderes Equipment',
       timeLabel: 'Vormittag',
       title: 'Schulter-Reset',
+    },
+    {
+      description: 'Ruhig atmen.',
+      duration: '2 Minuten',
+      id: 'breathing-reset',
+      intensity: 'Leicht',
+      movementType: 'breathing',
+      reason: 'Ruhiger Fokusimpuls.',
+      setup: 'Kein besonderes Equipment',
+      timeLabel: 'Nachmittag',
+      title: 'Atem-Reset',
     },
   ],
   movements: [],
@@ -21,45 +32,58 @@ const plan = {
   summary: 'Ein ruhiger Tagesplan.',
 }
 
-describe('TodayScreen', () => {
-  it('renders the optional current work phase selector', () => {
-    const html = renderToStaticMarkup(
-      <TodayScreen
-        activeWorkPhase="focus"
-        activeWorkplace="office"
-        completedIds={[]}
-        feedbackUrl="https://example.com"
-        onComplete={() => {}}
-        onWorkPhaseChange={() => {}}
-        onWorkplaceChange={() => {}}
-        plan={plan}
-        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
-        workplaces={['office']}
-      />,
-    )
+function renderTodayScreen(props = {}) {
+  return renderToStaticMarkup(
+    <TodayScreen
+      activeWorkplace="office"
+      completedIds={[]}
+      feedbackUrl="https://example.com"
+      onComplete={() => {}}
+      onReplaceRecommendation={() => {}}
+      onWorkplaceChange={() => {}}
+      plan={plan}
+      progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+      workplaces={['office']}
+      {...props}
+    />,
+  )
+}
 
-    expect(html).toContain('Was passt gerade?')
-    expect(html).toContain('Fokusarbeit')
-    expect(html).toContain('Meeting')
-    expect(html).toContain('Zwischen zwei Aufgaben')
-    expect(html).toContain('Passt gerade nicht?')
+describe('TodayScreen', () => {
+  it('does not render the removed next recommendation and phase sections', () => {
+    const html = renderTodayScreen()
+
+    expect(html).not.toContain('Als Nächstes')
+    expect(html).not.toContain('Passt gerade nicht?')
+    expect(html).not.toContain('Was passt gerade?')
+    expect(html).not.toContain('Zwischen zwei Aufgaben')
+  })
+
+  it('keeps the daily schedule visible', () => {
+    const html = renderTodayScreen()
+
+    expect(html).toContain('Tagesplan')
+    expect(html).toContain('Deine Empfehlungen')
+    expect(html).toContain('Schulter-Reset')
+    expect(html).toContain('Atem-Reset')
+  })
+
+  it('shows completed recommendations as completed while other cards remain open', () => {
+    const html = renderTodayScreen({
+      completedIds: ['morning-reset'],
+      progressSummary: { completedToday: 1, completedThisWeek: 1, streak: 1 },
+    })
+
+    expect(html).toContain('1 offen')
+    expect(html).toContain('1 erledigt')
+    expect(html).toContain('✓ Erledigt')
+    expect(html).toContain('Offen')
   })
 
   it('shows the workplace used for the day', () => {
-    const html = renderToStaticMarkup(
-      <TodayScreen
-        activeWorkPhase="focus"
-        activeWorkplace="office"
-        completedIds={[]}
-        feedbackUrl="https://example.com"
-        onComplete={() => {}}
-        onWorkPhaseChange={() => {}}
-        onWorkplaceChange={() => {}}
-        plan={plan}
-        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
-        workplaces={['office', 'homeoffice']}
-      />,
-    )
+    const html = renderTodayScreen({
+      workplaces: ['office', 'homeoffice'],
+    })
 
     expect(html).toContain('Arbeitsort heute')
     expect(html).toContain('Arbeitsort heute: Büro')
@@ -68,34 +92,10 @@ describe('TodayScreen', () => {
   })
 
   it('shows the workplace switch only when both workplaces are active', () => {
-    const singleWorkplaceHtml = renderToStaticMarkup(
-      <TodayScreen
-        activeWorkPhase="focus"
-        activeWorkplace="office"
-        completedIds={[]}
-        feedbackUrl="https://example.com"
-        onComplete={() => {}}
-        onWorkPhaseChange={() => {}}
-        onWorkplaceChange={() => {}}
-        plan={plan}
-        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
-        workplaces={['office']}
-      />,
-    )
-    const twoWorkplaceHtml = renderToStaticMarkup(
-      <TodayScreen
-        activeWorkPhase="focus"
-        activeWorkplace="office"
-        completedIds={[]}
-        feedbackUrl="https://example.com"
-        onComplete={() => {}}
-        onWorkPhaseChange={() => {}}
-        onWorkplaceChange={() => {}}
-        plan={plan}
-        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
-        workplaces={['office', 'homeoffice']}
-      />,
-    )
+    const singleWorkplaceHtml = renderTodayScreen()
+    const twoWorkplaceHtml = renderTodayScreen({
+      workplaces: ['office', 'homeoffice'],
+    })
 
     expect(singleWorkplaceHtml).not.toContain('Homeoffice</button>')
     expect(twoWorkplaceHtml).toContain('Homeoffice</button>')

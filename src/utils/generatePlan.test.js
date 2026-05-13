@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generatePlan } from './generatePlan.js'
+import { generatePlan, replaceRecommendationInPlan } from './generatePlan.js'
 
 const unavailableEquipment = [
   'Walking Pad',
@@ -497,7 +497,156 @@ describe('generatePlan', () => {
       ),
     ).toBe(true)
   })
+
+  it('replaceRecommendationInPlan returns a different recommendation in the same slot', () => {
+    const profile = createReplacementProfile()
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 0,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'meeting',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.plan.dailySchedule).toHaveLength(plan.dailySchedule.length)
+    expect(result.replacement.ruleId).not.toBe(plan.dailySchedule[0].ruleId)
+    expect(result.replacement.timeLabel).toBe(plan.dailySchedule[0].timeLabel)
+    expect(result.plan.dailySchedule.slice(1)).toEqual(plan.dailySchedule.slice(1))
+  })
+
+  it('keeps required setup and workplace rules during replacement', () => {
+    const profile = createReplacementProfile({
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['walking-pad', 'stairs', 'hallway', 'space', 'small-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 1,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'setup-mismatch',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.setup).toContain('Kein besonderes Equipment')
+    expect(result.replacement.setup).not.toContain('Walking Pad')
+    expect(result.replacement.setup).not.toContain('Treppe in der Nähe')
+    expect(result.replacement.setup).not.toContain('Flur oder kurzer Weg in der Nähe')
+    expect(result.replacement.setup).not.toContain('Platz für kurze Übungen')
+    expect(result.replacement.setup).not.toContain('Kleines Bewegungsequipment')
+  })
+
+  it('prefers discreet recommendations for meeting replacements', () => {
+    const profile = createReplacementProfile()
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 0,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'meeting',
+    })
+
+    expect(result.replacement.visibilityLevel).toBe('discreet')
+    expect(result.replacement.visibilityLevel).not.toBe('visible')
+  })
+
+  it('prefers gentle calmer recommendations', () => {
+    const profile = createReplacementProfile({ fitnessLevel: 'active' })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 0,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'calmer',
+    })
+
+    expect(result.replacement.intensity).toBe('Leicht')
+    expect(['breathing', 'sit_reset', 'mobilize']).toContain(
+      result.replacement.movementType,
+    )
+  })
+
+  it('prefers short recommendations when there is no time', () => {
+    const profile = createReplacementProfile()
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 2,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'no-time',
+    })
+
+    expect(result.replacement.durationMinutes).toBeLessThanOrEqual(2)
+  })
+
+  it('prefers no-equipment recommendations for setup mismatch', () => {
+    const profile = createReplacementProfile({
+      workplaceSetups: {
+        office: ['no-equipment', 'standing-desk', 'ergonomic-support'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 2,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'setup-mismatch',
+    })
+
+    expect(result.replacement.setup).toContain('Kein besonderes Equipment')
+  })
+
+  it('does not reuse a recommendation already in the plan when alternatives exist', () => {
+    const profile = createReplacementProfile()
+    const plan = generatePlan(profile)
+    const existingRuleIds = plan.dailySchedule
+      .filter((_, index) => index !== 0)
+      .map((section) => section.ruleId)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 0,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'not-appealing',
+    })
+
+    expect(existingRuleIds).not.toContain(result.replacement.ruleId)
+  })
 })
+
+function createReplacementProfile(overrides = {}) {
+  return {
+    currentPhase: 'meeting',
+    currentWorkplace: 'office',
+    defaultWorkplace: 'office',
+    fitnessLevel: 'balanced',
+    goal: 'sit-less',
+    situation: 'meeting-heavy',
+    workplaces: ['office'],
+    workplaceSetups: {
+      office: ['no-equipment'],
+      homeoffice: ['no-equipment'],
+    },
+    ...overrides,
+  }
+}
 
 function hasSetup(plan, setup) {
   return [...plan.dailySchedule, ...plan.movements].some((item) =>

@@ -89,6 +89,60 @@ describe('recommendationFeedbackStorage helpers', () => {
     })
   })
 
+  it('stores replacement reasons as not-fit feedback with replacement action', () => {
+    const feedback = recordRecommendationFeedback(
+      {
+        recommendationId: 'meeting-posture-switch',
+        currentWorkplace: 'office',
+        currentPhase: 'meeting',
+        workdayType: 'meeting-heavy',
+        intensity: 'Leicht',
+        feedback: 'not-fit',
+        reason: 'meeting',
+        action: 'replaced',
+      },
+      new Date(2026, 4, 13),
+    )
+
+    expect(feedback[0]).toMatchObject({
+      recommendationId: 'meeting-posture-switch',
+      date: '2026-05-13',
+      workplace: 'office',
+      currentWorkplace: 'office',
+      phase: 'meeting',
+      currentPhase: 'meeting',
+      workdayType: 'meeting-heavy',
+      intensity: 'Leicht',
+      feedback: 'not-fit',
+      reason: 'meeting',
+      action: 'replaced',
+    })
+  })
+
+  it('keeps old feedback entries without action readable', () => {
+    saveRecommendationFeedback([
+      {
+        recommendationId: 'old-entry',
+        date: '2026-05-13',
+        workplace: 'office',
+        currentWorkplace: 'office',
+        feedback: 'not-fit',
+        reason: 'Keine Zeit',
+      },
+    ])
+
+    expect(loadRecommendationFeedback()).toEqual([
+      {
+        recommendationId: 'old-entry',
+        date: '2026-05-13',
+        workplace: 'office',
+        currentWorkplace: 'office',
+        feedback: 'not-fit',
+        reason: 'Keine Zeit',
+      },
+    ])
+  })
+
   it('does not break on invalid or empty localStorage data', () => {
     expect(loadRecommendationFeedback()).toEqual([])
 

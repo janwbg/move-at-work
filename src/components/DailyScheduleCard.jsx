@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { replacementReasonOptions } from './replacementReasons.js'
 
 const movementTypeLabels = {
   activate: 'Aktivieren',
@@ -16,11 +17,14 @@ const movementTypeLabels = {
 function DailyScheduleCard({
   completed,
   initialExpanded = false,
+  initialReplaceDialogOpen = false,
   onComplete,
+  onReplace = () => {},
   section,
   stepNumber,
 }) {
   const [expanded, setExpanded] = useState(initialExpanded)
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(initialReplaceDialogOpen)
   const [remainingSeconds, setRemainingSeconds] = useState(getDurationSeconds(section.duration))
   const [timerState, setTimerState] = useState('idle')
   const instructionSteps = Array.isArray(section.instructionSteps)
@@ -52,6 +56,11 @@ function DailyScheduleCard({
     setRemainingSeconds(getDurationSeconds(section.duration))
   }
 
+  function submitReplacement(reason) {
+    onReplace(reason)
+    setReplaceDialogOpen(false)
+  }
+
   return (
     <article
       className={`relative rounded-lg border p-4 shadow-sm transition sm:p-5 ${
@@ -60,13 +69,13 @@ function DailyScheduleCard({
           : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.04]'
       }`}
     >
-      <button
-        type="button"
-        onClick={() => setExpanded((current) => !current)}
-        className="w-full text-left"
-        aria-expanded={expanded}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className="min-w-0 flex-1 text-left"
+          aria-expanded={expanded}
+        >
           <div className="flex gap-3 sm:gap-4">
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
@@ -98,16 +107,60 @@ function DailyScheduleCard({
               )}
             </div>
           </div>
+        </button>
 
-          <div className="flex flex-wrap gap-2 sm:justify-end">
-            <Badge>{section.duration}</Badge>
-            <Badge>{movementTypeLabels[section.movementType] ?? section.movementType}</Badge>
-            <Badge tone={completed ? 'success' : 'neutral'}>
-              {completed ? '✓ Erledigt' : 'Offen'}
-            </Badge>
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          <button
+            type="button"
+            aria-label="Empfehlung wechseln"
+            onClick={() => setReplaceDialogOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-extrabold text-slate-500 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white"
+            title="Empfehlung wechseln"
+          >
+            &#8635;
+          </button>
+          <Badge>{section.duration}</Badge>
+          <Badge>{movementTypeLabels[section.movementType] ?? section.movementType}</Badge>
+          <Badge tone={completed ? 'success' : 'neutral'}>
+            {completed ? '✓ Erledigt' : 'Offen'}
+          </Badge>
+        </div>
+      </div>
+
+      {replaceDialogOpen && (
+        <div
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={`${section.id}-replace-title`}
+          className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
+        >
+          <p
+            id={`${section.id}-replace-title`}
+            className="text-sm font-extrabold text-slate-900 dark:text-white"
+          >
+            Warum möchtest du diese Empfehlung wechseln?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {replacementReasonOptions.map((reason) => (
+              <button
+                type="button"
+                key={reason.id}
+                onClick={() => submitReplacement(reason.id)}
+                className="min-h-9 rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+              >
+                {reason.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setReplaceDialogOpen(false)}
+              className="min-h-9 rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
+            >
+              Abbrechen
+            </button>
           </div>
         </div>
-      </button>
+      )}
 
       {expanded && (
         <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">

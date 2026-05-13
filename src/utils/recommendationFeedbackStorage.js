@@ -118,6 +118,10 @@ function normalizeRecommendationFeedbackEntry(feedbackEntry, date) {
     normalizedEntry.scheduleSectionId = feedbackEntry.scheduleSectionId
   }
 
+  if (feedbackEntry.action) {
+    normalizedEntry.action = feedbackEntry.action
+  }
+
   return normalizedEntry
 }
 
