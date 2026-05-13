@@ -19,10 +19,11 @@ function ExerciseDetailView({
   const instructionSteps = Array.isArray(section.instructionSteps)
     ? section.instructionSteps.filter(Boolean)
     : []
-  const shouldShowReset = timerState !== 'idle' || remainingSeconds !== durationSeconds
+  const shouldShowReset =
+    !completed && (timerState !== 'idle' || remainingSeconds !== durationSeconds)
 
   useEffect(() => {
-    if (timerState !== 'running') {
+    if (completed || timerState !== 'running') {
       return undefined
     }
 
@@ -39,14 +40,22 @@ function ExerciseDetailView({
     }, 1000)
 
     return () => window.clearInterval(interval)
-  }, [timerState])
+  }, [completed, timerState])
 
   function resetTimer() {
+    if (completed) {
+      return
+    }
+
     setTimerState('idle')
     setRemainingSeconds(durationSeconds)
   }
 
   function submitReplacement(reason) {
+    if (completed) {
+      return
+    }
+
     onReplace(reason)
     setReplaceDialogOpen(false)
     resetTimer()
@@ -83,6 +92,11 @@ function ExerciseDetailView({
                 {section.reason}
               </p>
             )}
+            {completed && (
+              <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-100">
+                Diese Übung ist erledigt.
+              </p>
+            )}
           </header>
 
           {instructionSteps.length > 0 && (
@@ -112,26 +126,25 @@ function ExerciseDetailView({
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setTimerState('running')}
-                  disabled={timerState === 'running' || timerState === 'finished'}
-                  className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
-                >
-                  Timer starten
-                </button>
-                <button
-                  type="button"
-                  onClick={onComplete}
-                  disabled={completed}
-                  className={`min-h-11 rounded-full px-5 py-3 text-sm font-bold transition ${
-                    completed
-                      ? 'cursor-not-allowed bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
-                  }`}
-                >
-                  {completed ? 'Erledigt' : 'Als erledigt markieren'}
-                </button>
+                {!completed && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setTimerState('running')}
+                      disabled={timerState === 'running' || timerState === 'finished'}
+                      className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
+                    >
+                      Timer starten
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onComplete}
+                      className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                    >
+                      Als erledigt markieren
+                    </button>
+                  </>
+                )}
                 {shouldShowReset && (
                   <button
                     type="button"
@@ -145,50 +158,52 @@ function ExerciseDetailView({
             </div>
           </section>
 
-          <section className="mt-5">
-            <button
-              type="button"
-              onClick={() => setReplaceDialogOpen(true)}
-              className="min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
-            >
-              Andere Empfehlung
-            </button>
-
-            {replaceDialogOpen && (
-              <div
-                role="dialog"
-                aria-modal="false"
-                aria-labelledby={`${section.id}-detail-replace-title`}
-                className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
+          {!completed && (
+            <section className="mt-5">
+              <button
+                type="button"
+                onClick={() => setReplaceDialogOpen(true)}
+                className="min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
               >
-                <p
-                  id={`${section.id}-detail-replace-title`}
-                  className="text-sm font-extrabold text-slate-900 dark:text-white"
+                Andere Empfehlung
+              </button>
+
+              {replaceDialogOpen && (
+                <div
+                  role="dialog"
+                  aria-modal="false"
+                  aria-labelledby={`${section.id}-detail-replace-title`}
+                  className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
                 >
-                  Warum möchtest du diese Empfehlung wechseln?
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {replacementReasonOptions.map((reason) => (
+                  <p
+                    id={`${section.id}-detail-replace-title`}
+                    className="text-sm font-extrabold text-slate-900 dark:text-white"
+                  >
+                    Warum möchtest du diese Empfehlung wechseln?
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {replacementReasonOptions.map((reason) => (
+                      <button
+                        type="button"
+                        key={reason.id}
+                        onClick={() => submitReplacement(reason.id)}
+                        className="min-h-9 rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                      >
+                        {reason.label}
+                      </button>
+                    ))}
                     <button
                       type="button"
-                      key={reason.id}
-                      onClick={() => submitReplacement(reason.id)}
-                      className="min-h-9 rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                      onClick={() => setReplaceDialogOpen(false)}
+                      className="min-h-9 rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
                     >
-                      {reason.label}
+                      Abbrechen
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setReplaceDialogOpen(false)}
-                    className="min-h-9 rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
-                  >
-                    Abbrechen
-                  </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </section>
+              )}
+            </section>
+          )}
         </article>
       </section>
     </div>

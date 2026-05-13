@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
-import MovementPlanCard from './MovementPlanCard.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
 import { getOptionLabel, workplaceOptions } from '../data/profileOptions.js'
 
@@ -131,21 +130,9 @@ function TodayScreen({
               key={section.id}
               onComplete={() => onComplete(section)}
               onOpenDetails={() => setSelectedDetailIndex(index)}
-              onReplace={(reason) => onReplaceRecommendation(index, reason)}
               section={section}
               stepNumber={index + 1}
             />
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
-        <h2 className="mb-4 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-          Weitere passende Impulse
-        </h2>
-        <div className="grid gap-4">
-          {plan.movements.map((movement) => (
-            <MovementPlanCard key={movement.id} movement={movement} />
           ))}
         </div>
       </section>

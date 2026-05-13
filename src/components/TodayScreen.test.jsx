@@ -31,7 +31,12 @@ const baseSections = [
 
 const plan = {
   dailySchedule: baseSections,
-  movements: [],
+  movements: [
+    {
+      id: 'extra-movement',
+      title: 'Zusätzlicher Impuls',
+    },
+  ],
   rhythm: 'Kurze, ruhige Microbreaks.',
   summary: 'Ein ruhiger Tagesplan.',
 }
@@ -88,6 +93,16 @@ describe('TodayScreen', () => {
     expect(html).toContain('Deine Empfehlungen')
     expect(html).toContain('Schulter-Reset')
     expect(html).toContain('Atem-Reset')
+  })
+
+  it('does not render additional matching exercises outside the daily schedule', () => {
+    const html = renderTodayScreen({
+      plan: createPlan(5),
+    })
+
+    expect(html).not.toContain('Weitere passende')
+    expect(html).not.toContain('Zusätzlicher Impuls')
+    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
   })
 
   it('shows completed recommendations as completed while other cards remain open internally', () => {

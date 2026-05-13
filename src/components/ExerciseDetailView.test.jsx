@@ -30,7 +30,7 @@ describe('ExerciseDetailView', () => {
     expect(html).toContain('<ol')
   })
 
-  it('shows a back action and the main exercise actions', () => {
+  it('shows a back action and the main exercise actions for open exercises', () => {
     const html = renderDetail()
 
     expect(html).toContain('Zurück')
@@ -47,7 +47,7 @@ describe('ExerciseDetailView', () => {
     expect(runningHtml).toContain('Zurücksetzen')
   })
 
-  it('can render the same replacement reasons as the schedule card', () => {
+  it('can render the same replacement reasons from the detail view', () => {
     const html = renderDetail({ initialReplaceDialogOpen: true })
 
     expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
@@ -60,8 +60,24 @@ describe('ExerciseDetailView', () => {
     const html = renderDetail({ completed: true })
 
     expect(html).toContain('Erledigt')
+    expect(html).toContain('Diese Übung ist erledigt.')
     expect(html).toContain('Schulterkreisen')
     expect(html).toContain('So geht')
+  })
+
+  it('does not offer timer, completion or replacement actions for completed exercises', () => {
+    const html = renderDetail({
+      completed: true,
+      initialReplaceDialogOpen: true,
+      initialTimerState: 'running',
+    })
+
+    expect(html).not.toContain('Timer starten')
+    expect(html).not.toContain('Als erledigt markieren')
+    expect(html).not.toContain('Andere Empfehlung')
+    expect(html).not.toContain('Warum möchtest du diese Empfehlung wechseln?')
+    expect(html).not.toContain('Zurücksetzen')
+    expect(html).toContain('Zurück')
   })
 })
 
