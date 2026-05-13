@@ -1,4 +1,6 @@
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import Onboarding from './Onboarding.jsx'
 import { getOnboardingSteps } from './onboardingSteps.js'
 
 describe('Onboarding', () => {
@@ -42,4 +44,62 @@ describe('Onboarding', () => {
       'Welcher Arbeitsort soll standardmäßig für deinen Tagesplan verwendet werden?',
     )
   })
+
+  it('keeps the progress bar but hides step count and percentage labels', () => {
+    const html = renderOnboarding({
+      answers: {
+        goal: 'habit',
+        workplaces: ['office', 'homeoffice'],
+      },
+      initialCurrentIndex: 1,
+    })
+
+    expect(html).toContain('role="progressbar"')
+    expect(html).toContain('aria-label="Onboarding-Fortschritt"')
+    expect(html).not.toContain('Schritt 2 von')
+    expect(html).not.toContain('%</span>')
+  })
+
+  it('keeps the workplace step visible after workplace answers change', () => {
+    const html = renderOnboarding({
+      answers: {
+        goal: 'back-neck',
+        workplaces: ['office', 'homeoffice'],
+      },
+      initialCurrentIndex: 1,
+    })
+
+    expect(html).toContain('Wo arbeitest du regelmäßig?')
+    expect(html).toContain('Büro')
+    expect(html).toContain('Homeoffice')
+    expect(html).not.toContain('Was möchtest du mit Move at work erreichen?')
+  })
+
+  it('shows office before homeoffice in the default workplace step', () => {
+    const html = renderOnboarding({
+      answers: {
+        goal: 'habit',
+        workplaces: ['homeoffice', 'office'],
+        defaultWorkplace: 'office',
+        workplaceSetups: {
+          office: ['no-equipment'],
+          homeoffice: ['no-equipment'],
+        },
+      },
+      initialCurrentIndex: 4,
+    })
+
+    expect(html.indexOf('Büro')).toBeLessThan(html.indexOf('Homeoffice'))
+  })
 })
+
+function renderOnboarding({ answers, initialCurrentIndex = 0 }) {
+  return renderToStaticMarkup(
+    <Onboarding
+      answers={answers}
+      initialCurrentIndex={initialCurrentIndex}
+      onChange={() => {}}
+      onComplete={() => {}}
+    />,
+  )
+}

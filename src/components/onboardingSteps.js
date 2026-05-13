@@ -57,10 +57,7 @@ export function getOnboardingSteps(answers) {
       kind: 'workday',
       question: 'Wie sieht dein Arbeitstag meistens aus?',
     },
-  ].map((step, index, list) => ({
-    ...step,
-    eyebrow: `Schritt ${index + 1} von ${list.length}`,
-  }))
+  ]
 }
 
 function getSetupQuestionPlace(workplace) {

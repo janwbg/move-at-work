@@ -12,8 +12,8 @@ import {
 import OptionCard from './OptionCard.jsx'
 import { getOnboardingSteps } from './onboardingSteps.js'
 
-function Onboarding({ answers, onChange, onComplete }) {
-  const [currentIndex, setCurrentIndex] = useState(0)
+function Onboarding({ answers, initialCurrentIndex = 0, onChange, onComplete }) {
+  const [currentIndex, setCurrentIndex] = useState(initialCurrentIndex)
   const onboardingSteps = getOnboardingSteps(answers)
   const currentStep = onboardingSteps[Math.min(currentIndex, onboardingSteps.length - 1)]
   const canContinue = isStepComplete(currentStep, answers)
@@ -46,7 +46,6 @@ function Onboarding({ answers, onChange, onComplete }) {
         workplaceSetups: normalized.workplaceSetups,
       }
     })
-    setCurrentIndex(0)
   }
 
   function toggleWorkplaceSetup(workplaceId, setupId) {
@@ -85,12 +84,8 @@ function Onboarding({ answers, onChange, onComplete }) {
   return (
     <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 sm:p-8">
       <div className="mb-6">
-        <div className="mb-3 flex items-center justify-between gap-4 text-sm font-bold text-slate-500 dark:text-slate-400">
-          <span>{currentStep.eyebrow}</span>
-          <span>{Math.round(progressPercent)}%</span>
-        </div>
         <div
-          aria-label={currentStep.eyebrow}
+          aria-label="Onboarding-Fortschritt"
           aria-valuemax={onboardingSteps.length}
           aria-valuemin="1"
           aria-valuenow={currentIndex + 1}
@@ -147,7 +142,7 @@ function Onboarding({ answers, onChange, onComplete }) {
 
       {currentStep.kind === 'default-workplace' && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {getSelectedWorkplaces(answers).map((workplace) => (
+          {getDefaultWorkplaceOptions(answers).map((workplace) => (
             <OptionCard
               key={workplace}
               active={answers.defaultWorkplace === workplace}
@@ -266,6 +261,14 @@ function isStepComplete(step, answers) {
 
 function getWorkplaceSetup(answers, workplace) {
   return normalizeProfileAnswers(answers).workplaceSetups[workplace] ?? []
+}
+
+function getDefaultWorkplaceOptions(answers) {
+  const selectedWorkplaces = getSelectedWorkplaces(answers)
+
+  return workplaceOptions
+    .map((workplace) => workplace.id)
+    .filter((workplace) => selectedWorkplaces.includes(workplace))
 }
 
 export default Onboarding

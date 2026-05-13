@@ -21,89 +21,48 @@ const section = {
 
 describe('DailyScheduleCard', () => {
   it('renders completed exercises with a clear completed state', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+    const html = renderCard({ completed: true })
 
     expect(html).toContain('Erledigt')
     expect(html).toContain('bg-emerald')
     expect(html).not.toContain('Offen')
   })
 
-  it('shows the recommendation reason in the compact card', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+  it('shows the compact card information without why boxes', () => {
+    const html = renderCard()
 
+    expect(html).toContain('Schulterkreisen')
+    expect(html).toContain('2 Minuten')
     expect(html).toContain('Hilft beim Start in den Arbeitstag.')
     expect(html).toContain('Mobilisieren')
+    expect(html).not.toContain('Warum:')
+    expect(html).not.toContain('Setup:')
   })
 
-  it('shows instruction steps in the expanded detail area', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        initialExpanded
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+  it('does not render inline exercise details anymore', () => {
+    const html = renderCard()
 
-    expect(html).toContain('So geht')
-    expect(html).toContain('Kreise die Schultern langsam nach hinten.')
-    expect(html).toContain('<ol')
-  })
-
-  it('does not render an instruction section when steps are missing', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        initialExpanded
-        onComplete={() => {}}
-        section={{ ...section, instructionSteps: undefined }}
-        stepNumber={1}
-      />,
-    )
-
-    expect(html).toContain('Kurz bewegen und Schultern lockern.')
     expect(html).not.toContain('So geht')
+    expect(html).not.toContain('Kreise die Schultern langsam nach hinten.')
+    expect(html).not.toContain('aria-expanded')
+    expect(html).toContain('Übung öffnen')
   })
 
-  it('shows a discreet replacement button', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+  it('does not show an open badge', () => {
+    const html = renderCard()
+
+    expect(html).not.toContain('Offen')
+  })
+
+  it('keeps the replacement button', () => {
+    const html = renderCard()
 
     expect(html).toContain('aria-label="Empfehlung wechseln"')
     expect(html).toContain('↻')
   })
 
   it('can render the replacement reason dialog with all reasons', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        initialReplaceDialogOpen
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+    const html = renderCard({ initialReplaceDialogOpen: true })
 
     expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
     for (const reason of replacementReasonOptions) {
@@ -112,16 +71,21 @@ describe('DailyScheduleCard', () => {
   })
 
   it('shows a cancel action in the replacement dialog', () => {
-    const html = renderToStaticMarkup(
-      <DailyScheduleCard
-        completed={false}
-        initialReplaceDialogOpen
-        onComplete={() => {}}
-        section={section}
-        stepNumber={1}
-      />,
-    )
+    const html = renderCard({ initialReplaceDialogOpen: true })
 
     expect(html).toContain('Abbrechen')
   })
 })
+
+function renderCard(props = {}) {
+  return renderToStaticMarkup(
+    <DailyScheduleCard
+      completed={false}
+      onComplete={() => {}}
+      onOpenDetails={() => {}}
+      section={section}
+      stepNumber={1}
+      {...props}
+    />,
+  )
+}

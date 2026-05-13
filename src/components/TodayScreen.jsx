@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
+import ExerciseDetailView from './ExerciseDetailView.jsx'
 import MovementPlanCard from './MovementPlanCard.jsx'
+import { ProgressRing } from './ProgressSummary.jsx'
 import { getOptionLabel, workplaceOptions } from '../data/profileOptions.js'
 
 function TodayScreen({
   activeWorkplace,
   completedIds,
   feedbackUrl,
+  initialDetailIndex = null,
   onComplete,
   onReplaceRecommendation = () => {},
   onWorkplaceChange,
@@ -14,6 +18,7 @@ function TodayScreen({
   replacementMessage = '',
   workplaces,
 }) {
+  const [selectedDetailIndex, setSelectedDetailIndex] = useState(initialDetailIndex)
   const openSections = plan.dailySchedule.filter(
     (section) => !completedIds.includes(section.id),
   )
@@ -21,8 +26,16 @@ function TodayScreen({
     completedIds.includes(section.id),
   )
   const openCount = openSections.length
+  const completedCount = completedSections.length
   const workplaceTodayLabel = getOptionLabel(workplaceOptions, activeWorkplace)
   const canSwitchWorkplace = workplaces?.length > 1
+  const selectedDetailSection =
+    selectedDetailIndex === null ? null : plan.dailySchedule[selectedDetailIndex]
+
+  function completeFromDetail(section) {
+    setSelectedDetailIndex(null)
+    onComplete(section)
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -36,7 +49,7 @@ function TodayScreen({
         <p className="mt-4 max-w-2xl leading-7 text-blue-50">
           {openCount === 0
             ? 'Alles erledigt für heute. Stark gemacht.'
-            : `${openCount} von ${plan.dailySchedule.length} Impulsen sind noch offen.`}
+            : 'Kleine Bewegungsimpulse helfen dir, lange Sitzphasen bewusster zu unterbrechen.'}
         </p>
       </section>
 
@@ -82,16 +95,12 @@ function TodayScreen({
         )}
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <StatusCard
-          label="Heute erledigt"
-          value={`${progressSummary.completedToday} von ${plan.dailySchedule.length}`}
+      <section className="grid gap-3 sm:grid-cols-[1.4fr_1fr]">
+        <TodayProgressCard
+          completedToday={completedCount}
+          totalToday={plan.dailySchedule.length}
         />
-        <StatusCard label="Offen" value={String(openCount)} />
-        <StatusCard
-          label="Arbeitsstreak"
-          value={`${progressSummary.streak} ${progressSummary.streak === 1 ? 'Arbeitstag' : 'Arbeitstage'}`}
-        />
+        <StreakCard streak={progressSummary?.streak ?? 0} />
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
@@ -121,6 +130,7 @@ function TodayScreen({
               completed={completedIds.includes(section.id)}
               key={section.id}
               onComplete={() => onComplete(section)}
+              onOpenDetails={() => setSelectedDetailIndex(index)}
               onReplace={(reason) => onReplaceRecommendation(index, reason)}
               section={section}
               stepNumber={index + 1}
@@ -160,19 +170,64 @@ function TodayScreen({
           Feedback geben
         </a>
       </section>
+
+      {selectedDetailSection && (
+        <ExerciseDetailView
+          completed={completedIds.includes(selectedDetailSection.id)}
+          key={selectedDetailSection.id}
+          onBack={() => setSelectedDetailIndex(null)}
+          onComplete={() => completeFromDetail(selectedDetailSection)}
+          onReplace={(reason) => onReplaceRecommendation(selectedDetailIndex, reason)}
+          section={selectedDetailSection}
+        />
+      )}
     </div>
   )
 }
 
-function StatusCard({ label, value }) {
+function TodayProgressCard({ completedToday, totalToday }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
-      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
-        {value}
-      </p>
+      <div className="flex items-center gap-4">
+        <ProgressRing
+          compact
+          completedToday={completedToday}
+          totalToday={totalToday}
+        />
+        <div>
+          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+            Heute erledigt
+          </p>
+          <p className="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
+            {completedToday} von {totalToday}
+          </p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function StreakCard({ streak }) {
+  const safeStreak = Math.max(streak, 0)
+
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2563eb]/10 text-xl"
+        >
+          🚀
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+            Arbeitsstreak
+          </p>
+          <p className="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
+            {safeStreak} {safeStreak === 1 ? 'Arbeitstag' : 'Arbeitstage'}
+          </p>
+        </div>
+      </div>
     </article>
   )
 }

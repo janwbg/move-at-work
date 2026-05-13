@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { replacementReasonOptions } from './replacementReasons.js'
 
 const movementTypeLabels = {
@@ -16,45 +16,14 @@ const movementTypeLabels = {
 
 function DailyScheduleCard({
   completed,
-  initialExpanded = false,
   initialReplaceDialogOpen = false,
   onComplete,
+  onOpenDetails,
   onReplace = () => {},
   section,
   stepNumber,
 }) {
-  const [expanded, setExpanded] = useState(initialExpanded)
   const [replaceDialogOpen, setReplaceDialogOpen] = useState(initialReplaceDialogOpen)
-  const [remainingSeconds, setRemainingSeconds] = useState(getDurationSeconds(section.duration))
-  const [timerState, setTimerState] = useState('idle')
-  const instructionSteps = Array.isArray(section.instructionSteps)
-    ? section.instructionSteps.filter(Boolean)
-    : []
-
-  useEffect(() => {
-    if (timerState !== 'running') {
-      return undefined
-    }
-
-    const interval = window.setInterval(() => {
-      setRemainingSeconds((current) => {
-        if (current <= 1) {
-          window.clearInterval(interval)
-          setTimerState('finished')
-          return 0
-        }
-
-        return current - 1
-      })
-    }, 1000)
-
-    return () => window.clearInterval(interval)
-  }, [timerState])
-
-  function resetTimer() {
-    setTimerState('idle')
-    setRemainingSeconds(getDurationSeconds(section.duration))
-  }
 
   function submitReplacement(reason) {
     onReplace(reason)
@@ -70,12 +39,7 @@ function DailyScheduleCard({
       }`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <button
-          type="button"
-          onClick={() => setExpanded((current) => !current)}
-          className="min-w-0 flex-1 text-left"
-          aria-expanded={expanded}
-        >
+        <div className="min-w-0 flex-1">
           <div className="flex gap-3 sm:gap-4">
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
@@ -107,7 +71,7 @@ function DailyScheduleCard({
               )}
             </div>
           </div>
-        </button>
+        </div>
 
         <div className="flex flex-wrap gap-2 sm:justify-end">
           <button
@@ -121,10 +85,30 @@ function DailyScheduleCard({
           </button>
           <Badge>{section.duration}</Badge>
           <Badge>{movementTypeLabels[section.movementType] ?? section.movementType}</Badge>
-          <Badge tone={completed ? 'success' : 'neutral'}>
-            {completed ? '✓ Erledigt' : 'Offen'}
-          </Badge>
+          {completed && <Badge tone="success">✓ Erledigt</Badge>}
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onOpenDetails}
+          className="min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8]"
+        >
+          Übung öffnen
+        </button>
+        <button
+          type="button"
+          onClick={onComplete}
+          disabled={completed}
+          className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+            completed
+              ? 'cursor-not-allowed bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100'
+              : 'border border-slate-200 text-slate-600 hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300'
+          }`}
+        >
+          {completed ? 'Erledigt' : 'Als erledigt markieren'}
+        </button>
       </div>
 
       {replaceDialogOpen && (
@@ -161,73 +145,6 @@ function DailyScheduleCard({
           </div>
         </div>
       )}
-
-      {expanded && (
-        <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">
-          <p className="leading-7 text-slate-600 dark:text-slate-300">
-            {section.description}
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-[0.8fr_1.2fr]">
-            <p className="rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-300">
-              Setup: {section.setup}
-            </p>
-            <p className="rounded-lg bg-[#2563eb]/10 p-3 text-sm font-semibold leading-6 text-slate-700 dark:text-blue-50">
-              Warum: {section.reason}
-            </p>
-          </div>
-
-          {instructionSteps.length > 0 && (
-            <section className="mt-4 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
-              <h4 className="text-sm font-extrabold text-slate-800 dark:text-white">
-                So geht&apos;s
-              </h4>
-              <ol className="mt-2 space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                {instructionSteps.map((step) => (
-                  <li className="pl-1" key={step}>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-
-          <div className="mt-4 flex flex-col gap-3 rounded-lg bg-slate-50 p-3 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-mono text-xl font-extrabold text-slate-900 dark:text-white">
-              {timerState === 'finished' ? 'Beendet' : formatSeconds(remainingSeconds)}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setTimerState('running')}
-                disabled={timerState === 'running' || timerState === 'finished'}
-                className="rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-              >
-                Timer starten
-              </button>
-              <button
-                type="button"
-                onClick={resetTimer}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
-              >
-                Zurücksetzen
-              </button>
-              <button
-                type="button"
-                onClick={onComplete}
-                disabled={completed}
-                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                  completed
-                    ? 'cursor-not-allowed bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100'
-                    : 'bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950'
-                }`}
-              >
-                {completed ? '✓ Erledigt' : 'Als erledigt markieren'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </article>
   )
 }
@@ -244,17 +161,6 @@ function Badge({ children, tone = 'neutral' }) {
       {children}
     </span>
   )
-}
-
-function getDurationSeconds(duration) {
-  const numbers = duration.match(/\d+/g)?.map(Number) ?? [2]
-  return Math.max(...numbers) * 60
-}
-
-function formatSeconds(seconds) {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = String(seconds % 60).padStart(2, '0')
-  return `${minutes}:${remainingSeconds}`
 }
 
 export default DailyScheduleCard
