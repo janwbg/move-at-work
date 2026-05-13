@@ -66,11 +66,45 @@ const goalMovementTypeScores = {
 }
 
 const slotMovementTypeScores = {
-  start: { breathing: 14, mobilize: 18, sit_reset: 12, stand: 8 },
-  focus: { breathing: 16, eyes: 18, mobilize: 18, sit_reset: 14 },
-  movement: { activate: 18, stand: 10, walk: 22, walking_meeting: 16 },
-  relief: { mobilize: 20, relax: 16, sit_reset: 18, stretch: 18 },
-  closing: { breathing: 12, mobilize: 16, relax: 22, sit_reset: 14 },
+  start: { breathing: 24, mobilize: 22, sit_reset: 22, stand: 8 },
+  focus: { breathing: 24, mobilize: 22, sit_reset: 20 },
+  movement: { activate: 24, stand: 20, walk: 30, walking_meeting: 24 },
+  relief: { mobilize: 24, sit_reset: 14, stretch: 28 },
+  closing: { breathing: 26, mobilize: 12, sit_reset: 22, stand: 8 },
+}
+
+const slotBodyAreaScores = {
+  focus: { breathing: 18, eyes: 24, neck: 8, shoulders: 8, wrists: 8 },
+  relief: {
+    hips: 16,
+    'lower-back': 18,
+    neck: 18,
+    shoulders: 18,
+    spine: 18,
+    'upper-back': 18,
+  },
+}
+
+const slotPositionScores = {
+  start: { sitting: 8, standing: 8, mixed: 6 },
+  focus: { sitting: 14, desk: 12 },
+  movement: { walking: 28, standing: 18, stairs: 18, mixed: 12 },
+  relief: { sitting: 8, standing: 8, floor: 10, mixed: 8 },
+  closing: { sitting: 12, standing: 6, mixed: 8 },
+}
+
+const slotVisibilityScores = {
+  start: { discreet: 14, normal: 10 },
+  focus: { discreet: 18, normal: 10 },
+  movement: { discreet: 2, normal: 10, visible: 8 },
+  relief: { discreet: 6, normal: 12, visible: 6 },
+  closing: { discreet: 18, normal: 8 },
+}
+
+const relaxedIntensities = {
+  active: ['gentle', 'balanced', 'active'],
+  balanced: ['gentle', 'balanced', 'active'],
+  gentle: ['gentle', 'balanced'],
 }
 
 const slotRolesByLength = {
@@ -122,27 +156,72 @@ function normalizeContext(answers) {
 }
 
 function getMatchingRecommendations(context) {
-  const matching = movementRecommendations.filter((recommendation) =>
+  const ideal = movementRecommendations.filter((recommendation) =>
+    isRecommendationIdeal(recommendation, context),
+  )
+  const strict = movementRecommendations.filter((recommendation) =>
     isRecommendationAvailable(recommendation, context),
   )
+  const good = movementRecommendations.filter((recommendation) =>
+    isRecommendationGoodFallback(recommendation, context),
+  )
+  const safe = movementRecommendations.filter((recommendation) =>
+    isSafeBasisRecommendation(recommendation, context),
+  )
+  const candidates = uniqueRecommendations([...ideal, ...strict, ...good, ...safe])
 
-  if (matching.length >= minimumRecommendations) {
-    return matching
+  if (candidates.length >= maximumRecommendations) {
+    return candidates
   }
 
-  return movementRecommendations.filter(
-    (recommendation) =>
-      hasNoSpecialSetup(recommendation.requiredSetup) &&
-      recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
-      allowedIntensities.gentle.includes(recommendation.intensity),
-  )
+  return uniqueRecommendations([
+    ...candidates,
+    ...movementRecommendations.filter((recommendation) =>
+      canUseRecommendationSetup(recommendation, context),
+    ),
+  ])
 }
 
 function isRecommendationAvailable(recommendation, context) {
   return (
-    recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
-    hasRequiredSetup(recommendation.requiredSetup, context.setup) &&
+    canUseRecommendationSetup(recommendation, context) &&
     allowedIntensities[context.fitnessLevel]?.includes(recommendation.intensity)
+  )
+}
+
+function isRecommendationIdeal(recommendation, context) {
+  return (
+    isRecommendationAvailable(recommendation, context) &&
+    recommendation.suitableGoals.includes(context.goal) &&
+    recommendation.suitablePhases.includes(context.currentPhase) &&
+    recommendation.suitableWorkdayTypes.includes(context.situation)
+  )
+}
+
+function isRecommendationGoodFallback(recommendation, context) {
+  return (
+    canUseRecommendationSetup(recommendation, context) &&
+    relaxedIntensities[context.fitnessLevel]?.includes(recommendation.intensity) &&
+    (
+      recommendation.suitableGoals.includes(context.goal) ||
+      recommendation.suitablePhases.includes(context.currentPhase)
+    )
+  )
+}
+
+function isSafeBasisRecommendation(recommendation, context) {
+  return (
+    recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
+    hasNoSpecialSetup(recommendation.requiredSetup) &&
+    ['gentle', 'balanced'].includes(recommendation.intensity) &&
+    ['discreet', 'normal'].includes(recommendation.visibilityLevel)
+  )
+}
+
+function canUseRecommendationSetup(recommendation, context) {
+  return (
+    recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
+    hasRequiredSetup(recommendation.requiredSetup, context.setup)
   )
 }
 
@@ -174,6 +253,9 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
   score += goalMovementTypeScores[context.goal]?.[recommendation.movementType] ?? 0
   score += phaseMovementTypeScores[context.currentPhase]?.[recommendation.movementType] ?? 0
   score += slotMovementTypeScores[slotRole]?.[recommendation.movementType] ?? 0
+  score += getSlotBodyAreaScore(recommendation, slotRole)
+  score += slotPositionScores[slotRole]?.[recommendation.position] ?? 0
+  score += slotVisibilityScores[slotRole]?.[recommendation.visibilityLevel] ?? 0
   score += getSpecialSetupCount(recommendation.requiredSetup) * 12
 
   if (context.currentWorkplace === 'homeoffice' && recommendation.id.startsWith('home-')) {
@@ -200,9 +282,11 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
     score += getMeetingVisibilityScore(recommendation.visibilityLevel)
   }
 
-  if (context.currentWorkplace === 'office' && context.currentPhase !== 'break') {
-    score += getOfficeVisibilityScore(recommendation.visibilityLevel)
-  }
+  score += getPhaseVisibilityScore(recommendation, context)
+  score += getWorkplaceVisibilityScore(recommendation, context)
+  score += getPositionTransitionScore(recommendation, context, schedule)
+  score += getSetupContextScore(recommendation, context, schedule)
+  score += getBodyAreaDiversityScore(recommendation, schedule)
 
   score -= schedulePenalty(recommendation, schedule)
 
@@ -214,11 +298,11 @@ function schedulePenalty(recommendation, schedule) {
   let penalty = 0
 
   if (last?.movementType === recommendation.movementType) {
-    penalty += 80
+    penalty += 72
   }
 
   if (last?.movementType === 'stand' && recommendation.movementType === 'stand') {
-    penalty += 100
+    penalty += 130
   }
 
   if (schedule.some((item) => item.id === recommendation.id)) {
@@ -226,7 +310,7 @@ function schedulePenalty(recommendation, schedule) {
   }
 
   if (schedule.some((item) => item.similarityGroup === recommendation.similarityGroup)) {
-    penalty += 34
+    penalty += 52
   }
 
   if (
@@ -235,19 +319,47 @@ function schedulePenalty(recommendation, schedule) {
     last.position === recommendation.position &&
     recommendation.position !== 'mixed'
   ) {
-    penalty += 18
+    penalty += recommendation.position === 'standing' ? 48 : 28
   }
 
   const lastBodyAreaOverlap = countBodyAreaOverlap(last?.bodyArea, recommendation.bodyArea)
-  penalty += lastBodyAreaOverlap * 8
+  penalty += lastBodyAreaOverlap * 18
 
   penalty += schedule.filter((item) =>
     countBodyAreaOverlap(item.bodyArea, recommendation.bodyArea) > 0,
-  ).length * 4
+  ).length * 7
 
   penalty += schedule.filter(
     (item) => item.movementType === recommendation.movementType,
   ).length * 14
+
+  if (countMatchingMovementType(schedule, recommendation.movementType) >= 2) {
+    penalty += 42
+  }
+
+  if (
+    recommendation.visibilityLevel === 'visible' &&
+    schedule.filter((item) => item.visibilityLevel === 'visible').length >= 1
+  ) {
+    penalty += 24
+  }
+
+  if (
+    usesSpecialSetup(recommendation) &&
+    countSpecialSetupRecommendations(schedule) >= 2
+  ) {
+    penalty += 42
+  }
+
+  if (
+    usesSpecialSetup(recommendation) &&
+    schedule.some((item) =>
+      getPrimarySpecialSetup(item.requiredSetup) ===
+      getPrimarySpecialSetup(recommendation.requiredSetup),
+    )
+  ) {
+    penalty += 24
+  }
 
   return penalty
 }
@@ -262,7 +374,14 @@ function buildDailySchedule(sortedRecommendations, context) {
     const slotRole = slotRoles[index] ?? 'movement'
     const recommendation =
       pickNextRecommendation(sortedRecommendations, schedule, context, slotRole) ??
-      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, true)
+      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, {
+        allowSimilarity: true,
+      }) ??
+      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, {
+        allowDiversityFallback: true,
+        allowSequenceFallback: true,
+        allowSimilarity: true,
+      })
 
     if (!recommendation) {
       continue
@@ -279,7 +398,11 @@ function pickNextRecommendation(
   currentSchedule,
   context,
   slotRole,
-  allowSimilarity = false,
+  {
+    allowDiversityFallback = false,
+    allowSequenceFallback = false,
+    allowSimilarity = false,
+  } = {},
 ) {
   const sorted = [...candidates].sort(
     (first, second) =>
@@ -296,7 +419,11 @@ function pickNextRecommendation(
       return false
     }
 
-    return canFollow(currentSchedule.at(-1), candidate)
+    if (!allowDiversityFallback && exceedsSoftDiversityLimit(candidate, currentSchedule)) {
+      return false
+    }
+
+    return allowSequenceFallback || canFollow(currentSchedule.at(-1), candidate)
   })
 }
 
@@ -380,16 +507,8 @@ function isTooSimilar(recommendation, schedule) {
   )
 }
 
-function getScheduleLength(context) {
-  if (context.fitnessLevel === 'gentle') {
-    return 5
-  }
-
-  if (context.fitnessLevel === 'active' || context.situation === 'mixed-day') {
-    return 7
-  }
-
-  return 6
+function getScheduleLength() {
+  return 5
 }
 
 function getTimeLabels(scheduleLength) {
@@ -449,6 +568,7 @@ function toScheduleSection(recommendation, timeLabel, context) {
     bodyArea: recommendation.bodyArea,
     description: recommendation.description,
     duration: formatDuration(recommendation.durationMinutes),
+    durationMinutes: recommendation.durationMinutes,
     explanation: recommendation.explanation,
     id: `${timeLabel.toLowerCase().replaceAll(' ', '-')}-${recommendation.id}`,
     instructionSteps: recommendation.instructionSteps,
@@ -458,6 +578,7 @@ function toScheduleSection(recommendation, timeLabel, context) {
     reason: buildReason(recommendation, context),
     ruleId: recommendation.id,
     ruleType: movementTypeLegacyTypes[recommendation.movementType],
+    requiredSetup: recommendation.requiredSetup,
     setup: formatSetup(recommendation.requiredSetup),
     similarityGroup: recommendation.similarityGroup,
     timeLabel,
@@ -546,6 +667,14 @@ function formatSetup(requiredSetup) {
   return requiredSetup.map((setup) => getOptionLabel(setupOptions, setup)).join(', ')
 }
 
+function uniqueRecommendations(recommendations) {
+  return [
+    ...new Map(
+      recommendations.map((recommendation) => [recommendation.id, recommendation]),
+    ).values(),
+  ]
+}
+
 function hasRequiredSetup(requiredSetup, availableSetup) {
   return requiredSetup.every(
     (setup) => setup === 'no-equipment' || availableSetup.includes(setup),
@@ -563,17 +692,36 @@ function getSpecialSetupCount(requiredSetup) {
   return requiredSetup.filter((setup) => setup !== 'no-equipment').length
 }
 
+function usesSpecialSetup(recommendation) {
+  return getSpecialSetupCount(recommendation.requiredSetup ?? []) > 0
+}
+
+function countSpecialSetupRecommendations(schedule) {
+  return schedule.filter((item) => usesSpecialSetup(item)).length
+}
+
+function getPrimarySpecialSetup(requiredSetup = []) {
+  return requiredSetup.find((setup) => setup !== 'no-equipment') ?? ''
+}
+
+function getSlotBodyAreaScore(recommendation, slotRole) {
+  return recommendation.bodyArea.reduce(
+    (total, bodyArea) => total + (slotBodyAreaScores[slotRole]?.[bodyArea] ?? 0),
+    0,
+  )
+}
+
 function getMeetingVisibilityScore(visibilityLevel) {
   if (visibilityLevel === 'discreet') {
-    return 18
+    return 32
   }
 
   if (visibilityLevel === 'normal') {
-    return 6
+    return -4
   }
 
   if (visibilityLevel === 'visible') {
-    return -22
+    return -48
   }
 
   return 0
@@ -581,18 +729,200 @@ function getMeetingVisibilityScore(visibilityLevel) {
 
 function getOfficeVisibilityScore(visibilityLevel) {
   if (visibilityLevel === 'discreet') {
-    return 4
+    return 10
   }
 
   if (visibilityLevel === 'visible') {
-    return -10
+    return -18
   }
 
   return 0
 }
 
+function getPhaseVisibilityScore(recommendation, context) {
+  if (context.currentPhase === 'focus') {
+    if (recommendation.visibilityLevel === 'discreet') {
+      return 14
+    }
+
+    if (recommendation.visibilityLevel === 'normal') {
+      return 8
+    }
+
+    return context.currentWorkplace === 'office' ? -18 : -4
+  }
+
+  if (context.currentPhase === 'phone') {
+    if (['walk', 'walking_meeting'].includes(recommendation.movementType)) {
+      return 18
+    }
+
+    return recommendation.visibilityLevel === 'visible' ? 4 : 8
+  }
+
+  if (context.currentPhase === 'break') {
+    return recommendation.visibilityLevel === 'discreet' ? 2 : 14
+  }
+
+  if (context.currentPhase === 'between-tasks') {
+    if (recommendation.visibilityLevel === 'visible') {
+      return context.currentWorkplace === 'homeoffice' ? 6 : -4
+    }
+
+    return 8
+  }
+
+  return 0
+}
+
+function getWorkplaceVisibilityScore(recommendation, context) {
+  if (context.currentWorkplace === 'office' && context.currentPhase !== 'break') {
+    return getOfficeVisibilityScore(recommendation.visibilityLevel)
+  }
+
+  if (
+    context.currentWorkplace === 'homeoffice' &&
+    ['break', 'between-tasks'].includes(context.currentPhase) &&
+    ['normal', 'visible'].includes(recommendation.visibilityLevel)
+  ) {
+    return 8
+  }
+
+  return 0
+}
+
+function getPositionTransitionScore(recommendation, context, schedule) {
+  const last = schedule.at(-1)
+  let score = 0
+
+  if (last?.position === 'sitting' && recommendation.position === 'walking') {
+    score += 24
+  }
+
+  if (
+    last?.position === 'sitting' &&
+    recommendation.position === 'mixed' &&
+    (last.durationMinutes ?? 0) >= 5
+  ) {
+    score += 14
+  }
+
+  if (recommendation.position === 'floor') {
+    score += context.currentWorkplace === 'homeoffice' ? 16 : -26
+    score += context.currentPhase === 'break' ? 18 : -10
+  }
+
+  if (recommendation.position === 'stairs') {
+    score += context.currentPhase === 'break' ? 14 : 0
+  }
+
+  return score
+}
+
+function getSetupContextScore(recommendation, context, schedule) {
+  const primarySetup = getPrimarySpecialSetup(recommendation.requiredSetup)
+  let score = 0
+
+  if (!primarySetup) {
+    return score
+  }
+
+  if (primarySetup === 'walking-pad') {
+    score += ['phone', 'meeting'].includes(context.currentPhase) ? 28 : 8
+    score += recommendation.movementType === 'walking_meeting' ? 14 : 0
+  }
+
+  if (primarySetup === 'stairs') {
+    score += context.currentPhase === 'break' ? 26 : 4
+    score += ['balanced', 'active'].includes(recommendation.intensity) ? 10 : 0
+  }
+
+  if (primarySetup === 'hallway') {
+    score += recommendation.movementType === 'walk' ? 22 : 0
+    score += ['phone', 'between-tasks'].includes(context.currentPhase) ? 12 : 0
+  }
+
+  if (primarySetup === 'standing-desk') {
+    score += ['stand', 'sit_reset'].includes(recommendation.movementType) ? 16 : 6
+  }
+
+  if (primarySetup === 'ergonomic-support') {
+    score += recommendation.movementType === 'sit_reset' ? 16 : 6
+  }
+
+  if (['small-equipment', 'space'].includes(primarySetup)) {
+    score += context.currentWorkplace === 'homeoffice' ? 14 : 0
+    score += context.currentPhase === 'break' ? 16 : 0
+    score +=
+      recommendation.visibilityLevel === 'visible' &&
+      context.currentWorkplace === 'office'
+        ? -10
+        : 0
+  }
+
+  if (countSpecialSetupRecommendations(schedule) >= 1) {
+    score -= 8
+  }
+
+  return score
+}
+
+function getBodyAreaDiversityScore(recommendation, schedule) {
+  if (!schedule.length) {
+    return 0
+  }
+
+  const usedBodyAreas = new Set(schedule.flatMap((item) => item.bodyArea ?? []))
+  const newBodyAreas = recommendation.bodyArea.filter(
+    (bodyArea) => !usedBodyAreas.has(bodyArea),
+  )
+  const overlap = recommendation.bodyArea.length - newBodyAreas.length
+
+  let score = newBodyAreas.length ? 12 : -10
+  score -= overlap * 6
+
+  const mainBodyArea = recommendation.bodyArea[0]
+  const mainBodyAreaCount = schedule.filter((item) =>
+    item.bodyArea?.includes(mainBodyArea),
+  ).length
+
+  if (mainBodyAreaCount >= 2) {
+    score -= 34
+  }
+
+  return score
+}
+
 function countBodyAreaOverlap(firstBodyArea = [], secondBodyArea = []) {
+  if (!firstBodyArea || !secondBodyArea) {
+    return 0
+  }
+
   return firstBodyArea.filter((bodyArea) => secondBodyArea.includes(bodyArea)).length
+}
+
+function countMatchingMovementType(schedule, movementType) {
+  return schedule.filter((item) => item.movementType === movementType).length
+}
+
+function exceedsSoftDiversityLimit(recommendation, schedule) {
+  const mainBodyArea = recommendation.bodyArea[0]
+
+  return (
+    countMatchingMovementType(schedule, recommendation.movementType) >= 2 ||
+    (
+      mainBodyArea &&
+      schedule.filter((item) => item.bodyArea?.includes(mainBodyArea)).length >= 2
+    ) ||
+    (
+      recommendation.visibilityLevel === 'visible' &&
+      schedule.filter((item) => item.visibilityLevel === 'visible').length >= 2
+    ) ||
+    (
+      usesSpecialSetup(recommendation) &&
+      countSpecialSetupRecommendations(schedule) >= 2
+    )
+  )
 }
 
 function formatDuration(durationMinutes) {

@@ -7,9 +7,67 @@ const unavailableEquipment = [
   'Treppe in der Nähe',
   'Höhenverstellbarer Schreibtisch',
   'Kleines Bewegungsequipment',
+  'Platz für kurze Übungen',
+  'Ergonomische Sitz- oder Stehhilfe',
 ]
 
 describe('generatePlan', () => {
+  it('returns exactly five daily recommendations for broad and tight profiles', () => {
+    const profiles = [
+      {
+        currentPhase: 'focus',
+        currentWorkplace: 'homeoffice',
+        defaultWorkplace: 'homeoffice',
+        fitnessLevel: 'gentle',
+        goal: 'habit',
+        situation: 'focus-heavy',
+        workplaces: ['homeoffice'],
+        workplaceSetups: {
+          office: ['stairs'],
+          homeoffice: ['no-equipment'],
+        },
+      },
+      {
+        currentPhase: 'meeting',
+        fitnessLevel: 'gentle',
+        goal: 'sit-less',
+        setup: ['no-equipment'],
+        situation: 'meeting-heavy',
+      },
+      {
+        currentPhase: 'break',
+        fitnessLevel: 'gentle',
+        goal: 'more-energy',
+        setup: ['stairs'],
+        situation: 'mixed-day',
+      },
+      {
+        currentPhase: 'phone',
+        currentWorkplace: 'homeoffice',
+        defaultWorkplace: 'homeoffice',
+        fitnessLevel: 'gentle',
+        goal: 'sit-less',
+        situation: 'meeting-heavy',
+        workplaces: ['homeoffice'],
+        workplaceSetups: {
+          office: ['no-equipment'],
+          homeoffice: ['walking-pad'],
+        },
+      },
+      {
+        currentPhase: 'between-tasks',
+        fitnessLevel: 'gentle',
+        goal: 'sit-less',
+        setup: ['standing-desk'],
+        situation: 'meeting-heavy',
+      },
+    ]
+
+    for (const profile of profiles) {
+      expect(generatePlan(profile).dailySchedule).toHaveLength(5)
+    }
+  })
+
   it('creates a meeting-aware Walking Pad plan when the setup is available', () => {
     const plan = generatePlan({
       currentPhase: 'meeting',
@@ -22,12 +80,7 @@ describe('generatePlan', () => {
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
     expect(plan.dailySchedule.length).toBeLessThanOrEqual(7)
     expect(hasSetup(plan, 'Walking Pad')).toBe(true)
-    expect(
-      plan.dailySchedule.some(
-        (section) =>
-          section.reason.includes('Meeting') || section.title.includes('Meeting'),
-      ),
-    ).toBe(true)
+    expect(hasAnyMovementType(plan.dailySchedule, ['walking_meeting'])).toBe(true)
   })
 
   it('uses only available setup rules for no-equipment back and neck support', () => {
@@ -97,6 +150,35 @@ describe('generatePlan', () => {
     expect(plan.dailySchedule.length).toBeGreaterThanOrEqual(5)
     expect(hasAdjacentIntenseSections(plan.dailySchedule)).toBe(false)
     expect(hasAdjacentIdenticalMovementTypes(plan.dailySchedule)).toBe(false)
+    expect(getMaxMovementTypeCount(plan.dailySchedule)).toBeLessThanOrEqual(2)
+  })
+
+  it('reduces bodyArea repetitions across the daily schedule', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'back-neck',
+      setup: ['no-equipment'],
+      situation: 'focus-heavy',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(countAdjacentBodyAreaOverlaps(plan.dailySchedule)).toBeLessThanOrEqual(1)
+    expect(getMaxBodyAreaCount(plan.dailySchedule)).toBeLessThanOrEqual(2)
+  })
+
+  it('reduces direct position repetition when alternatives exist', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'back-neck',
+      setup: ['no-equipment'],
+      situation: 'focus-heavy',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(getUniquePositions(plan.dailySchedule).length).toBeGreaterThanOrEqual(3)
+    expect(countAdjacentPositionRepeats(plan.dailySchedule)).toBeLessThanOrEqual(1)
   })
 
   it('returns movement types and explanations for every recommendation', () => {
@@ -185,6 +267,18 @@ describe('generatePlan', () => {
     expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(false)
   })
 
+  it('does not recommend hallway exercises when hallway is unavailable', () => {
+    const plan = generatePlan({
+      currentPhase: 'phone',
+      fitnessLevel: 'balanced',
+      goal: 'more-energy',
+      setup: ['no-equipment'],
+      situation: 'meeting-heavy',
+    })
+
+    expect(hasSetup(plan, 'Flur oder kurzer Weg in der Nähe')).toBe(false)
+  })
+
   it('uses stairs for stair impulses when stairs are available', () => {
     const plan = generatePlan({
       currentPhase: 'break',
@@ -198,6 +292,18 @@ describe('generatePlan', () => {
     expect(hasDisplaySetup(plan, 'Treppe in der Nähe')).toBe(true)
     expect(hasRule(plan, 'office-hallway-loop')).toBe(false)
     expect(hasRule(plan, 'walking-call-hallway')).toBe(false)
+  })
+
+  it('does not recommend stair exercises when stairs are unavailable', () => {
+    const plan = generatePlan({
+      currentPhase: 'break',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      setup: ['hallway'],
+      situation: 'mixed-day',
+    })
+
+    expect(hasSetup(plan, 'Treppe in der Nähe')).toBe(false)
   })
 
   it('uses only the setup of the current workplace', () => {
@@ -262,6 +368,84 @@ describe('generatePlan', () => {
 
     expect(hasSetup(officePlan, 'Walking Pad')).toBe(false)
     expect(hasSetup(homeofficePlan, 'Walking Pad')).toBe(true)
+  })
+
+  it('prefers discreet recommendations for office meetings', () => {
+    const plan = generatePlan({
+      currentPhase: 'meeting',
+      currentWorkplace: 'office',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      situation: 'meeting-heavy',
+      workplaces: ['office'],
+      workplaceSetups: {
+        office: ['no-equipment'],
+      },
+    })
+    const visibilityCounts = countBy(plan.dailySchedule, 'visibilityLevel')
+
+    expect(visibilityCounts.discreet).toBeGreaterThan(visibilityCounts.visible ?? 0)
+    expect(visibilityCounts.visible ?? 0).toBe(0)
+  })
+
+  it('allows visible homeoffice break recommendations when phase and setup fit', () => {
+    const officePlan = generatePlan({
+      currentPhase: 'break',
+      currentWorkplace: 'office',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      situation: 'mixed-day',
+      workplaces: ['office'],
+      workplaceSetups: {
+        office: ['space'],
+      },
+    })
+    const homeofficePlan = generatePlan({
+      currentPhase: 'break',
+      currentWorkplace: 'homeoffice',
+      defaultWorkplace: 'homeoffice',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      situation: 'mixed-day',
+      workplaces: ['homeoffice'],
+      workplaceSetups: {
+        homeoffice: ['space'],
+      },
+    })
+
+    expect(countBy(homeofficePlan.dailySchedule, 'visibilityLevel').visible).toBeGreaterThan(0)
+    expect(countBy(homeofficePlan.dailySchedule, 'visibilityLevel').visible).toBeGreaterThanOrEqual(
+      countBy(officePlan.dailySchedule, 'visibilityLevel').visible ?? 0,
+    )
+  })
+
+  it('uses the third slot as a movement impulse when suitable candidates exist', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['hallway', 'standing-desk'],
+      situation: 'mixed-day',
+    })
+    const movementSlot = plan.dailySchedule[2]
+
+    expect(['walk', 'stand', 'activate', 'walking_meeting']).toContain(
+      movementSlot.movementType,
+    )
+  })
+
+  it('does not let special setup recommendations dominate the whole plan', () => {
+    const plan = generatePlan({
+      currentPhase: 'phone',
+      fitnessLevel: 'balanced',
+      goal: 'sit-less',
+      setup: ['walking-pad', 'hallway', 'standing-desk'],
+      situation: 'meeting-heavy',
+    })
+
+    expect(countSpecialSetupSections(plan.dailySchedule)).toBeLessThanOrEqual(2)
   })
 
   it('uses office as the effective workplace for mixed profiles', () => {
@@ -372,6 +556,58 @@ function hasAdjacentMovementType(sections, movementType) {
 
 function hasAnyMovementType(sections, movementTypes) {
   return sections.some((section) => movementTypes.includes(section.movementType))
+}
+
+function countAdjacentBodyAreaOverlaps(sections) {
+  return sections.filter((section, index) => {
+    const nextSection = sections[index + 1]
+
+    return nextSection && hasBodyAreaOverlap(section, nextSection)
+  }).length
+}
+
+function countAdjacentPositionRepeats(sections) {
+  return sections.filter(
+    (section, index) =>
+      section.position &&
+      section.position === sections[index + 1]?.position,
+  ).length
+}
+
+function getMaxBodyAreaCount(sections) {
+  const counts = countValues(sections.flatMap((section) => section.bodyArea ?? []))
+  return Math.max(...Object.values(counts))
+}
+
+function getMaxMovementTypeCount(sections) {
+  const counts = countValues(sections.map((section) => section.movementType))
+  return Math.max(...Object.values(counts))
+}
+
+function getUniquePositions(sections) {
+  return [...new Set(sections.map((section) => section.position))]
+}
+
+function countSpecialSetupSections(sections) {
+  return sections.filter((section) => section.setup !== 'Kein besonderes Equipment')
+    .length
+}
+
+function countBy(sections, field) {
+  return countValues(sections.map((section) => section[field]))
+}
+
+function countValues(values) {
+  return values.reduce((counts, value) => {
+    counts[value] = (counts[value] ?? 0) + 1
+    return counts
+  }, {})
+}
+
+function hasBodyAreaOverlap(firstSection, secondSection) {
+  return firstSection.bodyArea.some((bodyArea) =>
+    secondSection.bodyArea.includes(bodyArea),
+  )
 }
 
 function isLongStanding(section) {
