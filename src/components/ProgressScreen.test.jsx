@@ -50,6 +50,31 @@ describe('ProgressScreen', () => {
     expect(html).toContain('<svg')
     expect(html).toContain(expectedText)
   })
+
+  it('shows the recommendation feedback summary', () => {
+    const html = renderToStaticMarkup(
+      <ProgressScreen
+        feedbackSummary={{
+          total: 4,
+          fit: 3,
+          notFit: 1,
+          mostCommonReason: 'Keine Zeit',
+        }}
+        summary={{
+          completedToday: 2,
+          completedThisWeek: 5,
+          streak: 2,
+        }}
+        totalToday={5}
+      />,
+    )
+
+    expect(html).toContain('Empfehlungsfeedback')
+    expect(html).toContain('Gespeichert')
+    expect(html).toContain('Hat gepasst')
+    expect(html).toContain('Eher nicht')
+    expect(html).toContain('Häufigster Grund: Keine Zeit')
+  })
 })
 
 function countOccurrences(value, search) {

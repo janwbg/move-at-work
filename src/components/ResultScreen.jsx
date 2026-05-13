@@ -15,9 +15,23 @@ import {
   recordCompletion,
   saveProgress,
 } from '../utils/progressStorage.js'
+import {
+  loadRecommendationFeedback,
+  recordRecommendationFeedback,
+  summarizeRecommendationFeedback,
+} from '../utils/recommendationFeedbackStorage.js'
 
 const FEEDBACK_URL =
   'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u'
+
+const feedbackReasons = [
+  'Zu auffällig',
+  'Keine Zeit',
+  'Zu anstrengend',
+  'Zu leicht',
+  'Setup hat nicht gepasst',
+  'Hat mich nicht angesprochen',
+]
 
 function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const normalizedAnswers = normalizeProfileAnswers(answers)
@@ -29,6 +43,9 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const [phaseWasChanged, setPhaseWasChanged] = useState(false)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
+  const [recommendationFeedback, setRecommendationFeedback] = useState(() =>
+    loadRecommendationFeedback(),
+  )
   const [successState, setSuccessState] = useState(null)
   const activeWorkPhase = phaseWasChanged ? selectedWorkPhase : defaultWorkPhase
   const activeWorkplace =
@@ -49,6 +66,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     () => calculateProgressSummary(progress),
     [progress],
   )
+  const feedbackSummary = useMemo(
+    () => summarizeRecommendationFeedback(recommendationFeedback),
+    [recommendationFeedback],
+  )
 
   function handleWorkPhaseChange(workPhase) {
     setSelectedWorkPhase(workPhase)
@@ -60,7 +81,9 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setWorkplaceWasChanged(true)
   }
 
-  function handleComplete(exerciseId, exerciseTitle) {
+  function handleComplete(section) {
+    const exerciseId = section.id
+
     if (completedIds.includes(exerciseId)) {
       return
     }
@@ -71,10 +94,24 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setProgress(nextProgress)
     saveProgress(nextProgress)
     setSuccessState({
+      feedbackContext: {
+        recommendationId: section.ruleId ?? section.id,
+        scheduleSectionId: section.id,
+        workplace: activeWorkplace,
+        currentWorkplace: activeWorkplace,
+        phase: activeWorkPhase,
+        currentPhase: activeWorkPhase,
+        workdayType: normalizedAnswers.situation,
+        intensity: section.intensity ?? normalizedAnswers.fitnessLevel,
+      },
       summary: nextSummary,
-      title: exerciseTitle,
+      title: section.title,
       totalToday: plan.dailySchedule.length,
     })
+  }
+
+  function handleRecommendationFeedback(feedbackEntry) {
+    setRecommendationFeedback(recordRecommendationFeedback(feedbackEntry))
   }
 
   return (
@@ -96,6 +133,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
       {activeTab === 'progress' && (
         <ProgressScreen
+          feedbackSummary={feedbackSummary}
           summary={progressSummary}
           totalToday={plan.dailySchedule.length}
         />
@@ -113,6 +151,8 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
       {successState && (
         <SuccessDialog
+          feedbackContext={successState.feedbackContext}
+          onFeedback={handleRecommendationFeedback}
           summary={successState.summary}
           title={successState.title}
           totalToday={successState.totalToday}
@@ -123,7 +163,29 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   )
 }
 
-function SuccessDialog({ onClose, summary, title, totalToday }) {
+export function SuccessDialog({
+  feedbackContext = {},
+  initialFeedback = '',
+  initialReason = '',
+  onClose,
+  onFeedback = () => {},
+  summary,
+  title,
+  totalToday,
+}) {
+  const [selectedFeedback, setSelectedFeedback] = useState(initialFeedback)
+  const [selectedReason, setSelectedReason] = useState(initialReason)
+
+  function submitFeedback(feedback, reason = '') {
+    setSelectedFeedback(feedback)
+    setSelectedReason(reason)
+    onFeedback({
+      ...feedbackContext,
+      feedback,
+      reason: reason || undefined,
+    })
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 px-4 py-5 backdrop-blur-sm sm:items-center">
       <div
@@ -156,6 +218,40 @@ function SuccessDialog({ onClose, summary, title, totalToday }) {
           Jede kurze Bewegung zählt.
         </div>
 
+        <section className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-white/10">
+          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+            Hat diese Empfehlung gerade gepasst?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <FeedbackButton
+              active={selectedFeedback === 'fit'}
+              onClick={() => submitFeedback('fit')}
+            >
+              Ja, hat gepasst
+            </FeedbackButton>
+            <FeedbackButton
+              active={selectedFeedback === 'not-fit'}
+              onClick={() => submitFeedback('not-fit')}
+            >
+              Eher nicht
+            </FeedbackButton>
+          </div>
+
+          {selectedFeedback === 'not-fit' && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {feedbackReasons.map((reason) => (
+                <FeedbackButton
+                  active={selectedReason === reason}
+                  key={reason}
+                  onClick={() => submitFeedback('not-fit', reason)}
+                >
+                  {reason}
+                </FeedbackButton>
+              ))}
+            </div>
+          )}
+        </section>
+
         <button
           type="button"
           onClick={onClose}
@@ -165,6 +261,23 @@ function SuccessDialog({ onClose, summary, title, totalToday }) {
         </button>
       </div>
     </div>
+  )
+}
+
+function FeedbackButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+        active
+          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

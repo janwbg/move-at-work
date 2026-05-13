@@ -215,7 +215,7 @@ function TodayScreen({
             <DailyScheduleCard
               completed={completedIds.includes(section.id)}
               key={section.id}
-              onComplete={() => onComplete(section.id, section.title)}
+              onComplete={() => onComplete(section)}
               section={section}
               stepNumber={index + 1}
             />
