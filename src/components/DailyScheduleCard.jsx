@@ -13,10 +13,19 @@ const movementTypeLabels = {
   walking_meeting: 'Walking-Meeting',
 }
 
-function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
-  const [expanded, setExpanded] = useState(false)
+function DailyScheduleCard({
+  completed,
+  initialExpanded = false,
+  onComplete,
+  section,
+  stepNumber,
+}) {
+  const [expanded, setExpanded] = useState(initialExpanded)
   const [remainingSeconds, setRemainingSeconds] = useState(getDurationSeconds(section.duration))
   const [timerState, setTimerState] = useState('idle')
+  const instructionSteps = Array.isArray(section.instructionSteps)
+    ? section.instructionSteps.filter(Boolean)
+    : []
 
   useEffect(() => {
     if (timerState !== 'running') {
@@ -114,6 +123,21 @@ function DailyScheduleCard({ completed, onComplete, section, stepNumber }) {
               Warum: {section.reason}
             </p>
           </div>
+
+          {instructionSteps.length > 0 && (
+            <section className="mt-4 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
+              <h4 className="text-sm font-extrabold text-slate-800 dark:text-white">
+                So geht&apos;s
+              </h4>
+              <ol className="mt-2 space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {instructionSteps.map((step) => (
+                  <li className="pl-1" key={step}>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           <div className="mt-4 flex flex-col gap-3 rounded-lg bg-slate-50 p-3 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-xl font-extrabold text-slate-900 dark:text-white">

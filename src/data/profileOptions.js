@@ -75,7 +75,7 @@ export const setupOptions = [
     description: 'Für langsames Gehen während geeigneter Aufgaben.',
   },
   {
-    id: 'exercise-space',
+    id: 'space',
     label: 'Platz für kurze Übungen',
     description:
       'Für Mobilisation und kurze Bewegungspausen neben dem Schreibtisch.',
@@ -192,10 +192,11 @@ const goalAliases = {
 
 const setupAliases = {
   'Balance Board': 'small-equipment',
-  Boden: 'exercise-space',
+  Boden: 'space',
   'Bürostuhl': 'no-equipment',
   Buerostuhl: 'no-equipment',
   Ergometer: 'small-equipment',
+  'exercise-space': 'space',
   Gymnastikball: 'small-equipment',
   'Hoehenverstellbarer Schreibtisch': 'standing-desk',
   'Höhenverstellbarer Schreibtisch': 'standing-desk',
@@ -204,7 +205,8 @@ const setupAliases = {
   'Kein besonderes Equipment': 'no-equipment',
   'Kein spezielles Equipment': 'no-equipment',
   'Kleines Bewegungsequipment': 'small-equipment',
-  'Platz fuer kurze Uebungen': 'exercise-space',
+  'Platz fuer kurze Uebungen': 'space',
+  'Platz für kurze Übungen': 'space',
   Sitzschreibtisch: 'no-equipment',
   'Sofa/Lounge': 'ergonomic-support',
   Stehschreibtisch: 'standing-desk',

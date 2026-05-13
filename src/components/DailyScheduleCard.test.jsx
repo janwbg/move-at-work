@@ -6,6 +6,11 @@ const section = {
   description: 'Kurz bewegen und Schultern lockern.',
   duration: '2 Minuten',
   id: 'morning-mobility',
+  instructionSteps: [
+    'Setze dich aufrecht hin.',
+    'Kreise die Schultern langsam nach hinten.',
+    'Atme ruhig weiter und löse die Schultern.',
+  ],
   movementType: 'mobilize',
   reason: 'Hilft beim Start in den Arbeitstag.',
   setup: 'Kein spezielles Equipment',
@@ -41,5 +46,36 @@ describe('DailyScheduleCard', () => {
 
     expect(html).toContain('Hilft beim Start in den Arbeitstag.')
     expect(html).toContain('Mobilisieren')
+  })
+
+  it('shows instruction steps in the expanded detail area', () => {
+    const html = renderToStaticMarkup(
+      <DailyScheduleCard
+        completed={false}
+        initialExpanded
+        onComplete={() => {}}
+        section={section}
+        stepNumber={1}
+      />,
+    )
+
+    expect(html).toContain('So geht')
+    expect(html).toContain('Kreise die Schultern langsam nach hinten.')
+    expect(html).toContain('<ol')
+  })
+
+  it('does not render an instruction section when steps are missing', () => {
+    const html = renderToStaticMarkup(
+      <DailyScheduleCard
+        completed={false}
+        initialExpanded
+        onComplete={() => {}}
+        section={{ ...section, instructionSteps: undefined }}
+        stepNumber={1}
+      />,
+    )
+
+    expect(html).toContain('Kurz bewegen und Schultern lockern.')
+    expect(html).not.toContain('So geht')
   })
 })

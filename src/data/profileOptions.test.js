@@ -26,7 +26,7 @@ describe('profileOptions', () => {
       'no-equipment',
       'standing-desk',
       'walking-pad',
-      'exercise-space',
+      'space',
       'small-equipment',
       'hallway',
       'stairs',

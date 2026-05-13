@@ -1,55 +1,138 @@
 import { describe, expect, it } from 'vitest'
 import { movementRecommendations } from './movementRecommendations.js'
 
+const requiredFields = [
+  'id',
+  'title',
+  'description',
+  'durationMinutes',
+  'movementType',
+  'intensity',
+  'suitableGoals',
+  'suitableWorkplaces',
+  'requiredSetup',
+  'suitablePhases',
+  'suitableWorkdayTypes',
+  'reason',
+  'explanation',
+  'similarityGroup',
+  'priority',
+  'bodyArea',
+  'position',
+  'visibilityLevel',
+  'instructionSteps',
+]
+
+const allowedMovementTypes = new Set([
+  'stand',
+  'walk',
+  'mobilize',
+  'stretch',
+  'activate',
+  'breathing',
+  'sit_reset',
+  'walking_meeting',
+])
+
+const allowedBodyAreas = new Set([
+  'neck',
+  'shoulders',
+  'upper-back',
+  'lower-back',
+  'spine',
+  'chest',
+  'hips',
+  'legs',
+  'calves',
+  'feet',
+  'wrists',
+  'eyes',
+  'breathing',
+  'whole-body',
+])
+
+const allowedPositions = new Set([
+  'sitting',
+  'standing',
+  'walking',
+  'desk',
+  'floor',
+  'stairs',
+  'mixed',
+])
+
+const allowedVisibilityLevels = new Set(['discreet', 'normal', 'visible'])
+
+const allowedRequiredSetup = new Set([
+  'no-equipment',
+  'standing-desk',
+  'walking-pad',
+  'space',
+  'small-equipment',
+  'hallway',
+  'stairs',
+  'ergonomic-support',
+])
+
 describe('movementRecommendations', () => {
-  it('contains a structured recommendation library', () => {
-    expect(movementRecommendations.length).toBeGreaterThanOrEqual(30)
+  it('contains exactly the 80 imported recommendations', () => {
+    expect(movementRecommendations).toHaveLength(80)
   })
 
-  it('defines the required fields for every recommendation', () => {
+  it('defines every required field for every recommendation', () => {
     for (const recommendation of movementRecommendations) {
+      for (const field of requiredFields) {
+        expect(recommendation[field], `${recommendation.id}.${field}`).toBeDefined()
+      }
+
       expect(recommendation.id).toBeTruthy()
       expect(recommendation.title).toBeTruthy()
       expect(recommendation.description).toBeTruthy()
       expect(recommendation.durationMinutes).toBeGreaterThan(0)
-      expect(recommendation.movementType).toBeTruthy()
+      expect(recommendation.priority).toBeGreaterThan(0)
       expect(recommendation.reason || recommendation.explanation).toBeTruthy()
       expect(Array.isArray(recommendation.requiredSetup)).toBe(true)
+      expect(Array.isArray(recommendation.suitableGoals)).toBe(true)
       expect(Array.isArray(recommendation.suitableWorkplaces)).toBe(true)
       expect(Array.isArray(recommendation.suitablePhases)).toBe(true)
+      expect(Array.isArray(recommendation.suitableWorkdayTypes)).toBe(true)
     }
   })
 
-  it('covers the core movement and setup categories', () => {
-    const movementTypes = new Set(
-      movementRecommendations.map((recommendation) => recommendation.movementType),
-    )
-    const requiredSetups = new Set(
-      movementRecommendations.flatMap((recommendation) => recommendation.requiredSetup),
-    )
+  it('uses only allowed movement, setup, body area, position and visibility values', () => {
+    for (const recommendation of movementRecommendations) {
+      expect(
+        allowedMovementTypes.has(recommendation.movementType),
+        recommendation.id,
+      ).toBe(true)
 
-    expect([...movementTypes]).toEqual(
-      expect.arrayContaining([
-        'stand',
-        'walk',
-        'mobilize',
-        'activate',
-        'breathing',
-        'eyes',
-        'sit_reset',
-        'walking_meeting',
-      ]),
-    )
-    expect([...requiredSetups]).toEqual(
-      expect.arrayContaining([
-        'standing-desk',
-        'walking-pad',
-        'exercise-space',
-        'small-equipment',
-        'ergonomic-support',
-        'hallway',
-        'stairs',
-      ]),
-    )
+      for (const setup of recommendation.requiredSetup) {
+        expect(setup).not.toBe('22')
+        expect(allowedRequiredSetup.has(setup), `${recommendation.id}.${setup}`).toBe(true)
+      }
+
+      for (const bodyArea of recommendation.bodyArea) {
+        expect(allowedBodyAreas.has(bodyArea), `${recommendation.id}.${bodyArea}`).toBe(true)
+      }
+
+      expect(allowedPositions.has(recommendation.position), recommendation.id).toBe(true)
+      expect(
+        allowedVisibilityLevels.has(recommendation.visibilityLevel),
+        recommendation.id,
+      ).toBe(true)
+    }
+  })
+
+  it('contains useful body areas and instruction steps', () => {
+    for (const recommendation of movementRecommendations) {
+      expect(Array.isArray(recommendation.bodyArea)).toBe(true)
+      expect(recommendation.bodyArea.length, recommendation.id).toBeGreaterThan(0)
+      expect(Array.isArray(recommendation.instructionSteps)).toBe(true)
+      expect(recommendation.instructionSteps.length, recommendation.id).toBeGreaterThanOrEqual(3)
+      expect(
+        recommendation.instructionSteps.every((step) => step.trim().length >= 12),
+        recommendation.id,
+      ).toBe(true)
+    }
   })
 })

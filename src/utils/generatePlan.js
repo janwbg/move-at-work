@@ -132,7 +132,7 @@ function getMatchingRecommendations(context) {
 
   return movementRecommendations.filter(
     (recommendation) =>
-      !recommendation.requiredSetup.length &&
+      hasNoSpecialSetup(recommendation.requiredSetup) &&
       recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
       allowedIntensities.gentle.includes(recommendation.intensity),
   )
@@ -141,7 +141,7 @@ function getMatchingRecommendations(context) {
 function isRecommendationAvailable(recommendation, context) {
   return (
     recommendation.suitableWorkplaces.includes(context.currentWorkplace) &&
-    recommendation.requiredSetup.every((setup) => context.setup.includes(setup)) &&
+    hasRequiredSetup(recommendation.requiredSetup, context.setup) &&
     allowedIntensities[context.fitnessLevel]?.includes(recommendation.intensity)
   )
 }
@@ -174,7 +174,7 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
   score += goalMovementTypeScores[context.goal]?.[recommendation.movementType] ?? 0
   score += phaseMovementTypeScores[context.currentPhase]?.[recommendation.movementType] ?? 0
   score += slotMovementTypeScores[slotRole]?.[recommendation.movementType] ?? 0
-  score += recommendation.requiredSetup.length * 12
+  score += getSpecialSetupCount(recommendation.requiredSetup) * 12
 
   if (context.currentWorkplace === 'homeoffice' && recommendation.id.startsWith('home-')) {
     score += 18
@@ -194,6 +194,14 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
 
   if (context.currentPhase === 'meeting' && recommendation.movementType === 'walk') {
     score -= context.setup.includes('walking-pad') || context.setup.includes('hallway') ? 0 : 24
+  }
+
+  if (context.currentPhase === 'meeting') {
+    score += getMeetingVisibilityScore(recommendation.visibilityLevel)
+  }
+
+  if (context.currentWorkplace === 'office' && context.currentPhase !== 'break') {
+    score += getOfficeVisibilityScore(recommendation.visibilityLevel)
   }
 
   score -= schedulePenalty(recommendation, schedule)
@@ -220,6 +228,22 @@ function schedulePenalty(recommendation, schedule) {
   if (schedule.some((item) => item.similarityGroup === recommendation.similarityGroup)) {
     penalty += 34
   }
+
+  if (
+    last?.position &&
+    recommendation.position &&
+    last.position === recommendation.position &&
+    recommendation.position !== 'mixed'
+  ) {
+    penalty += 18
+  }
+
+  const lastBodyAreaOverlap = countBodyAreaOverlap(last?.bodyArea, recommendation.bodyArea)
+  penalty += lastBodyAreaOverlap * 8
+
+  penalty += schedule.filter((item) =>
+    countBodyAreaOverlap(item.bodyArea, recommendation.bodyArea) > 0,
+  ).length * 4
 
   penalty += schedule.filter(
     (item) => item.movementType === recommendation.movementType,
@@ -401,29 +425,36 @@ function getRecommendationCount(context) {
 
 function toMovementCardData(recommendation) {
   return {
+    bodyArea: recommendation.bodyArea,
     description: recommendation.description,
     displaySetup: formatSetup(recommendation.requiredSetup),
     duration: formatDuration(recommendation.durationMinutes),
     explanation: recommendation.explanation,
     id: recommendation.id,
+    instructionSteps: recommendation.instructionSteps,
     intensity: intensityLabels[recommendation.intensity],
     movementType: recommendation.movementType,
+    position: recommendation.position,
     reason: recommendation.reason,
     ruleType: movementTypeLegacyTypes[recommendation.movementType],
     setup: formatSetup(recommendation.requiredSetup),
     title: recommendation.title,
     type: recommendation.movementType,
+    visibilityLevel: recommendation.visibilityLevel,
   }
 }
 
 function toScheduleSection(recommendation, timeLabel, context) {
   return {
+    bodyArea: recommendation.bodyArea,
     description: recommendation.description,
     duration: formatDuration(recommendation.durationMinutes),
     explanation: recommendation.explanation,
     id: `${timeLabel.toLowerCase().replaceAll(' ', '-')}-${recommendation.id}`,
+    instructionSteps: recommendation.instructionSteps,
     intensity: intensityLabels[recommendation.intensity],
     movementType: recommendation.movementType,
+    position: recommendation.position,
     reason: buildReason(recommendation, context),
     ruleId: recommendation.id,
     ruleType: movementTypeLegacyTypes[recommendation.movementType],
@@ -431,6 +462,7 @@ function toScheduleSection(recommendation, timeLabel, context) {
     similarityGroup: recommendation.similarityGroup,
     timeLabel,
     title: recommendation.title,
+    visibilityLevel: recommendation.visibilityLevel,
   }
 }
 
@@ -457,7 +489,7 @@ function buildReason(recommendation, context) {
 
   if (
     context.currentWorkplace === 'office' &&
-    !recommendation.requiredSetup.length &&
+    hasNoSpecialSetup(recommendation.requiredSetup) &&
     ['mobilize', 'sit_reset', 'stand', 'walk'].includes(recommendation.movementType)
   ) {
     return 'Im Büro lassen sich kurze Wechsel gut nutzen, um lange Sitzphasen zu unterbrechen.'
@@ -507,11 +539,60 @@ function buildSummary(context) {
 }
 
 function formatSetup(requiredSetup) {
-  if (!requiredSetup.length) {
+  if (hasNoSpecialSetup(requiredSetup)) {
     return 'Kein besonderes Equipment'
   }
 
   return requiredSetup.map((setup) => getOptionLabel(setupOptions, setup)).join(', ')
+}
+
+function hasRequiredSetup(requiredSetup, availableSetup) {
+  return requiredSetup.every(
+    (setup) => setup === 'no-equipment' || availableSetup.includes(setup),
+  )
+}
+
+function hasNoSpecialSetup(requiredSetup) {
+  return (
+    !requiredSetup.length ||
+    requiredSetup.every((setup) => setup === 'no-equipment')
+  )
+}
+
+function getSpecialSetupCount(requiredSetup) {
+  return requiredSetup.filter((setup) => setup !== 'no-equipment').length
+}
+
+function getMeetingVisibilityScore(visibilityLevel) {
+  if (visibilityLevel === 'discreet') {
+    return 18
+  }
+
+  if (visibilityLevel === 'normal') {
+    return 6
+  }
+
+  if (visibilityLevel === 'visible') {
+    return -22
+  }
+
+  return 0
+}
+
+function getOfficeVisibilityScore(visibilityLevel) {
+  if (visibilityLevel === 'discreet') {
+    return 4
+  }
+
+  if (visibilityLevel === 'visible') {
+    return -10
+  }
+
+  return 0
+}
+
+function countBodyAreaOverlap(firstBodyArea = [], secondBodyArea = []) {
+  return firstBodyArea.filter((bodyArea) => secondBodyArea.includes(bodyArea)).length
 }
 
 function formatDuration(durationMinutes) {
