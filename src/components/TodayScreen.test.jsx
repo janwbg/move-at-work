@@ -156,25 +156,64 @@ describe('TodayScreen', () => {
     expect(emptyHtml).toContain('0 Arbeitstage')
   })
 
-  it('shows the workplace used for the day', () => {
+  it('removes the separate workplace card and helper copy', () => {
     const html = renderTodayScreen({
       workplaces: ['office', 'homeoffice'],
     })
 
-    expect(html).toContain('Arbeitsort heute')
-    expect(html).toContain('Arbeitsort heute: Büro')
-    expect(html).toContain('Homeoffice')
-    expect(html).toContain('Diese Auswahl gilt nur für den heutigen Plan.')
+    expect(html).not.toContain('Arbeitsort heute:')
+    expect(html).not.toContain('Diese Auswahl gilt nur für den heutigen Plan.')
+    expect(countOccurrences(html, 'Arbeitsort heute')).toBe(2)
   })
 
-  it('shows the workplace switch only when both workplaces are active', () => {
-    const singleWorkplaceHtml = renderTodayScreen()
-    const twoWorkplaceHtml = renderTodayScreen({
+  it('shows the workplace switch inside the daily schedule header when both workplaces are active', () => {
+    const html = renderTodayScreen({
       workplaces: ['office', 'homeoffice'],
     })
 
-    expect(singleWorkplaceHtml).not.toContain('Homeoffice</button>')
-    expect(twoWorkplaceHtml).toContain('Homeoffice</button>')
+    expect(html).toContain('aria-label="Arbeitsort heute auswählen"')
+    expect(html).toContain('Büro</button>')
+    expect(html).toContain('Homeoffice</button>')
+    expect(html.indexOf('Deine Empfehlungen')).toBeLessThan(
+      html.indexOf('Arbeitsort heute'),
+    )
+    expect(html.indexOf('Arbeitsort heute')).toBeLessThan(
+      html.indexOf('2 offen · 0 erledigt'),
+    )
+  })
+
+  it('marks the active workplace semantically', () => {
+    const officeHtml = renderTodayScreen({
+      activeWorkplace: 'office',
+      workplaces: ['office', 'homeoffice'],
+    })
+    const homeofficeHtml = renderTodayScreen({
+      activeWorkplace: 'homeoffice',
+      workplaces: ['office', 'homeoffice'],
+    })
+
+    expect(officeHtml).toContain('aria-pressed="true"')
+    expect(officeHtml).toMatch(/aria-pressed="true"[^>]*>Büro<\/button>/)
+    expect(officeHtml).toMatch(/aria-pressed="false"[^>]*>Homeoffice<\/button>/)
+    expect(homeofficeHtml).toMatch(/aria-pressed="false"[^>]*>Büro<\/button>/)
+    expect(homeofficeHtml).toMatch(
+      /aria-pressed="true"[^>]*>Homeoffice<\/button>/,
+    )
+  })
+
+  it('does not show an unnecessary workplace switch for one active workplace', () => {
+    const html = renderTodayScreen()
+
+    expect(html).not.toContain('aria-label="Arbeitsort heute auswählen"')
+    expect(html).not.toContain('Homeoffice</button>')
+  })
+
+  it('keeps the daily schedule summary visible', () => {
+    const html = renderTodayScreen({
+      completedIds: ['morning-reset'],
+    })
+
+    expect(html).toContain('1 offen · 1 erledigt')
   })
 
   it('can render the exercise detail view for a selected schedule item', () => {

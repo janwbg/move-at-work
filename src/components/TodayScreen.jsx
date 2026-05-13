@@ -2,7 +2,7 @@ import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
-import { getOptionLabel, workplaceOptions } from '../data/profileOptions.js'
+import { workplaceOptions } from '../data/profileOptions.js'
 
 function TodayScreen({
   activeWorkplace,
@@ -26,7 +26,6 @@ function TodayScreen({
   )
   const openCount = openSections.length
   const completedCount = completedSections.length
-  const workplaceTodayLabel = getOptionLabel(workplaceOptions, activeWorkplace)
   const canSwitchWorkplace = workplaces?.length > 1
   const selectedDetailSection =
     selectedDetailIndex === null ? null : plan.dailySchedule[selectedDetailIndex]
@@ -52,48 +51,6 @@ function TodayScreen({
         </p>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-              Arbeitsort heute
-            </p>
-            <p className="mt-2 text-lg font-extrabold text-slate-950 dark:text-white">
-              Arbeitsort heute: {workplaceTodayLabel}
-            </p>
-          </div>
-          {canSwitchWorkplace && (
-            <div className="flex flex-wrap gap-2">
-              {workplaceOptions
-                .filter((workplace) => workplaces.includes(workplace.id))
-                .map((workplace) => {
-                  const isActive = activeWorkplace === workplace.id
-
-                  return (
-                    <button
-                      key={workplace.id}
-                      type="button"
-                      onClick={() => onWorkplaceChange(workplace.id)}
-                      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
-                        isActive
-                          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-                      }`}
-                    >
-                      {workplace.label}
-                    </button>
-                  )
-                })}
-            </div>
-          )}
-        </div>
-        {canSwitchWorkplace && (
-          <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Diese Auswahl gilt nur für den heutigen Plan.
-          </p>
-        )}
-      </section>
-
       <section className="grid gap-3 sm:grid-cols-[1.4fr_1fr]">
         <TodayProgressCard
           completedToday={completedCount}
@@ -103,7 +60,7 @@ function TodayScreen({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
               Tagesplan
@@ -111,6 +68,13 @@ function TodayScreen({
             <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
               Deine Empfehlungen
             </h2>
+            {canSwitchWorkplace && (
+              <WorkplaceSwitcher
+                activeWorkplace={activeWorkplace}
+                onWorkplaceChange={onWorkplaceChange}
+                workplaces={workplaces}
+              />
+            )}
           </div>
           <p className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
             {openCount} offen · {completedSections.length} erledigt
@@ -168,6 +132,43 @@ function TodayScreen({
           section={selectedDetailSection}
         />
       )}
+    </div>
+  )
+}
+
+function WorkplaceSwitcher({ activeWorkplace, onWorkplaceChange, workplaces }) {
+  return (
+    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+        Arbeitsort heute
+      </p>
+      <div
+        aria-label="Arbeitsort heute auswählen"
+        className="flex flex-wrap gap-2"
+        role="group"
+      >
+        {workplaceOptions
+          .filter((workplace) => workplaces.includes(workplace.id))
+          .map((workplace) => {
+            const isActive = activeWorkplace === workplace.id
+
+            return (
+              <button
+                key={workplace.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => onWorkplaceChange(workplace.id)}
+                className={`min-h-9 rounded-full px-3 py-2 text-sm font-bold transition ${
+                  isActive
+                    ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+                }`}
+              >
+                {workplace.label}
+              </button>
+            )
+          })}
+      </div>
     </div>
   )
 }
