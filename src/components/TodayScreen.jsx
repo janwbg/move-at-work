@@ -2,12 +2,13 @@ import { useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
+import { FEEDBACK_URL } from '../data/feedback.js'
 import { workplaceOptions } from '../data/profileOptions.js'
 
 function TodayScreen({
   activeWorkplace,
   completedIds,
-  feedbackUrl,
+  feedbackUrl = FEEDBACK_URL,
   initialDetailIndex = null,
   onComplete,
   onReplaceRecommendation = () => {},
@@ -102,9 +103,10 @@ function TodayScreen({
       </section>
 
       <p className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm leading-6 text-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 sm:p-5">
-        Hinweis: Move at work ersetzt keine medizinische Beratung. Wenn du
-        Schmerzen, Verletzungen oder gesundheitliche Einschränkungen hast, passe
-        die Bewegungen an oder frage medizinisches Fachpersonal.
+        Hinweis: Move at work ersetzt keine medizinische Beratung. Führe
+        Bewegungen nur aus, wenn sie sich für dich sicher und angenehm anfühlen.
+        Bei Schmerzen, Verletzungen oder gesundheitlichen Einschränkungen brich
+        die Übung ab oder frage medizinisches Fachpersonal.
       </p>
 
       <section className="rounded-2xl border border-dashed border-[#2563eb]/30 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10 sm:p-5">
@@ -115,7 +117,7 @@ function TodayScreen({
         <a
           href={feedbackUrl}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noreferrer"
           className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
         >
           Feedback geben

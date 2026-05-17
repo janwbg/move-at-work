@@ -95,6 +95,38 @@ describe('TodayScreen', () => {
     expect(html).toContain('Atem-Reset')
   })
 
+  it('shows the finalized medical notice unobtrusively', () => {
+    const html = renderTodayScreen()
+
+    expect(html).toContain(
+      'Hinweis: Move at work ersetzt keine medizinische Beratung.',
+    )
+    expect(html).toContain(
+      'Führe Bewegungen nur aus, wenn sie sich für dich sicher und angenehm anfühlen.',
+    )
+    expect(html).toContain(
+      'Bei Schmerzen, Verletzungen oder gesundheitlichen Einschränkungen brich die Übung ab oder frage medizinisches Fachpersonal.',
+    )
+    expect(html).toContain('text-sm leading-6 text-slate-500')
+  })
+
+  it('keeps the existing practice test feedback hint after the daily schedule', () => {
+    const html = renderTodayScreen({
+      feedbackUrl: 'https://example.com/feedback',
+    })
+
+    expect(html).toContain(
+      'Dein Feedback hilft dabei, die App besser an echte Arbeitstage anzupassen.',
+    )
+    expect(html).toContain('Feedback geben')
+    expect(html).toContain('href="https://example.com/feedback"')
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noreferrer"')
+    expect(html.indexOf('Deine Empfehlungen')).toBeLessThan(
+      html.indexOf('Dein Feedback hilft dabei'),
+    )
+  })
+
   it('does not render additional matching exercises outside the daily schedule', () => {
     const html = renderTodayScreen({
       plan: createPlan(5),

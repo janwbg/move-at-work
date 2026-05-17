@@ -30,6 +30,23 @@ describe('SettingsScreen', () => {
     expect(html).toContain('Dein Fortschritt bleibt erhalten.')
   })
 
+  it('shows the practice test feedback area', () => {
+    const html = renderToStaticMarkup(
+      <SettingsScreen
+        answers={answers}
+        feedbackUrl="https://example.com/feedback"
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+      />,
+    )
+
+    expect(html).toContain('Feedback zum Praxistest')
+    expect(html).toContain('Feedback geben')
+    expect(html).toContain('href="https://example.com/feedback"')
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noreferrer"')
+  })
+
   it('reopens onboarding only after confirmation', () => {
     const restart = vi.fn()
 

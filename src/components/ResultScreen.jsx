@@ -3,6 +3,7 @@ import BottomNavigation from './BottomNavigation.jsx'
 import ProgressScreen from './ProgressScreen.jsx'
 import SettingsScreen from './SettingsScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
+import { FEEDBACK_URL } from '../data/feedback.js'
 import {
   deriveWorkPhaseFromWorkday,
   normalizeProfileAnswers,
@@ -20,9 +21,6 @@ import {
   recordRecommendationFeedback,
   summarizeRecommendationFeedback,
 } from '../utils/recommendationFeedbackStorage.js'
-
-const FEEDBACK_URL =
-  'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=_skZ9LD3h02-6OjfshkMq0iBY0yGNnBAlYv4W7o8vNRUNVVEV0JYSVYzRlZFSUpXWVVHVUVNNktMTS4u'
 
 const feedbackReasons = [
   'Zu auffällig',
@@ -179,6 +177,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
       {activeTab === 'settings' && (
         <SettingsScreen
           answers={normalizedAnswers}
+          feedbackUrl={FEEDBACK_URL}
           onChangeAnswers={onChangeAnswers}
           onRestartOnboarding={onRestartOnboarding}
         />
@@ -189,6 +188,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
       {successState && (
         <SuccessDialog
           feedbackContext={successState.feedbackContext}
+          feedbackUrl={FEEDBACK_URL}
           onFeedback={handleRecommendationFeedback}
           summary={successState.summary}
           title={successState.title}
@@ -202,6 +202,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
 export function SuccessDialog({
   feedbackContext = {},
+  feedbackUrl = FEEDBACK_URL,
   initialFeedback = '',
   initialReason = '',
   onClose,
@@ -287,6 +288,21 @@ export function SuccessDialog({
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
+          <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+            War die Empfehlung hilfreich? Dein Feedback hilft, Move at work zu
+            verbessern.
+          </p>
+          <a
+            href={feedbackUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+          >
+            Feedback geben
+          </a>
         </section>
 
         <button

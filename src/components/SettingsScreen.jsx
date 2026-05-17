@@ -1,8 +1,14 @@
 import ProfileSettings from './ProfileSettings.jsx'
 import ReminderSettings from './ReminderSettings.jsx'
 import { confirmRestartOnboarding } from './settingsActions.js'
+import { FEEDBACK_URL } from '../data/feedback.js'
 
-function SettingsScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
+function SettingsScreen({
+  answers,
+  feedbackUrl = FEEDBACK_URL,
+  onChangeAnswers,
+  onRestartOnboarding,
+}) {
   function handleRestartOnboarding() {
     confirmRestartOnboarding(onRestartOnboarding)
   }
@@ -24,6 +30,25 @@ function SettingsScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
       <ProfileSettings answers={answers} onChange={onChangeAnswers} />
       <ReminderSettings />
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          Feedback
+        </p>
+        <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+          Feedback zum Praxistest
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          Hilf uns, Move at work besser an echte Arbeitstage anzupassen.
+        </p>
+        <a
+          href={feedbackUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex min-h-11 items-center rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+        >
+          Feedback geben
+        </a>
+      </section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
           Onboarding
