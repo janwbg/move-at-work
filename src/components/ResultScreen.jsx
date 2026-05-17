@@ -19,7 +19,6 @@ import {
 import {
   loadRecommendationFeedback,
   recordRecommendationFeedback,
-  summarizeRecommendationFeedback,
 } from '../utils/recommendationFeedbackStorage.js'
 
 const feedbackReasons = [
@@ -39,7 +38,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
-  const [recommendationFeedback, setRecommendationFeedback] = useState(() =>
+  const [, setRecommendationFeedback] = useState(() =>
     loadRecommendationFeedback(),
   )
   const [successState, setSuccessState] = useState(null)
@@ -68,11 +67,6 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     () => calculateProgressSummary(progress),
     [progress],
   )
-  const feedbackSummary = useMemo(
-    () => summarizeRecommendationFeedback(recommendationFeedback),
-    [recommendationFeedback],
-  )
-
   function handleWorkplaceChange(workplace) {
     setSelectedWorkplace(workplace)
     setWorkplaceWasChanged(true)
@@ -168,7 +162,6 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
       {activeTab === 'progress' && (
         <ProgressScreen
-          feedbackSummary={feedbackSummary}
           summary={progressSummary}
           totalToday={plan.dailySchedule.length}
         />
@@ -292,8 +285,9 @@ export function SuccessDialog({
 
         <section className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
           <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-            War die Empfehlung hilfreich? Dein Feedback hilft, Move at work zu
-            verbessern.
+            War die Empfehlung hilfreich? Du testest gerade eine frühe Version
+            von Move at work. Dein Feedback hilft dabei, die Empfehlungen
+            verständlicher, passender und alltagstauglicher zu machen.
           </p>
           <a
             href={feedbackUrl}

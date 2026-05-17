@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
+import { getTimerActionLabel, shouldAdvanceTimer } from './exerciseTimer.js'
 import { replacementReasonOptions } from './replacementReasons.js'
 
 const section = {
@@ -47,6 +48,60 @@ describe('ExerciseDetailView', () => {
     expect(runningHtml).toContain('Zurücksetzen')
   })
 
+  it('shows the start action before the timer has started', () => {
+    const html = renderDetail()
+
+    expect(html).toContain('Timer starten')
+    expect(html).not.toContain('Pause')
+    expect(html).not.toContain('Fortsetzen')
+  })
+
+  it('shows a pause action while the timer is running', () => {
+    const html = renderDetail({
+      initialRemainingSeconds: 90,
+      initialTimerState: 'running',
+    })
+
+    expect(html).toContain('1:30')
+    expect(html).toContain('Pause')
+    expect(html).not.toContain('Timer starten')
+    expect(html).not.toContain('Fortsetzen')
+  })
+
+  it('keeps the remaining time visible while the timer is paused', () => {
+    const html = renderDetail({
+      initialRemainingSeconds: 90,
+      initialTimerState: 'paused',
+    })
+
+    expect(html).toContain('1:30')
+    expect(html).toContain('Fortsetzen')
+    expect(html).not.toContain('Pause')
+    expect(html).not.toContain('Beendet')
+  })
+
+  it('maps timer states to the correct primary action labels', () => {
+    expect(getTimerActionLabel('idle')).toBe('Timer starten')
+    expect(getTimerActionLabel('running')).toBe('Pause')
+    expect(getTimerActionLabel('paused')).toBe('Fortsetzen')
+    expect(getTimerActionLabel('finished')).toBeNull()
+  })
+
+  it('advances the countdown only while the timer is running', () => {
+    expect(shouldAdvanceTimer({ completed: false, timerState: 'running' })).toBe(
+      true,
+    )
+    expect(shouldAdvanceTimer({ completed: false, timerState: 'paused' })).toBe(
+      false,
+    )
+    expect(shouldAdvanceTimer({ completed: false, timerState: 'idle' })).toBe(
+      false,
+    )
+    expect(shouldAdvanceTimer({ completed: true, timerState: 'running' })).toBe(
+      false,
+    )
+  })
+
   it('can render the same replacement reasons from the detail view', () => {
     const html = renderDetail({ initialReplaceDialogOpen: true })
 
@@ -73,6 +128,8 @@ describe('ExerciseDetailView', () => {
     })
 
     expect(html).not.toContain('Timer starten')
+    expect(html).not.toContain('Pause')
+    expect(html).not.toContain('Fortsetzen')
     expect(html).not.toContain('Als erledigt markieren')
     expect(html).not.toContain('Andere Empfehlung')
     expect(html).not.toContain('Warum möchtest du diese Empfehlung wechseln?')

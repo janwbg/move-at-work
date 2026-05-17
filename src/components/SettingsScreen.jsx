@@ -38,7 +38,9 @@ function SettingsScreen({
           Feedback zum Praxistest
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-          Hilf uns, Move at work besser an echte Arbeitstage anzupassen.
+          Du testest gerade eine frühe Version von Move at work. Dein Feedback
+          hilft dabei, die Empfehlungen verständlicher, passender und
+          alltagstauglicher zu machen.
         </p>
         <a
           href={feedbackUrl}

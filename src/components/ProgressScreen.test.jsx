@@ -51,7 +51,7 @@ describe('ProgressScreen', () => {
     expect(html).toContain(expectedText)
   })
 
-  it('shows the recommendation feedback summary', () => {
+  it('does not show the recommendation feedback summary', () => {
     const html = renderToStaticMarkup(
       <ProgressScreen
         feedbackSummary={{
@@ -69,11 +69,14 @@ describe('ProgressScreen', () => {
       />,
     )
 
-    expect(html).toContain('Empfehlungsfeedback')
-    expect(html).toContain('Gespeichert')
-    expect(html).toContain('Hat gepasst')
-    expect(html).toContain('Eher nicht')
-    expect(html).toContain('Häufigster Grund: Keine Zeit')
+    expect(html).not.toContain('Empfehlungsfeedback')
+    expect(html).not.toContain('Gespeichert')
+    expect(html).not.toContain('Hat gepasst')
+    expect(html).not.toContain('Eher nicht')
+    expect(html).not.toContain('Häufigster Grund')
+    expect(html).toContain('Heute erledigt')
+    expect(html).toContain('Diese Arbeitswoche')
+    expect(html).toContain('Arbeitsstreak')
   })
 })
 

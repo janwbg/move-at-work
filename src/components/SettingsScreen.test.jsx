@@ -41,6 +41,9 @@ describe('SettingsScreen', () => {
     )
 
     expect(html).toContain('Feedback zum Praxistest')
+    expect(html).toContain(
+      'Du testest gerade eine frühe Version von Move at work. Dein Feedback hilft dabei, die Empfehlungen verständlicher, passender und alltagstauglicher zu machen.',
+    )
     expect(html).toContain('Feedback geben')
     expect(html).toContain('href="https://example.com/feedback"')
     expect(html).toContain('target="_blank"')

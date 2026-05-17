@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { getTimerActionLabel, shouldAdvanceTimer } from './exerciseTimer.js'
 import { replacementReasonOptions } from './replacementReasons.js'
 
 function ExerciseDetailView({
   completed,
   initialReplaceDialogOpen = false,
+  initialRemainingSeconds,
   initialTimerState = 'idle',
   onBack,
   onComplete,
@@ -11,7 +13,9 @@ function ExerciseDetailView({
   section,
 }) {
   const durationSeconds = getDurationSeconds(section.duration)
-  const [remainingSeconds, setRemainingSeconds] = useState(durationSeconds)
+  const [remainingSeconds, setRemainingSeconds] = useState(
+    initialRemainingSeconds ?? durationSeconds,
+  )
   const [timerState, setTimerState] = useState(initialTimerState)
   const [replaceDialogOpen, setReplaceDialogOpen] = useState(
     initialReplaceDialogOpen,
@@ -21,9 +25,10 @@ function ExerciseDetailView({
     : []
   const shouldShowReset =
     !completed && (timerState !== 'idle' || remainingSeconds !== durationSeconds)
+  const timerActionLabel = getTimerActionLabel(timerState)
 
   useEffect(() => {
-    if (completed || timerState !== 'running') {
+    if (!shouldAdvanceTimer({ completed, timerState })) {
       return undefined
     }
 
@@ -41,6 +46,16 @@ function ExerciseDetailView({
 
     return () => window.clearInterval(interval)
   }, [completed, timerState])
+
+  function handleTimerAction() {
+    if (completed || timerState === 'finished') {
+      return
+    }
+
+    setTimerState((currentState) =>
+      currentState === 'running' ? 'paused' : 'running',
+    )
+  }
 
   function resetTimer() {
     if (completed) {
@@ -128,14 +143,15 @@ function ExerciseDetailView({
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                 {!completed && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => setTimerState('running')}
-                      disabled={timerState === 'running' || timerState === 'finished'}
-                      className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
-                    >
-                      Timer starten
-                    </button>
+                    {timerActionLabel && (
+                      <button
+                        type="button"
+                        onClick={handleTimerAction}
+                        className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+                      >
+                        {timerActionLabel}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={onComplete}

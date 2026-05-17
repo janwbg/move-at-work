@@ -36,6 +36,9 @@ describe('SuccessDialog', () => {
     )
 
     expect(html).toContain('War die Empfehlung hilfreich?')
+    expect(html).toContain(
+      'Dein Feedback hilft dabei, die Empfehlungen verständlicher, passender und alltagstauglicher zu machen.',
+    )
     expect(html).toContain('Feedback geben')
     expect(html).toContain('href="https://example.com/feedback"')
     expect(html).toContain('target="_blank"')

@@ -112,7 +112,8 @@ function TodayScreen({
       <section className="rounded-2xl border border-dashed border-[#2563eb]/30 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10 sm:p-5">
         <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
           Du testest gerade eine frühe Version von Move at work. Dein Feedback
-          hilft dabei, die App besser an echte Arbeitstage anzupassen.
+          hilft dabei, die Empfehlungen verständlicher, passender und
+          alltagstauglicher zu machen.
         </p>
         <a
           href={feedbackUrl}
