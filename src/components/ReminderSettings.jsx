@@ -26,13 +26,6 @@ const reminderModes = [
   },
 ]
 
-const reminderWindows = [
-  { id: 'morning', label: 'Vormittag' },
-  { id: 'lunch_transition', label: 'Mittag' },
-  { id: 'afternoon', label: 'Nachmittag' },
-  { id: 'wrap_up', label: 'Tagesabschluss' },
-]
-
 function ReminderSettings({
   currentDate = new Date(),
   initialSettings,
@@ -65,19 +58,6 @@ function ReminderSettings({
       mode,
       enabledWindows: reminderModeWindowDefaults[mode],
     }))
-  }
-
-  function handleWindowToggle(windowId) {
-    updateSettings((current) => {
-      const enabledWindows = current.enabledWindows.includes(windowId)
-        ? current.enabledWindows.filter((slotId) => slotId !== windowId)
-        : [...current.enabledWindows, windowId]
-
-      return {
-        ...current,
-        enabledWindows,
-      }
-    })
   }
 
   function handlePause(preset) {
@@ -151,28 +131,6 @@ function ReminderSettings({
         </div>
       </div>
 
-      <div className="mt-5">
-        <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-          Zeitfenster auswählen
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {reminderWindows.map((windowOption) => (
-            <label
-              className="flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 dark:border-white/10 dark:text-slate-200"
-              key={windowOption.id}
-            >
-              <input
-                checked={settings.enabledWindows.includes(windowOption.id)}
-                className="h-4 w-4 accent-[#2563eb]"
-                onChange={() => handleWindowToggle(windowOption.id)}
-                type="checkbox"
-              />
-              {windowOption.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
       <div className="mt-5 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -201,9 +159,6 @@ function ReminderSettings({
           </PauseButton>
           <PauseButton onClick={() => handlePause('today')}>
             Für heute pausieren
-          </PauseButton>
-          <PauseButton onClick={() => handlePause('tomorrow')}>
-            Bis morgen pausieren
           </PauseButton>
         </div>
       </div>

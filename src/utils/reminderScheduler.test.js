@@ -114,6 +114,31 @@ describe('reminderScheduler', () => {
       getReminderAt(14, 30, { completedIds: ['morning-id'] })?.slotId,
     ).toBe('afternoon')
   })
+
+  it('derives active windows from reminder mode even with old stored windows', () => {
+    expect(
+      getReminderAt(12, 30, {
+        completedIds: ['morning-id'],
+        settings: {
+          enabled: true,
+          mode: 'gentle',
+          enabledWindows: ['lunch_transition', 'wrap_up'],
+          quietUntil: null,
+        },
+      }),
+    ).toBeNull()
+    expect(
+      getReminderAt(12, 30, {
+        completedIds: ['morning-id'],
+        settings: {
+          enabled: true,
+          mode: 'active',
+          enabledWindows: ['morning'],
+          quietUntil: null,
+        },
+      })?.slotId,
+    ).toBe('lunch_transition')
+  })
 })
 
 function getReminderAt(hours, minutes, overrides = {}) {

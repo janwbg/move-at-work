@@ -64,11 +64,6 @@ export function normalizeReminderSettings(settings) {
   const mode = Object.hasOwn(reminderModeWindowDefaults, settings.mode)
     ? settings.mode
     : defaultReminderSettings.mode
-  const enabledWindows = Array.isArray(settings.enabledWindows)
-    ? settings.enabledWindows.filter((slotId, index, windows) =>
-        reminderWindowIds.includes(slotId) && windows.indexOf(slotId) === index,
-      )
-    : reminderModeWindowDefaults[mode]
   const quietUntil = isValidIsoDateTime(settings.quietUntil)
     ? settings.quietUntil
     : null
@@ -79,9 +74,7 @@ export function normalizeReminderSettings(settings) {
         ? settings.enabled
         : defaultReminderSettings.enabled,
     mode,
-    enabledWindows: enabledWindows.length
-      ? enabledWindows
-      : [...reminderModeWindowDefaults[mode]],
+    enabledWindows: [...reminderModeWindowDefaults[mode]],
     quietUntil,
   }
 }

@@ -26,13 +26,14 @@ describe('ReminderSettings', () => {
     expect(html).toMatch(/aria-pressed="true"[^>]*>.*Aktiv/s)
   })
 
-  it('renders selectable reminder windows', () => {
+  it('does not render manually selectable reminder windows', () => {
     const html = renderSettings()
 
-    expect(html).toContain('Vormittag')
-    expect(html).toContain('Mittag')
-    expect(html).toContain('Nachmittag')
-    expect(html).toContain('Tagesabschluss')
+    expect(html).not.toContain('Zeitfenster auswählen')
+    expect(html).not.toContain('Vormittag')
+    expect(html).not.toContain('Mittag')
+    expect(html).not.toContain('Nachmittag')
+    expect(html).not.toContain('Tagesabschluss')
   })
 
   it('shows the pause controls and pause status', () => {
@@ -46,7 +47,7 @@ describe('ReminderSettings', () => {
 
     expect(html).toContain('Für 1 Stunde pausieren')
     expect(html).toContain('Für heute pausieren')
-    expect(html).toContain('Bis morgen pausieren')
+    expect(html).not.toContain('Bis morgen pausieren')
     expect(html).toContain('Erinnerungen pausiert bis morgen.')
     expect(html).toContain('Pause beenden')
   })

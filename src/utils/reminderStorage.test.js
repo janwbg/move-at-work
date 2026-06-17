@@ -5,6 +5,8 @@ import {
   getQuietUntilForPreset,
   loadDailyReminderState,
   loadReminderSettings,
+  normalizeReminderSettings,
+  reminderModeWindowDefaults,
   reminderSettingsStorageKey,
   reminderStateStorageKey,
   saveDailyReminderState,
@@ -40,6 +42,38 @@ describe('reminderStorage helpers', () => {
       enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
       quietUntil: '2026-06-17T11:00:00.000Z',
     })
+  })
+
+  it.each([
+    ['gentle', reminderModeWindowDefaults.gentle],
+    ['standard', reminderModeWindowDefaults.standard],
+    ['active', reminderModeWindowDefaults.active],
+  ])('derives reminder windows from %s mode', (mode, expectedWindows) => {
+    expect(
+      normalizeReminderSettings({
+        enabled: true,
+        mode,
+        enabledWindows: ['wrap_up'],
+        quietUntil: null,
+      }).enabledWindows,
+    ).toEqual(expectedWindows)
+  })
+
+  it('normalizes old stored enabled windows to the selected mode', () => {
+    window.localStorage.setItem(
+      reminderSettingsStorageKey,
+      JSON.stringify({
+        enabled: true,
+        mode: 'standard',
+        enabledWindows: ['morning', 'lunch_transition', 'wrap_up'],
+        quietUntil: null,
+      }),
+    )
+
+    expect(loadReminderSettings().enabledWindows).toEqual([
+      'morning',
+      'afternoon',
+    ])
   })
 
   it('falls back to defaults for invalid reminder settings', () => {
