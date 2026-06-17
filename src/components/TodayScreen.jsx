@@ -5,7 +5,16 @@ import { ProgressRing } from './ProgressSummary.jsx'
 import { FEEDBACK_URL } from '../data/feedback.js'
 import { workplaceOptions } from '../data/profileOptions.js'
 
+const todayWorkdayOptions = [
+  { id: 'focus-heavy', label: 'Fokusarbeit' },
+  { id: 'meeting-heavy', label: 'Meetings' },
+  { id: 'mixed-day', label: 'Gemischt' },
+  { id: 'study-day', label: 'Lernen' },
+  { id: 'tight-schedule', label: 'Wenig Zeit' },
+]
+
 function TodayScreen({
+  activeWorkdayType = 'mixed-day',
   activeWorkplace,
   completedIds,
   feedbackUrl = FEEDBACK_URL,
@@ -13,6 +22,7 @@ function TodayScreen({
   onComplete,
   onReplaceRecommendation = () => {},
   onWorkplaceChange,
+  onWorkdayTypeChange = () => {},
   plan,
   progressSummary,
   replacementMessage = '',
@@ -76,6 +86,10 @@ function TodayScreen({
                 workplaces={workplaces}
               />
             )}
+            <WorkdayTypeSwitcher
+              activeWorkdayType={activeWorkdayType}
+              onWorkdayTypeChange={onWorkdayTypeChange}
+            />
           </div>
           <p className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
             {openCount} offen · {completedSections.length} erledigt
@@ -136,6 +150,41 @@ function TodayScreen({
           section={selectedDetailSection}
         />
       )}
+    </div>
+  )
+}
+
+function WorkdayTypeSwitcher({ activeWorkdayType, onWorkdayTypeChange }) {
+  return (
+    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+        Heute eher
+      </p>
+      <div
+        aria-label="Arbeits- oder Lerntag heute auswählen"
+        className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
+        role="group"
+      >
+        {todayWorkdayOptions.map((workdayType) => {
+          const isActive = activeWorkdayType === workdayType.id
+
+          return (
+            <button
+              key={workdayType.id}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => onWorkdayTypeChange(workdayType.id)}
+              className={`min-h-9 shrink-0 rounded-full px-3 py-2 text-sm font-bold transition ${
+                isActive
+                  ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+              }`}
+            >
+              {workdayType.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -61,6 +61,7 @@ function renderTodayScreen(props = {}) {
       onComplete={() => {}}
       onReplaceRecommendation={() => {}}
       onWorkplaceChange={() => {}}
+      onWorkdayTypeChange={() => {}}
       plan={plan}
       progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
       workplaces={['office']}
@@ -212,6 +213,21 @@ describe('TodayScreen', () => {
     expect(html.indexOf('Arbeitsort heute')).toBeLessThan(
       html.indexOf('2 offen · 0 erledigt'),
     )
+  })
+
+  it('shows the current work or study day switch in the daily schedule header', () => {
+    const html = renderTodayScreen({
+      activeWorkdayType: 'study-day',
+    })
+
+    expect(html).toContain('Heute eher')
+    expect(html).toContain('aria-label="Arbeits- oder Lerntag heute auswählen"')
+    expect(html).toContain('Fokusarbeit</button>')
+    expect(html).toContain('Meetings</button>')
+    expect(html).toContain('Gemischt</button>')
+    expect(html).toContain('Lernen</button>')
+    expect(html).toContain('Wenig Zeit</button>')
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Lernen<\/button>/)
   })
 
   it('marks the active workplace semantically', () => {

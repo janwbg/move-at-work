@@ -4,6 +4,7 @@ import {
   getOptionLabel,
   goalOptions,
   intensityOptions,
+  isValidWorkdayType,
   normalizeProfileAnswers,
   setupOptions,
   workplaceOptions,
@@ -245,6 +246,7 @@ export function replaceRecommendationInPlan({
   profile = {},
   currentWorkplace,
   currentPhase,
+  currentWorkdayType,
   reason = '',
 }) {
   const currentSchedule = Array.isArray(plan?.dailySchedule)
@@ -265,6 +267,7 @@ export function replaceRecommendationInPlan({
     ...profile,
     currentPhase,
     currentWorkplace,
+    currentWorkdayType,
   })
   const replacement = pickReplacementRecommendation({
     context,
@@ -306,8 +309,11 @@ export function replaceRecommendationInPlan({
 
 function normalizeContext(answers) {
   const profile = normalizeProfileAnswers(answers)
+  const currentWorkdayType = isValidWorkdayType(answers?.currentWorkdayType)
+    ? answers.currentWorkdayType
+    : profile.situation
   const currentPhase = normalizeWorkPhase(
-    answers?.currentPhase ?? deriveWorkPhaseFromWorkday(profile.situation),
+    answers?.currentPhase ?? deriveWorkPhaseFromWorkday(currentWorkdayType),
   )
   const requestedWorkplace = answers?.currentWorkplace ?? profile.currentWorkplace
   const currentWorkplace = profile.workplaces.includes(requestedWorkplace)
@@ -317,6 +323,7 @@ function normalizeContext(answers) {
 
   return {
     ...profile,
+    situation: currentWorkdayType,
     currentPhase,
     currentWorkplace,
     setup,

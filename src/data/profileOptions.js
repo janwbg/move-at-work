@@ -392,8 +392,16 @@ export function deriveWorkPhaseFromWorkday(workday) {
   return 'between-tasks'
 }
 
+export function isValidWorkdayType(workdayType) {
+  return validWorkdayIds.has(workdayType)
+}
+
 export function getOptionLabel(options, id) {
   return options.find((option) => option.id === id)?.label ?? id
+}
+
+export function normalizeWorkdayType(workdayType) {
+  return normalizeWorkday(workdayType)
 }
 
 export function getEffectiveWorkplace(profileOrWorkplace) {

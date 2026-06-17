@@ -309,6 +309,57 @@ describe('generatePlan', () => {
     expect(countSpecialSetupSections(plan.dailySchedule)).toBe(0)
   })
 
+  it('uses currentWorkdayType over the stored profile workday type', () => {
+    const profile = {
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'meeting-heavy',
+    }
+    const plan = generatePlan({
+      ...profile,
+      currentWorkdayType: 'study-day',
+    })
+
+    expect(profile.situation).toBe('meeting-heavy')
+    expect(plan.summary).toContain('lern- oder studientag')
+    expect(
+      plan.dailySchedule.some((section) =>
+        section.bodyArea.some((bodyArea) =>
+          ['eyes', 'neck', 'shoulders', 'upper-back'].includes(bodyArea),
+        ),
+      ),
+    ).toBe(true)
+  })
+
+  it('falls back to the profile workday type when currentWorkdayType is invalid', () => {
+    const plan = generatePlan({
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'focus-heavy',
+      currentWorkdayType: 'does-not-exist',
+    })
+
+    expect(plan.summary).toContain('viel fokusarbeit')
+  })
+
+  it('uses currentWorkdayType for low-time recommendations', () => {
+    const plan = generatePlan({
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+      currentWorkdayType: 'tight-schedule',
+    })
+
+    expect(plan.summary).toContain('wenig zeit / enge taktung')
+    expect(
+      plan.dailySchedule.filter((section) => getLongestDuration(section.duration) <= 3)
+        .length,
+    ).toBeGreaterThanOrEqual(4)
+  })
+
   it('allows fitting walking or standing recommendations for calls and meetings', () => {
     const meetingPlan = generatePlan({
       currentPhase: 'meeting',

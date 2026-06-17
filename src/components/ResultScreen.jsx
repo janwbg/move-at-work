@@ -1,13 +1,19 @@
 import { useMemo, useState } from 'react'
 import BottomNavigation from './BottomNavigation.jsx'
 import ProgressScreen from './ProgressScreen.jsx'
+import {
+  createRecommendationFeedbackContext,
+  preserveCompletedSections,
+} from './resultScreenHelpers.js'
 import SettingsScreen from './SettingsScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
 import { FEEDBACK_URL } from '../data/feedback.js'
 import {
   deriveWorkPhaseFromWorkday,
+  normalizeWorkdayType,
   normalizeProfileAnswers,
 } from '../data/profileOptions.js'
+import { loadDailyContext, saveDailyContext } from '../utils/dailyContextStorage.js'
 import { generatePlan, replaceRecommendationInPlan } from '../utils/generatePlan.js'
 import {
   calculateProgressSummary,
@@ -33,7 +39,11 @@ const feedbackReasons = [
 function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const normalizedAnswers = useMemo(() => normalizeProfileAnswers(answers), [answers])
   const [activeTab, setActiveTab] = useState('today')
-  const defaultWorkPhase = deriveWorkPhaseFromWorkday(normalizedAnswers.situation)
+  const [selectedWorkdayType, setSelectedWorkdayType] = useState(
+    () => loadDailyContext()?.currentWorkdayType ?? normalizedAnswers.situation,
+  )
+  const activeWorkdayType = normalizeWorkdayType(selectedWorkdayType)
+  const activeWorkPhase = deriveWorkPhaseFromWorkday(activeWorkdayType)
   const defaultWorkplace = normalizedAnswers.defaultWorkplace
   const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
@@ -44,7 +54,6 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const [successState, setSuccessState] = useState(null)
   const [planOverride, setPlanOverride] = useState(null)
   const [replacementMessage, setReplacementMessage] = useState(null)
-  const activeWorkPhase = defaultWorkPhase
   const activeWorkplace =
     workplaceWasChanged && normalizedAnswers.workplaces.includes(selectedWorkplace)
       ? selectedWorkplace
@@ -55,10 +64,16 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
         ...normalizedAnswers,
         currentPhase: activeWorkPhase,
         currentWorkplace: activeWorkplace,
+        currentWorkdayType: activeWorkdayType,
       }),
-    [activeWorkPhase, activeWorkplace, normalizedAnswers],
+    [activeWorkPhase, activeWorkdayType, activeWorkplace, normalizedAnswers],
   )
-  const planContextKey = `${activeWorkPhase}:${activeWorkplace}:${JSON.stringify(normalizedAnswers)}`
+  const planContextKey = createPlanContextKey({
+    activeWorkPhase,
+    activeWorkdayType,
+    activeWorkplace,
+    normalizedAnswers,
+  })
   const plan = planOverride?.contextKey === planContextKey ? planOverride.plan : basePlan
   const currentReplacementMessage =
     replacementMessage?.contextKey === planContextKey ? replacementMessage.message : ''
@@ -72,6 +87,37 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setWorkplaceWasChanged(true)
   }
 
+  function handleWorkdayTypeChange(workdayType) {
+    const nextWorkdayType = normalizeWorkdayType(workdayType)
+    const nextWorkPhase = deriveWorkPhaseFromWorkday(nextWorkdayType)
+    const nextPlan = generatePlan({
+      ...normalizedAnswers,
+      currentPhase: nextWorkPhase,
+      currentWorkplace: activeWorkplace,
+      currentWorkdayType: nextWorkdayType,
+    })
+    const nextContextKey = createPlanContextKey({
+      activeWorkPhase: nextWorkPhase,
+      activeWorkdayType: nextWorkdayType,
+      activeWorkplace,
+      normalizedAnswers,
+    })
+
+    setSelectedWorkdayType(nextWorkdayType)
+    saveDailyContext({ currentWorkdayType: nextWorkdayType })
+    setReplacementMessage(null)
+
+    if (!completedIds.length) {
+      setPlanOverride(null)
+      return
+    }
+
+    setPlanOverride({
+      contextKey: nextContextKey,
+      plan: preserveCompletedSections(plan, nextPlan, completedIds),
+    })
+  }
+
   function handleReplaceRecommendation(indexToReplace, reason) {
     const originalSection = plan.dailySchedule[indexToReplace]
     const result = replaceRecommendationInPlan({
@@ -80,6 +126,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
       profile: normalizedAnswers,
       currentWorkplace: activeWorkplace,
       currentPhase: activeWorkPhase,
+      currentWorkdayType: activeWorkdayType,
       reason,
     })
 
@@ -95,17 +142,16 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setReplacementMessage(null)
     setRecommendationFeedback(
       recordRecommendationFeedback({
-        recommendationId: originalSection.ruleId ?? originalSection.id,
+        ...createRecommendationFeedbackContext({
+          activeWorkPhase,
+          activeWorkdayType,
+          activeWorkplace,
+          fallbackIntensity: normalizedAnswers.fitnessLevel,
+          section: originalSection,
+        }),
         replacementRecommendationId:
           result.replacement.ruleId ?? result.replacement.id,
         slotId: originalSection.slotId,
-        scheduleSectionId: originalSection.id,
-        workplace: activeWorkplace,
-        currentWorkplace: activeWorkplace,
-        phase: activeWorkPhase,
-        currentPhase: activeWorkPhase,
-        workdayType: normalizedAnswers.situation,
-        intensity: originalSection.intensity ?? normalizedAnswers.fitnessLevel,
         feedback: 'not-fit',
         reason,
         replacementReason: reason,
@@ -127,16 +173,13 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setProgress(nextProgress)
     saveProgress(nextProgress)
     setSuccessState({
-      feedbackContext: {
-        recommendationId: section.ruleId ?? section.id,
-        scheduleSectionId: section.id,
-        workplace: activeWorkplace,
-        currentWorkplace: activeWorkplace,
-        phase: activeWorkPhase,
-        currentPhase: activeWorkPhase,
-        workdayType: normalizedAnswers.situation,
-        intensity: section.intensity ?? normalizedAnswers.fitnessLevel,
-      },
+      feedbackContext: createRecommendationFeedbackContext({
+        activeWorkPhase,
+        activeWorkdayType,
+        activeWorkplace,
+        fallbackIntensity: normalizedAnswers.fitnessLevel,
+        section,
+      }),
       summary: nextSummary,
       title: section.title,
       totalToday: plan.dailySchedule.length,
@@ -157,8 +200,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
           plan={plan}
           progressSummary={progressSummary}
           activeWorkplace={activeWorkplace}
+          activeWorkdayType={activeWorkdayType}
           onReplaceRecommendation={handleReplaceRecommendation}
           onWorkplaceChange={handleWorkplaceChange}
+          onWorkdayTypeChange={handleWorkdayTypeChange}
           replacementMessage={currentReplacementMessage}
           workplaces={normalizedAnswers.workplaces}
         />
@@ -195,6 +240,15 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
       )}
     </section>
   )
+}
+
+function createPlanContextKey({
+  activeWorkPhase,
+  activeWorkdayType,
+  activeWorkplace,
+  normalizedAnswers,
+}) {
+  return `${activeWorkPhase}:${activeWorkdayType}:${activeWorkplace}:${JSON.stringify(normalizedAnswers)}`
 }
 
 export function SuccessDialog({
