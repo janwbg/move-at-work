@@ -40,6 +40,35 @@ export function getReminderCopy({
   }
 }
 
+export function getReminderNotificationCopy({
+  activeWorkdayType = 'mixed-day',
+} = {}) {
+  const copies = {
+    'focus-heavy': {
+      title: 'Kurzer Fokus-Reset?',
+      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzuarbeiten.',
+    },
+    'meeting-heavy': {
+      title: 'Zwischen zwei Terminen?',
+      body: 'Ein kurzer, diskreter Impuls wartet auf dich.',
+    },
+    'mixed-day': {
+      title: 'Kurzer Wechsel gefällig?',
+      body: 'Dein nächster Bewegungsimpuls ist noch offen.',
+    },
+    'study-day': {
+      title: 'Kurzer Lern-Reset?',
+      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzulernen.',
+    },
+    'tight-schedule': {
+      title: '60 Sekunden reichen.',
+      body: 'Ein kurzer Microbreak ist noch offen.',
+    },
+  }
+
+  return copies[activeWorkdayType] ?? copies['mixed-day']
+}
+
 export function applyReminderBannerAction({
   action,
   now = new Date(),

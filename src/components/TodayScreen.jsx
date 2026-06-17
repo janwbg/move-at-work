@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
@@ -6,6 +6,7 @@ import {
   applyReminderBannerAction,
   getReminderCopy,
 } from './reminderBannerHelpers.js'
+import { maybeShowDueReminderNotification } from './reminderNotificationHelpers.js'
 import { FEEDBACK_URL } from '../data/feedback.js'
 import { workplaceOptions } from '../data/profileOptions.js'
 import { getDueReminder } from '../utils/reminderScheduler.js'
@@ -50,6 +51,7 @@ function TodayScreen({
   const [reminderState, setReminderState] = useState(
     () => initialReminderState ?? loadDailyReminderState(now),
   )
+  const shownSystemNotificationKeysRef = useRef(new Set())
   const openSections = plan.dailySchedule.filter(
     (section) => !completedIds.includes(section.id),
   )
@@ -68,6 +70,10 @@ function TodayScreen({
     settings: reminderSettings,
     state: reminderState,
   })
+  const updateReminderState = useCallback((nextState) => {
+    setReminderState(nextState)
+    saveDailyReminderState(nextState, now)
+  }, [now])
 
   useEffect(() => {
     if (currentDate) {
@@ -79,14 +85,49 @@ function TodayScreen({
     return () => window.clearInterval(interval)
   }, [currentDate])
 
+  useEffect(() => {
+    const notificationKey = dueReminder
+      ? `${now.toDateString()}:${dueReminder.slotId}`
+      : ''
+
+    if (
+      notificationKey &&
+      shownSystemNotificationKeysRef.current.has(notificationKey)
+    ) {
+      return undefined
+    }
+
+    const nextReminderState = maybeShowDueReminderNotification({
+      activeWorkdayType,
+      documentRef: typeof document === 'undefined' ? undefined : document,
+      dueReminder,
+      now,
+      settings: reminderSettings,
+      state: reminderState,
+    })
+
+    if (nextReminderState) {
+      shownSystemNotificationKeysRef.current.add(notificationKey)
+      const timeout = window.setTimeout(() => {
+        updateReminderState(nextReminderState)
+      }, 0)
+
+      return () => window.clearTimeout(timeout)
+    }
+
+    return undefined
+  }, [
+    activeWorkdayType,
+    dueReminder,
+    now,
+    reminderSettings,
+    reminderState,
+    updateReminderState,
+  ])
+
   function completeFromDetail(section) {
     setSelectedDetailIndex(null)
     onComplete(section)
-  }
-
-  function updateReminderState(nextState) {
-    setReminderState(nextState)
-    saveDailyReminderState(nextState, now)
   }
 
   function handleReminderAction(action) {

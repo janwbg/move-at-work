@@ -21,6 +21,7 @@ const defaultReminderSettings = {
   mode: 'standard',
   enabledWindows: reminderModeWindowDefaults.standard,
   quietUntil: null,
+  systemNotificationsEnabled: false,
 }
 
 export function getDefaultReminderSettings() {
@@ -76,6 +77,10 @@ export function normalizeReminderSettings(settings) {
     mode,
     enabledWindows: [...reminderModeWindowDefaults[mode]],
     quietUntil,
+    systemNotificationsEnabled:
+      typeof settings.systemNotificationsEnabled === 'boolean'
+        ? settings.systemNotificationsEnabled
+        : defaultReminderSettings.systemNotificationsEnabled,
   }
 }
 

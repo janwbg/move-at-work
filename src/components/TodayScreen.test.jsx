@@ -1,11 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import TodayScreen from './TodayScreen.jsx'
 import {
   applyReminderBannerAction,
   getReminderCopy,
 } from './reminderBannerHelpers.js'
+import { maybeShowDueReminderNotification } from './reminderNotificationHelpers.js'
 import { createDailyReminderState } from '../utils/reminderStorage.js'
+import { getDueReminder } from '../utils/reminderScheduler.js'
 
 const baseSections = [
   {
@@ -415,6 +417,123 @@ describe('TodayScreen', () => {
       }).contextHint,
     ).toBe('Nutze den kurzen Raumwechsel.')
   })
+
+  it('uses only the in-app banner when the app is visible', () => {
+    const NotificationApi = vi.fn()
+
+    expect(
+      maybeShowDueReminderNotification({
+        activeWorkdayType: 'mixed-day',
+        documentRef: { visibilityState: 'visible' },
+        dueReminder: createDueReminder(),
+        notificationApi: NotificationApi,
+        now: morningNow(),
+        permission: 'granted',
+        settings: enabledSystemReminderSettings(),
+        state: createDailyReminderState(morningNow()),
+      }),
+    ).toBeNull()
+    expect(NotificationApi).not.toHaveBeenCalled()
+  })
+
+  it('shows a system notification for a due reminder while the app is hidden', () => {
+    const NotificationApi = vi.fn(function NotificationMock(title, options) {
+      this.title = title
+      this.options = options
+    })
+    const nextState = maybeShowDueReminderNotification({
+      activeWorkdayType: 'focus-heavy',
+      documentRef: { visibilityState: 'hidden' },
+      dueReminder: createDueReminder(),
+      notificationApi: NotificationApi,
+      now: morningNow(),
+      permission: 'granted',
+      settings: enabledSystemReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+
+    expect(NotificationApi).toHaveBeenCalledWith('Kurzer Fokus-Reset?', {
+      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzuarbeiten.',
+      tag: 'move-at-work-2026-06-17-morning',
+    })
+    expect(nextState.lastReminderShownAt.morning).toBe(morningNow().toISOString())
+  })
+
+  it.each([
+    ['denied permission', 'denied', enabledSystemReminderSettings()],
+    [
+      'disabled reminders',
+      'granted',
+      { ...enabledSystemReminderSettings(), enabled: false },
+    ],
+    [
+      'disabled system notifications',
+      'granted',
+      { ...enabledSystemReminderSettings(), systemNotificationsEnabled: false },
+    ],
+  ])('does not show system notifications for %s', (_, permission, settings) => {
+    const NotificationApi = vi.fn()
+
+    expect(
+      maybeShowDueReminderNotification({
+        activeWorkdayType: 'mixed-day',
+        documentRef: { visibilityState: 'hidden' },
+        dueReminder: createDueReminder(),
+        notificationApi: NotificationApi,
+        now: morningNow(),
+        permission,
+        settings,
+        state: createDailyReminderState(morningNow()),
+      }),
+    ).toBeNull()
+    expect(NotificationApi).not.toHaveBeenCalled()
+  })
+
+  it('does not create a system notification while do-not-disturb is active', () => {
+    const settings = {
+      ...enabledSystemReminderSettings(),
+      quietUntil: new Date(2026, 5, 17, 11, 0).toISOString(),
+    }
+    const dueReminder = getDueReminder({
+      completedIds: [],
+      now: morningNow(),
+      plan,
+      settings,
+      state: createDailyReminderState(morningNow()),
+    })
+
+    expect(dueReminder).toBeNull()
+  })
+
+  it('does not create a system notification for completed slots', () => {
+    const dueReminder = getDueReminder({
+      completedIds: ['morning-reset'],
+      now: morningNow(),
+      plan,
+      settings: enabledSystemReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+
+    expect(dueReminder).toBeNull()
+  })
+
+  it('does not create duplicate system notifications for a recently shown slot', () => {
+    const state = {
+      ...createDailyReminderState(morningNow()),
+      lastReminderShownAt: {
+        morning: new Date(2026, 5, 17, 9, 40).toISOString(),
+      },
+    }
+    const dueReminder = getDueReminder({
+      completedIds: [],
+      now: morningNow(),
+      plan,
+      settings: enabledSystemReminderSettings(),
+      state,
+    })
+
+    expect(dueReminder).toBeNull()
+  })
 })
 
 function countOccurrences(value, search) {
@@ -436,6 +555,14 @@ function enabledReminderSettings() {
     mode: 'standard',
     enabledWindows: ['morning', 'afternoon'],
     quietUntil: null,
+    systemNotificationsEnabled: false,
+  }
+}
+
+function enabledSystemReminderSettings() {
+  return {
+    ...enabledReminderSettings(),
+    systemNotificationsEnabled: true,
   }
 }
 

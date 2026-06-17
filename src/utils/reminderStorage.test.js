@@ -34,6 +34,7 @@ describe('reminderStorage helpers', () => {
       mode: 'active',
       enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
       quietUntil: '2026-06-17T11:00:00.000Z',
+      systemNotificationsEnabled: true,
     })
 
     expect(loadReminderSettings()).toEqual({
@@ -41,6 +42,7 @@ describe('reminderStorage helpers', () => {
       mode: 'active',
       enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
       quietUntil: '2026-06-17T11:00:00.000Z',
+      systemNotificationsEnabled: true,
     })
   })
 
@@ -74,6 +76,17 @@ describe('reminderStorage helpers', () => {
       'morning',
       'afternoon',
     ])
+  })
+
+  it('normalizes old settings without system notification preference', () => {
+    expect(
+      normalizeReminderSettings({
+        enabled: true,
+        mode: 'standard',
+        enabledWindows: ['morning'],
+        quietUntil: null,
+      }).systemNotificationsEnabled,
+    ).toBe(false)
   })
 
   it('falls back to defaults for invalid reminder settings', () => {

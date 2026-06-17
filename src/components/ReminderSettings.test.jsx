@@ -52,6 +52,71 @@ describe('ReminderSettings', () => {
     expect(html).toContain('Pause beenden')
   })
 
+  it('hides system notification settings while reminders are disabled', () => {
+    const html = renderSettings({
+      enabled: false,
+    })
+
+    expect(html).not.toContain('System-Benachrichtigungen')
+  })
+
+  it('shows system notification permission action when permission is default', () => {
+    const html = renderSettings(
+      {
+        enabled: true,
+      },
+      new Date(2026, 5, 17, 9, 30),
+      { notificationPermission: 'default' },
+    )
+
+    expect(html).toContain('System-Benachrichtigungen')
+    expect(html).toContain('Benachrichtigungen erlauben')
+    expect(html).toContain('Dein Browser fragt dich anschließend nach der Erlaubnis.')
+  })
+
+  it('shows enabled system notification status when permission is granted', () => {
+    const html = renderSettings(
+      {
+        enabled: true,
+        systemNotificationsEnabled: true,
+      },
+      new Date(2026, 5, 17, 9, 30),
+      { notificationPermission: 'granted' },
+    )
+
+    expect(html).toContain('System-Benachrichtigungen sind aktiviert.')
+    expect(html).toContain('System-Benachrichtigungen nutzen')
+    expect(html).toContain('checked=""')
+  })
+
+  it('shows blocked system notification copy when permission is denied', () => {
+    const html = renderSettings(
+      {
+        enabled: true,
+        systemNotificationsEnabled: true,
+      },
+      new Date(2026, 5, 17, 9, 30),
+      { notificationPermission: 'denied' },
+    )
+
+    expect(html).toContain('Benachrichtigungen wurden blockiert.')
+    expect(html).not.toContain('System-Benachrichtigungen nutzen')
+  })
+
+  it('shows unsupported system notification fallback', () => {
+    const html = renderSettings(
+      {
+        enabled: true,
+      },
+      new Date(2026, 5, 17, 9, 30),
+      { notificationPermission: 'unsupported', notificationSupported: false },
+    )
+
+    expect(html).toContain(
+      'Dein Browser unterstützt System-Benachrichtigungen hier nicht.',
+    )
+  })
+
   it('creates readable pause status for the supported quiet presets', () => {
     const now = new Date(2026, 5, 17, 9, 30)
 
@@ -67,15 +132,25 @@ describe('ReminderSettings', () => {
   })
 })
 
-function renderSettings(settings = {}, currentDate = new Date(2026, 5, 17, 9, 30)) {
+function renderSettings(
+  settings = {},
+  currentDate = new Date(2026, 5, 17, 9, 30),
+  {
+    notificationPermission = 'default',
+    notificationSupported = true,
+  } = {},
+) {
   return renderToStaticMarkup(
     <ReminderSettings
       currentDate={currentDate}
+      initialNotificationPermission={notificationPermission}
+      initialNotificationSupported={notificationSupported}
       initialSettings={{
         enabled: false,
         mode: 'standard',
         enabledWindows: ['morning', 'afternoon'],
         quietUntil: null,
+        systemNotificationsEnabled: false,
         ...settings,
       }}
       onSettingsChange={() => {}}
