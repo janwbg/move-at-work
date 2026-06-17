@@ -1,6 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import TodayScreen from './TodayScreen.jsx'
+import {
+  applyReminderBannerAction,
+  getReminderCopy,
+} from './reminderBannerHelpers.js'
+import { createDailyReminderState } from '../utils/reminderStorage.js'
 
 const baseSections = [
   {
@@ -12,6 +17,12 @@ const baseSections = [
     movementType: 'mobilize',
     reason: 'Passt gerade zu Fokusarbeit.',
     setup: 'Kein besonderes Equipment',
+    slotId: 'morning',
+    slotLabel: 'Vormittag',
+    slotWindowMeta: {
+      startTime: '09:30',
+      endTime: '10:30',
+    },
     timeLabel: 'Vormittag',
     title: 'Schulter-Reset',
   },
@@ -24,6 +35,12 @@ const baseSections = [
     movementType: 'breathing',
     reason: 'Ruhiger Fokusimpuls.',
     setup: 'Kein besonderes Equipment',
+    slotId: 'afternoon',
+    slotLabel: 'Nachmittag',
+    slotWindowMeta: {
+      startTime: '14:00',
+      endTime: '15:15',
+    },
     timeLabel: 'Nachmittag',
     title: 'Atem-Reset',
   },
@@ -272,8 +289,165 @@ describe('TodayScreen', () => {
     expect(html).toContain('Aufrecht sitzen.')
     expect(html).toContain('Zurück')
   })
+  it('shows the reminder banner for a due open slot', () => {
+    const html = renderTodayScreen(withDueReminder())
+
+    expect(html).toContain('Kurzer Wechsel gefällig?')
+    expect(html).toContain('Dein Vormittagsimpuls ist noch offen.')
+    expect(html).toContain('Übung öffnen')
+    expect(html).toContain('15 Min. später')
+    expect(html).toContain('Heute nicht mehr')
+  })
+
+  it.each([
+    ['focus-heavy', 'Kurzer Fokus-Reset?'],
+    ['meeting-heavy', 'Zwischen zwei Terminen?'],
+    ['study-day', 'Kurzer Lern-Reset?'],
+    ['tight-schedule', '60 Sekunden reichen.'],
+  ])('shows fitting reminder copy for %s', (activeWorkdayType, title) => {
+    const html = renderTodayScreen(withDueReminder({ activeWorkdayType }))
+
+    expect(html).toContain(title)
+  })
+
+  it('opens the due recommendation from the reminder action', () => {
+    const actionResult = applyReminderBannerAction({
+      action: 'open',
+      now: morningNow(),
+      reminder: createDueReminder(),
+      settings: enabledReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+
+    expect(actionResult.detailIndex).toBe(0)
+    expect(actionResult.state.lastReminderShownAt.morning).toBe(
+      morningNow().toISOString(),
+    )
+  })
+
+  it('snoozes for 15 minutes and hides the banner', () => {
+    const actionResult = applyReminderBannerAction({
+      action: 'snooze-15',
+      now: morningNow(),
+      reminder: createDueReminder(),
+      settings: enabledReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+    const html = renderTodayScreen(
+      withDueReminder({ initialReminderState: actionResult.state }),
+    )
+
+    expect(actionResult.state.snoozedSlots.morning).toBe(
+      new Date(2026, 5, 17, 10, 0).toISOString(),
+    )
+    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+  })
+
+  it('snoozes for 30 minutes and hides the banner', () => {
+    const actionResult = applyReminderBannerAction({
+      action: 'snooze-30',
+      now: morningNow(),
+      reminder: createDueReminder(),
+      settings: enabledReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+    const html = renderTodayScreen(
+      withDueReminder({ initialReminderState: actionResult.state }),
+    )
+
+    expect(actionResult.state.snoozedSlots.morning).toBe(
+      new Date(2026, 5, 17, 10, 15).toISOString(),
+    )
+    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+  })
+
+  it('skips the reminder slot for today', () => {
+    const actionResult = applyReminderBannerAction({
+      action: 'skip-today',
+      now: morningNow(),
+      reminder: createDueReminder(),
+      settings: enabledReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+    const html = renderTodayScreen(
+      withDueReminder({ initialReminderState: actionResult.state }),
+    )
+
+    expect(actionResult.state.skippedSlots).toContain('morning')
+    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+  })
+
+  it('moves the reminder to a later enabled window today', () => {
+    const actionResult = applyReminderBannerAction({
+      action: 'later-today',
+      now: morningNow(),
+      reminder: createDueReminder(),
+      settings: enabledReminderSettings(),
+      state: createDailyReminderState(morningNow()),
+    })
+
+    expect(actionResult.state.snoozedSlots.morning).toBe(
+      new Date(2026, 5, 17, 14, 0).toISOString(),
+    )
+  })
+
+  it('does not show reminders for completed slots', () => {
+    const html = renderTodayScreen(
+      withDueReminder({ completedIds: ['morning-reset'] }),
+    )
+
+    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+  })
+
+  it('creates compact reminder copy for office and homeoffice', () => {
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'office',
+        reminder: createDueReminder(),
+      }).contextHint,
+    ).toBe('Direkt am Arbeitsplatz möglich.')
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'homeoffice',
+        reminder: createDueReminder(),
+      }).contextHint,
+    ).toBe('Nutze den kurzen Raumwechsel.')
+  })
 })
 
 function countOccurrences(value, search) {
   return value.split(search).length - 1
+}
+
+function withDueReminder(props = {}) {
+  return {
+    currentDate: morningNow(),
+    initialReminderSettings: enabledReminderSettings(),
+    initialReminderState: createDailyReminderState(morningNow()),
+    ...props,
+  }
+}
+
+function enabledReminderSettings() {
+  return {
+    enabled: true,
+    mode: 'standard',
+    enabledWindows: ['morning', 'afternoon'],
+    quietUntil: null,
+  }
+}
+
+function createDueReminder() {
+  return {
+    index: 0,
+    section: baseSections[0],
+    slotId: 'morning',
+    slotLabel: 'Vormittag',
+  }
+}
+
+function morningNow() {
+  return new Date(2026, 5, 17, 9, 45)
 }

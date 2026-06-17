@@ -1,9 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
+import {
+  applyReminderBannerAction,
+  getReminderCopy,
+} from './reminderBannerHelpers.js'
 import { FEEDBACK_URL } from '../data/feedback.js'
 import { workplaceOptions } from '../data/profileOptions.js'
+import { getDueReminder } from '../utils/reminderScheduler.js'
+import {
+  loadDailyReminderState,
+  loadReminderSettings,
+  saveDailyReminderState,
+} from '../utils/reminderStorage.js'
 
 const todayWorkdayOptions = [
   { id: 'focus-heavy', label: 'Fokusarbeit' },
@@ -17,8 +27,11 @@ function TodayScreen({
   activeWorkdayType = 'mixed-day',
   activeWorkplace,
   completedIds,
+  currentDate,
   feedbackUrl = FEEDBACK_URL,
   initialDetailIndex = null,
+  initialReminderSettings,
+  initialReminderState,
   onComplete,
   onReplaceRecommendation = () => {},
   onWorkplaceChange,
@@ -29,6 +42,14 @@ function TodayScreen({
   workplaces,
 }) {
   const [selectedDetailIndex, setSelectedDetailIndex] = useState(initialDetailIndex)
+  const [liveNow, setLiveNow] = useState(() => new Date())
+  const now = currentDate ?? liveNow
+  const [reminderSettings] = useState(
+    () => initialReminderSettings ?? loadReminderSettings(),
+  )
+  const [reminderState, setReminderState] = useState(
+    () => initialReminderState ?? loadDailyReminderState(now),
+  )
   const openSections = plan.dailySchedule.filter(
     (section) => !completedIds.includes(section.id),
   )
@@ -40,10 +61,52 @@ function TodayScreen({
   const canSwitchWorkplace = workplaces?.length > 1
   const selectedDetailSection =
     selectedDetailIndex === null ? null : plan.dailySchedule[selectedDetailIndex]
+  const dueReminder = getDueReminder({
+    completedIds,
+    now,
+    plan,
+    settings: reminderSettings,
+    state: reminderState,
+  })
+
+  useEffect(() => {
+    if (currentDate) {
+      return undefined
+    }
+
+    const interval = window.setInterval(() => setLiveNow(new Date()), 60 * 1000)
+
+    return () => window.clearInterval(interval)
+  }, [currentDate])
 
   function completeFromDetail(section) {
     setSelectedDetailIndex(null)
     onComplete(section)
+  }
+
+  function updateReminderState(nextState) {
+    setReminderState(nextState)
+    saveDailyReminderState(nextState, now)
+  }
+
+  function handleReminderAction(action) {
+    const result = applyReminderBannerAction({
+      action,
+      now,
+      reminder: dueReminder,
+      settings: reminderSettings,
+      state: reminderState,
+    })
+
+    if (!result) {
+      return
+    }
+
+    updateReminderState(result.state)
+
+    if (typeof result.detailIndex === 'number') {
+      setSelectedDetailIndex(result.detailIndex)
+    }
   }
 
   return (
@@ -102,6 +165,15 @@ function TodayScreen({
           </p>
         )}
 
+        {dueReminder && (
+          <ReminderBanner
+            activeWorkdayType={activeWorkdayType}
+            activeWorkplace={activeWorkplace}
+            onAction={handleReminderAction}
+            reminder={dueReminder}
+          />
+        )}
+
         <div className="grid gap-4">
           {plan.dailySchedule.map((section, index) => (
             <DailyScheduleCard
@@ -151,6 +223,79 @@ function TodayScreen({
         />
       )}
     </div>
+  )
+}
+
+function ReminderBanner({
+  activeWorkdayType,
+  activeWorkplace,
+  onAction,
+  reminder,
+}) {
+  const copy = getReminderCopy({
+    activeWorkdayType,
+    activeWorkplace,
+    reminder,
+  })
+
+  return (
+    <aside className="mb-4 rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/10 p-4 dark:bg-[#2563eb]/15">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-base font-extrabold text-slate-950 dark:text-white">
+            {copy.title}
+          </p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-200">
+            {copy.text}
+          </p>
+          {copy.contextHint && (
+            <p className="mt-1 text-sm font-semibold text-[#1d4ed8] dark:text-blue-100">
+              {copy.contextHint}
+            </p>
+          )}
+        </div>
+        <p className="w-fit rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
+          {reminder.slotLabel}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <ReminderActionButton
+          primary
+          onClick={() => onAction('open')}
+        >
+          Übung öffnen
+        </ReminderActionButton>
+        <ReminderActionButton onClick={() => onAction('snooze-15')}>
+          15 Min. später
+        </ReminderActionButton>
+        <ReminderActionButton onClick={() => onAction('snooze-30')}>
+          30 Min. später
+        </ReminderActionButton>
+        <ReminderActionButton onClick={() => onAction('later-today')}>
+          Heute später
+        </ReminderActionButton>
+        <ReminderActionButton onClick={() => onAction('skip-today')}>
+          Heute nicht mehr
+        </ReminderActionButton>
+      </div>
+    </aside>
+  )
+}
+
+function ReminderActionButton({ children, onClick, primary = false }) {
+  return (
+    <button
+      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+        primary
+          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15 hover:bg-[#1d4ed8]'
+          : 'bg-white text-slate-700 hover:text-[#2563eb] dark:bg-white/10 dark:text-slate-200'
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
   )
 }
 
