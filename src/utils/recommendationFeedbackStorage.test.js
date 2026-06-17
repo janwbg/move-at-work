@@ -99,6 +99,9 @@ describe('recommendationFeedbackStorage helpers', () => {
         intensity: 'Leicht',
         feedback: 'not-fit',
         reason: 'meeting',
+        replacementReason: 'meeting',
+        replacementRecommendationId: 'box-breathing-focus',
+        slotId: 'morning',
         action: 'replaced',
       },
       new Date(2026, 4, 13),
@@ -115,6 +118,9 @@ describe('recommendationFeedbackStorage helpers', () => {
       intensity: 'Leicht',
       feedback: 'not-fit',
       reason: 'meeting',
+      replacementReason: 'meeting',
+      replacementRecommendationId: 'box-breathing-focus',
+      slotId: 'morning',
       action: 'replaced',
     })
   })

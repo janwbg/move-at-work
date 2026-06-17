@@ -106,6 +106,10 @@ describe('ExerciseDetailView', () => {
     const html = renderDetail({ initialReplaceDialogOpen: true })
 
     expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
+    expect(html).toContain('Arbeitssituation')
+    expect(html).toContain('Zeit')
+    expect(html).toContain('Umgebung')
+    expect(html).toContain('Energie und Körper')
     for (const reason of replacementReasonOptions) {
       expect(html).toContain(reason.label)
     }

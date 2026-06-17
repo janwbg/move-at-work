@@ -55,7 +55,7 @@ export function getOnboardingSteps(answers) {
       helper:
         'Diese Auswahl hilft Move at work, deinen Tagesplan grob zu strukturieren.',
       kind: 'workday',
-      question: 'Wie sieht dein Arbeitstag meistens aus?',
+      question: 'Was beschreibt deinen typischen Arbeits- oder Lernalltag am besten?',
     },
   ]
 }

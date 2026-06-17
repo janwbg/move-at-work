@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import ReplacementReasonPicker from './ReplacementReasonPicker.jsx'
+
 const movementTypeLabels = {
   activate: 'Aktivieren',
   breathing: 'Atmen',
@@ -13,11 +16,26 @@ const movementTypeLabels = {
 
 function DailyScheduleCard({
   completed,
+  initialReplaceDialogOpen = false,
   onComplete,
   onOpenDetails,
+  onReplace = () => {},
   section,
   stepNumber,
 }) {
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(
+    initialReplaceDialogOpen,
+  )
+
+  function submitReplacement(reason) {
+    if (completed) {
+      return
+    }
+
+    onReplace(reason)
+    setReplaceDialogOpen(false)
+  }
+
   return (
     <article
       className={`relative rounded-lg border p-4 shadow-sm transition sm:p-5 ${
@@ -76,6 +94,17 @@ function DailyScheduleCard({
         >
           Übung öffnen
         </button>
+        {!completed && (
+          <button
+            type="button"
+            aria-label="Andere Empfehlung wählen"
+            title="Andere Empfehlung wählen"
+            onClick={() => setReplaceDialogOpen(true)}
+            className="flex min-h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300"
+          >
+            ↻
+          </button>
+        )}
         <button
           type="button"
           onClick={onComplete}
@@ -89,6 +118,14 @@ function DailyScheduleCard({
           {completed ? 'Erledigt' : 'Als erledigt markieren'}
         </button>
       </div>
+
+      {!completed && replaceDialogOpen && (
+        <ReplacementReasonPicker
+          idPrefix={`${section.id}-card`}
+          onCancel={() => setReplaceDialogOpen(false)}
+          onSelectReason={submitReplacement}
+        />
+      )}
     </article>
   )
 }

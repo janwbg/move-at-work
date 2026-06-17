@@ -76,6 +76,8 @@ describe('profileOptions', () => {
       'Viel Fokusarbeit',
       'Viele Meetings',
       'Gemischter Arbeitstag',
+      'Lern- oder Studientag',
+      'Wenig Zeit / enge Taktung',
     ])
   })
 
@@ -121,6 +123,29 @@ describe('profileOptions', () => {
         homeoffice: ['no-equipment'],
       },
     })
+  })
+
+  it('contains the new workday options and normalizes their ids', () => {
+    expect(workdayOptions.map((option) => option.id)).toContain('study-day')
+    expect(workdayOptions.map((option) => option.id)).toContain('tight-schedule')
+    expect(normalizeProfileAnswers({ situation: 'study-day' }).situation).toBe(
+      'study-day',
+    )
+    expect(
+      normalizeProfileAnswers({ situation: 'tight-schedule' }).situation,
+    ).toBe('tight-schedule')
+  })
+
+  it('migrates old and unknown workday values safely', () => {
+    expect(normalizeProfileAnswers({ situation: 'Mixed Day' }).situation).toBe(
+      'mixed-day',
+    )
+    expect(normalizeProfileAnswers({ situation: 'Lernen' }).situation).toBe(
+      'study-day',
+    )
+    expect(normalizeProfileAnswers({ situation: 'does-not-exist' }).situation).toBe(
+      'mixed-day',
+    )
   })
 
   it('keeps existing workplace profiles and falls back safely', () => {

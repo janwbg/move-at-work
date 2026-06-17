@@ -14,14 +14,81 @@ import {
 const minimumRecommendations = 3
 const maximumRecommendations = 5
 
+export const defaultDaySlotWindows = [
+  {
+    slotId: 'start',
+    slotLabel: 'Start in den Arbeitstag',
+    slotRole: 'start',
+    slotWindowMeta: {
+      startTime: '08:00',
+      endTime: '08:45',
+      relativeDescription: 'zu Beginn des Arbeitstags',
+    },
+  },
+  {
+    slotId: 'morning',
+    slotLabel: 'Vormittag',
+    slotRole: 'focus',
+    slotWindowMeta: {
+      startTime: '09:30',
+      endTime: '10:30',
+      relativeDescription: 'nach der ersten längeren Arbeitsphase',
+    },
+  },
+  {
+    slotId: 'lunch_transition',
+    slotLabel: 'Mittagswechsel',
+    slotRole: 'movement',
+    slotWindowMeta: {
+      startTime: '12:00',
+      endTime: '13:30',
+      relativeDescription: 'rund um die Mittagspause',
+    },
+  },
+  {
+    slotId: 'afternoon',
+    slotLabel: 'Nachmittag',
+    slotRole: 'relief',
+    slotWindowMeta: {
+      startTime: '14:00',
+      endTime: '15:15',
+      relativeDescription: 'im Nachmittagstief',
+    },
+  },
+  {
+    slotId: 'wrap_up',
+    slotLabel: 'Tagesabschluss',
+    slotRole: 'closing',
+    slotWindowMeta: {
+      startTime: '16:15',
+      endTime: '17:00',
+      relativeDescription: 'zum Abschluss des Arbeitstags',
+    },
+  },
+]
+
 const daySlots = [
-  'Start in den Arbeitstag',
-  'Vormittag',
-  'Später Vormittag',
-  'Mittagspause',
-  'Früher Nachmittag',
-  'Nachmittag',
-  'Abschluss des Arbeitstages',
+  ...defaultDaySlotWindows,
+  {
+    slotId: 'late_morning',
+    slotLabel: 'Später Vormittag',
+    slotRole: 'movement',
+    slotWindowMeta: {
+      startTime: '10:45',
+      endTime: '11:30',
+      relativeDescription: 'vor der Mittagspause',
+    },
+  },
+  {
+    slotId: 'early_afternoon',
+    slotLabel: 'Früher Nachmittag',
+    slotRole: 'movement',
+    slotWindowMeta: {
+      startTime: '13:30',
+      endTime: '14:15',
+      relativeDescription: 'nach der Mittagspause',
+    },
+  },
 ]
 
 const allowedIntensities = {
@@ -99,6 +166,42 @@ const slotVisibilityScores = {
   movement: { discreet: 2, normal: 10, visible: 8 },
   relief: { discreet: 6, normal: 12, visible: 6 },
   closing: { discreet: 18, normal: 8 },
+}
+
+const workdayMovementTypeScores = {
+  'study-day': {
+    breathing: 18,
+    eyes: 24,
+    mobilize: 20,
+    sit_reset: 20,
+    stretch: 10,
+    walk: 14,
+  },
+  'tight-schedule': {
+    breathing: 24,
+    eyes: 22,
+    mobilize: 18,
+    sit_reset: 24,
+    stand: 12,
+    stretch: 8,
+  },
+}
+
+const workdayBodyAreaScores = {
+  'study-day': {
+    eyes: 24,
+    neck: 18,
+    shoulders: 18,
+    spine: 10,
+    'upper-back': 14,
+    'lower-back': 10,
+  },
+  'tight-schedule': {
+    breathing: 16,
+    eyes: 16,
+    neck: 12,
+    shoulders: 12,
+  },
 }
 
 const relaxedIntensities = {
@@ -182,7 +285,7 @@ export function replaceRecommendationInPlan({
 
   const replacementSection = toScheduleSection(
     replacement,
-    originalSection.timeLabel,
+    getSlotDefinitionFromSection(originalSection, currentSchedule.length, indexToReplace),
     context,
   )
   const nextSchedule = currentSchedule.map((section, index) =>
@@ -345,7 +448,7 @@ function isRecommendationIdeal(recommendation, context) {
     isRecommendationAvailable(recommendation, context) &&
     recommendation.suitableGoals.includes(context.goal) &&
     recommendation.suitablePhases.includes(context.currentPhase) &&
-    recommendation.suitableWorkdayTypes.includes(context.situation)
+    recommendationMatchesWorkdayType(recommendation, context.situation)
   )
 }
 
@@ -393,7 +496,7 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
     score += 32
   }
 
-  if (recommendation.suitableWorkdayTypes.includes(context.situation)) {
+  if (recommendationMatchesWorkdayType(recommendation, context.situation)) {
     score += 18
   }
 
@@ -405,6 +508,8 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
   score += phaseMovementTypeScores[context.currentPhase]?.[recommendation.movementType] ?? 0
   score += slotMovementTypeScores[slotRole]?.[recommendation.movementType] ?? 0
   score += getSlotBodyAreaScore(recommendation, slotRole)
+  score += workdayMovementTypeScores[context.situation]?.[recommendation.movementType] ?? 0
+  score += getWorkdayBodyAreaScore(recommendation, context.situation)
   score += slotPositionScores[slotRole]?.[recommendation.position] ?? 0
   score += slotVisibilityScores[slotRole]?.[recommendation.visibilityLevel] ?? 0
   score += getSpecialSetupCount(recommendation.requiredSetup) * 12
@@ -431,6 +536,32 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
 
   if (context.currentPhase === 'meeting') {
     score += getMeetingVisibilityScore(recommendation.visibilityLevel)
+  }
+
+  if (context.situation === 'study-day') {
+    if (recommendation.durationMinutes <= 3) {
+      score += 16
+    }
+
+    if (recommendation.durationMinutes > 5) {
+      score -= 24
+    }
+  }
+
+  if (context.situation === 'tight-schedule') {
+    if (recommendation.durationMinutes <= 2) {
+      score += 42
+    } else if (recommendation.durationMinutes === 3) {
+      score += 14
+    } else {
+      score -= 38
+    }
+
+    score += recommendation.visibilityLevel === 'discreet' ? 22 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -44 : 0
+    score += hasNoSpecialSetup(recommendation.requiredSetup) ? 18 : -22
+    score += recommendation.intensity === 'gentle' ? 16 : 0
+    score += recommendation.intensity === 'active' ? -22 : 0
   }
 
   score += getPhaseVisibilityScore(recommendation, context)
@@ -517,12 +648,11 @@ function schedulePenalty(recommendation, schedule) {
 
 function buildDailySchedule(sortedRecommendations, context) {
   const scheduleLength = getScheduleLength(context)
-  const slotLabels = getTimeLabels(scheduleLength)
-  const slotRoles = slotRolesByLength[scheduleLength] ?? slotRolesByLength[5]
+  const slotDefinitions = getSlotDefinitions(scheduleLength)
   const schedule = []
 
-  for (const [index, timeLabel] of slotLabels.entries()) {
-    const slotRole = slotRoles[index] ?? 'movement'
+  for (const slotDefinition of slotDefinitions) {
+    const slotRole = slotDefinition.slotRole ?? 'movement'
     const recommendation =
       pickNextRecommendation(sortedRecommendations, schedule, context, slotRole) ??
       pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, {
@@ -538,7 +668,7 @@ function buildDailySchedule(sortedRecommendations, context) {
       continue
     }
 
-    schedule.push(toScheduleSection(recommendation, timeLabel, context))
+    schedule.push(toScheduleSection(recommendation, slotDefinition, context))
   }
 
   return schedule
@@ -667,25 +797,19 @@ function getSlotRole(scheduleLength, index) {
   return slotRoles[index] ?? 'movement'
 }
 
-function getTimeLabels(scheduleLength) {
+function getSlotDefinitions(scheduleLength) {
   if (scheduleLength === 5) {
-    return [
-      'Start in den Arbeitstag',
-      'Vormittag',
-      'Mittagspause',
-      'Nachmittag',
-      'Abschluss des Arbeitstages',
-    ]
+    return defaultDaySlotWindows
   }
 
   if (scheduleLength === 6) {
     return [
-      'Start in den Arbeitstag',
-      'Vormittag',
-      'Später Vormittag',
-      'Mittagspause',
-      'Früher Nachmittag',
-      'Abschluss des Arbeitstages',
+      daySlots[0],
+      daySlots[1],
+      daySlots[5],
+      daySlots[2],
+      daySlots[6],
+      daySlots[4],
     ]
   }
 
@@ -719,7 +843,13 @@ function toMovementCardData(recommendation) {
   }
 }
 
-function toScheduleSection(recommendation, timeLabel, context) {
+function toScheduleSection(recommendation, slotDefinitionOrLabel, context) {
+  const slotDefinition =
+    typeof slotDefinitionOrLabel === 'string'
+      ? createLegacySlotDefinition(slotDefinitionOrLabel)
+      : slotDefinitionOrLabel
+  const timeLabel = slotDefinition.slotLabel
+
   return {
     bodyArea: recommendation.bodyArea,
     description: recommendation.description,
@@ -737,6 +867,9 @@ function toScheduleSection(recommendation, timeLabel, context) {
     requiredSetup: recommendation.requiredSetup,
     setup: formatSetup(recommendation.requiredSetup),
     similarityGroup: recommendation.similarityGroup,
+    slotId: slotDefinition.slotId,
+    slotLabel: slotDefinition.slotLabel,
+    slotWindowMeta: slotDefinition.slotWindowMeta,
     timeLabel,
     title: recommendation.title,
     visibilityLevel: recommendation.visibilityLevel,
@@ -865,6 +998,58 @@ function getSlotBodyAreaScore(recommendation, slotRole) {
     (total, bodyArea) => total + (slotBodyAreaScores[slotRole]?.[bodyArea] ?? 0),
     0,
   )
+}
+
+function getWorkdayBodyAreaScore(recommendation, workdayType) {
+  return recommendation.bodyArea.reduce(
+    (total, bodyArea) =>
+      total + (workdayBodyAreaScores[workdayType]?.[bodyArea] ?? 0),
+    0,
+  )
+}
+
+function recommendationMatchesWorkdayType(recommendation, workdayType) {
+  if (recommendation.suitableWorkdayTypes.includes(workdayType)) {
+    return true
+  }
+
+  const compatibleWorkdayTypes = {
+    'study-day': ['focus-heavy', 'mixed-day'],
+    'tight-schedule': ['focus-heavy', 'meeting-heavy', 'mixed-day'],
+  }
+
+  return compatibleWorkdayTypes[workdayType]?.some((compatibleWorkdayType) =>
+    recommendation.suitableWorkdayTypes.includes(compatibleWorkdayType),
+  ) ?? false
+}
+
+function getSlotDefinitionFromSection(section, scheduleLength, index) {
+  const defaultSlotDefinition =
+    getSlotDefinitions(scheduleLength)[index] ?? createLegacySlotDefinition(section.timeLabel)
+
+  return {
+    slotId: section.slotId ?? defaultSlotDefinition.slotId,
+    slotLabel: section.slotLabel ?? section.timeLabel ?? defaultSlotDefinition.slotLabel,
+    slotRole: defaultSlotDefinition.slotRole,
+    slotWindowMeta: section.slotWindowMeta ?? defaultSlotDefinition.slotWindowMeta,
+  }
+}
+
+function createLegacySlotDefinition(timeLabel) {
+  const matchedSlot = defaultDaySlotWindows.find(
+    (slotDefinition) => slotDefinition.slotLabel === timeLabel,
+  )
+
+  if (matchedSlot) {
+    return matchedSlot
+  }
+
+  return {
+    slotId: timeLabel?.toLowerCase().replaceAll(' ', '_') ?? 'slot',
+    slotLabel: timeLabel ?? 'Empfehlung',
+    slotRole: 'movement',
+    slotWindowMeta: null,
+  }
 }
 
 function getMeetingVisibilityScore(visibilityLevel) {
@@ -1097,6 +1282,45 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.intensity === 'active' ? -35 : 0
   }
 
+  if (reason === 'focus-work') {
+    score += recommendation.durationMinutes <= 2 ? 95 : 0
+    score += recommendation.durationMinutes === 3 ? 35 : 0
+    score += recommendation.durationMinutes > 5 ? -120 : 0
+    score += ['breathing', 'sit_reset', 'mobilize'].includes(
+      recommendation.movementType,
+    )
+      ? 70
+      : 0
+    score += recommendation.bodyArea.includes('eyes') ? 70 : 0
+    score += countBodyAreaOverlap(recommendation.bodyArea, [
+      'neck',
+      'shoulders',
+      'upper-back',
+    ]) * 28
+    score += recommendation.visibilityLevel === 'discreet' ? 40 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -80 : 0
+  }
+
+  if (reason === 'phone') {
+    score += ['walk', 'walking_meeting'].includes(recommendation.movementType)
+      ? 125
+      : 0
+    score += ['stand', 'mobilize'].includes(recommendation.movementType) ? 42 : 0
+    score += recommendation.position === 'walking' ? 65 : 0
+    score += recommendation.bodyArea.includes('eyes') ? -36 : 0
+    score += recommendation.position === 'sitting' ? -18 : 0
+  }
+
+  if (reason === 'between-tasks') {
+    score += ['stand', 'walk', 'mobilize', 'sit_reset'].includes(
+      recommendation.movementType,
+    )
+      ? 58
+      : 0
+    score += recommendation.durationMinutes <= 3 ? 34 : 0
+    score += recommendation.visibilityLevel === 'visible' ? -18 : 0
+  }
+
   if (reason === 'calmer') {
     score += recommendation.intensity === 'gentle' ? 95 : 0
     score += recommendation.intensity === 'active' ? -95 : 0
@@ -1110,11 +1334,14 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.visibilityLevel === 'visible' ? -45 : 0
   }
 
-  if (reason === 'no-time') {
-    score += recommendation.durationMinutes <= 2 ? 100 : 0
+  if (['no-time', 'shorter'].includes(reason)) {
+    score += recommendation.durationMinutes <= 1 ? 180 : 0
+    score += recommendation.durationMinutes === 2 ? 120 : 0
     score += recommendation.durationMinutes === 3 ? 45 : 0
-    score += recommendation.durationMinutes > 5 ? -100 : 0
+    score += recommendation.durationMinutes > 5 ? -130 : 0
+    score -= recommendation.durationMinutes * 12
     score += hasNoSpecialSetup(recommendation.requiredSetup) ? 45 : -35
+    score += recommendation.visibilityLevel === 'discreet' ? 24 : 0
   }
 
   if (reason === 'too-visible') {
@@ -1128,6 +1355,23 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
         : 0
   }
 
+  if (reason === 'no-space') {
+    score += hasNoSpecialSetup(recommendation.requiredSetup) ? 110 : -95
+    score += ['sitting', 'standing', 'mixed', 'desk'].includes(
+      recommendation.position,
+    )
+      ? 58
+      : 0
+    score += ['walking', 'stairs', 'floor'].includes(recommendation.position)
+      ? -120
+      : 0
+    score += ['walk', 'walking_meeting', 'activate'].includes(
+      recommendation.movementType,
+    )
+      ? -55
+      : 0
+  }
+
   if (reason === 'too-hard') {
     score += recommendation.intensity === 'gentle' ? 100 : 0
     score += recommendation.intensity === 'balanced' ? 15 : 0
@@ -1138,6 +1382,52 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
 
   if (reason === 'setup-mismatch') {
     score += hasNoSpecialSetup(recommendation.requiredSetup) ? 130 : -110
+  }
+
+  if (reason === 'tired') {
+    score += ['walk', 'stand', 'activate'].includes(recommendation.movementType)
+      ? 88
+      : 0
+    score += recommendation.durationMinutes <= 4 ? 28 : -24
+    score += recommendation.intensity === 'active' ? 26 : 0
+    score += recommendation.intensity === 'gentle' ? 10 : 0
+    score += recommendation.position === 'walking' ? 54 : 0
+  }
+
+  if (reason === 'neck-shoulder') {
+    score += countBodyAreaOverlap(recommendation.bodyArea, [
+      'neck',
+      'shoulders',
+      'upper-back',
+    ]) * 80
+    score += ['mobilize', 'sit_reset', 'stretch', 'breathing'].includes(
+      recommendation.movementType,
+    )
+      ? 35
+      : 0
+  }
+
+  if (reason === 'back') {
+    score += countBodyAreaOverlap(recommendation.bodyArea, [
+      'back',
+      'spine',
+      'hips',
+      'lower-back',
+      'upper-back',
+    ]) * 80
+    score += ['mobilize', 'sit_reset', 'stretch'].includes(
+      recommendation.movementType,
+    )
+      ? 38
+      : 0
+  }
+
+  if (reason === 'walk') {
+    score += ['walk', 'walking_meeting'].includes(recommendation.movementType)
+      ? 170
+      : 0
+    score += recommendation.position === 'walking' ? 80 : 0
+    score += recommendation.durationMinutes <= 5 ? 26 : -20
   }
 
   if (reason === 'not-appealing') {

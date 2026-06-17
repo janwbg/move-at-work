@@ -91,6 +91,31 @@ describe('Onboarding', () => {
 
     expect(html.indexOf('Büro')).toBeLessThan(html.indexOf('Homeoffice'))
   })
+
+  it('asks for the typical work or study day and includes the new options', () => {
+    const answers = {
+      goal: 'habit',
+      workplaces: ['office'],
+      defaultWorkplace: 'office',
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['no-equipment'],
+      },
+      fitnessLevel: 'balanced',
+    }
+    const steps = getOnboardingSteps(answers)
+    const workdayStep = steps.at(-1)
+    const html = renderOnboarding({
+      answers,
+      initialCurrentIndex: steps.length - 1,
+    })
+
+    expect(workdayStep.question).toBe(
+      'Was beschreibt deinen typischen Arbeits- oder Lernalltag am besten?',
+    )
+    expect(html).toContain('Lern- oder Studientag')
+    expect(html).toContain('Wenig Zeit / enge Taktung')
+  })
 })
 
 function renderOnboarding({ answers, initialCurrentIndex = 0 }) {

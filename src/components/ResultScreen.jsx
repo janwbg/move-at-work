@@ -96,6 +96,9 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setRecommendationFeedback(
       recordRecommendationFeedback({
         recommendationId: originalSection.ruleId ?? originalSection.id,
+        replacementRecommendationId:
+          result.replacement.ruleId ?? result.replacement.id,
+        slotId: originalSection.slotId,
         scheduleSectionId: originalSection.id,
         workplace: activeWorkplace,
         currentWorkplace: activeWorkplace,
@@ -105,6 +108,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
         intensity: originalSection.intensity ?? normalizedAnswers.fitnessLevel,
         feedback: 'not-fit',
         reason,
+        replacementReason: reason,
         action: 'replaced',
       }),
     )

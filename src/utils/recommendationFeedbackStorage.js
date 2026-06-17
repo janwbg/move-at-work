@@ -114,6 +114,23 @@ function normalizeRecommendationFeedbackEntry(feedbackEntry, date) {
     normalizedEntry.reason = feedbackEntry.reason
   }
 
+  if (
+    feedbackEntry.replacementReason ||
+    (feedbackEntry.action === 'replaced' && feedbackEntry.reason)
+  ) {
+    normalizedEntry.replacementReason =
+      feedbackEntry.replacementReason ?? feedbackEntry.reason
+  }
+
+  if (feedbackEntry.replacementRecommendationId) {
+    normalizedEntry.replacementRecommendationId =
+      feedbackEntry.replacementRecommendationId
+  }
+
+  if (feedbackEntry.slotId) {
+    normalizedEntry.slotId = feedbackEntry.slotId
+  }
+
   if (feedbackEntry.scheduleSectionId) {
     normalizedEntry.scheduleSectionId = feedbackEntry.scheduleSectionId
   }
@@ -135,5 +152,5 @@ function isRecommendationFeedbackEntry(entry) {
 }
 
 function getFeedbackEntryKey(entry) {
-  return `${entry.date}:${entry.recommendationId}`
+  return `${entry.date}:${entry.recommendationId}:${entry.slotId ?? entry.scheduleSectionId ?? ''}`
 }

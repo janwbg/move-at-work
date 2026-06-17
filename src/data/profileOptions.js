@@ -145,6 +145,18 @@ export const workdayOptions = [
     description:
       'Dein Tag wechselt zwischen Fokusarbeit, Meetings und Pausen.',
   },
+  {
+    id: 'study-day',
+    label: 'Lern- oder Studientag',
+    description:
+      'Du lernst, liest oder arbeitest konzentriert mit kurzen Aktivierungsimpulsen.',
+  },
+  {
+    id: 'tight-schedule',
+    label: 'Wenig Zeit / enge Taktung',
+    description:
+      'Dein Tag ist dicht getaktet und braucht besonders kurze, unauffällige Impulse.',
+  },
 ]
 
 export const workPhaseOptions = [
@@ -244,7 +256,9 @@ const workdayAliases = {
   Fokustag: 'focus-heavy',
   Kreativarbeit: 'mixed-day',
   Lesen: 'focus-heavy',
-  Lernen: 'focus-heavy',
+  Lernen: 'study-day',
+  'Lern- oder Studientag': 'study-day',
+  Lerntag: 'study-day',
   'Langer Arbeitstag': 'mixed-day',
   Meeting: 'meeting-heavy',
   'Meeting Kamera an': 'meeting-heavy',
@@ -252,9 +266,13 @@ const workdayAliases = {
   Meetingtag: 'meeting-heavy',
   'Mixed Day': 'mixed-day',
   Pause: 'mixed-day',
+  Studientag: 'study-day',
   Telefonat: 'meeting-heavy',
   'Viel Fokusarbeit': 'focus-heavy',
   'Viele Meetings': 'meeting-heavy',
+  'Wenig Zeit': 'tight-schedule',
+  'Wenig Zeit / enge Taktung': 'tight-schedule',
+  'enge Taktung': 'tight-schedule',
 }
 
 const workplaceAliases = {
@@ -363,7 +381,7 @@ export function updateDefaultWorkplace(profile, workplaceId) {
 export function deriveWorkPhaseFromWorkday(workday) {
   const normalizedWorkday = normalizeWorkday(workday)
 
-  if (normalizedWorkday === 'focus-heavy') {
+  if (['focus-heavy', 'study-day'].includes(normalizedWorkday)) {
     return 'focus'
   }
 

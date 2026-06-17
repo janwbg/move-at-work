@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { generatePlan, replaceRecommendationInPlan } from './generatePlan.js'
+import {
+  defaultDaySlotWindows,
+  generatePlan,
+  replaceRecommendationInPlan,
+} from './generatePlan.js'
 
 const unavailableEquipment = [
   'Walking Pad',
@@ -194,6 +198,45 @@ describe('generatePlan', () => {
     expect([...plan.dailySchedule, ...plan.movements].every((item) => item.reason || item.explanation)).toBe(true)
   })
 
+  it('adds slot ids and internal slot windows to all five daily slots', () => {
+    const plan = generatePlan({
+      currentPhase: 'between-tasks',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'mixed-day',
+    })
+
+    expect(plan.dailySchedule.map((section) => section.slotId)).toEqual(
+      defaultDaySlotWindows.map((slot) => slot.slotId),
+    )
+    expect(plan.dailySchedule.map((section) => section.slotLabel)).toEqual([
+      'Start in den Arbeitstag',
+      'Vormittag',
+      'Mittagswechsel',
+      'Nachmittag',
+      'Tagesabschluss',
+    ])
+    expect(plan.dailySchedule.every((section) => section.slotWindowMeta)).toBe(true)
+  })
+
+  it('uses 08:00 as the internal standard start and keeps the configured slot windows', () => {
+    expect(defaultDaySlotWindows[0].slotWindowMeta.startTime).toBe('08:00')
+    expect(
+      defaultDaySlotWindows.map((slot) => [
+        slot.slotId,
+        slot.slotWindowMeta.startTime,
+        slot.slotWindowMeta.endTime,
+      ]),
+    ).toEqual([
+      ['start', '08:00', '08:45'],
+      ['morning', '09:30', '10:30'],
+      ['lunch_transition', '12:00', '13:30'],
+      ['afternoon', '14:00', '15:15'],
+      ['wrap_up', '16:15', '17:00'],
+    ])
+  })
+
   it('does not place stand recommendations directly after stand recommendations', () => {
     const plan = generatePlan({
       currentPhase: 'between-tasks',
@@ -218,6 +261,52 @@ describe('generatePlan', () => {
 
     expect(plan.dailySchedule.slice(0, 4).every((section) => microbreakTypes.includes(section.movementType))).toBe(true)
     expect(plan.dailySchedule.slice(0, 4).every((section) => getLongestDuration(section.duration) <= 5)).toBe(true)
+  })
+
+  it('supports study-day profiles with focus, activation and screen relief impulses', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'focus',
+      setup: ['no-equipment'],
+      situation: 'study-day',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(
+      plan.dailySchedule.some((section) =>
+        section.bodyArea.some((bodyArea) =>
+          ['eyes', 'neck', 'shoulders', 'upper-back', 'spine'].includes(
+            bodyArea,
+          ),
+        ),
+      ),
+    ).toBe(true)
+    expect(
+      plan.dailySchedule.filter((section) => getLongestDuration(section.duration) <= 3)
+        .length,
+    ).toBeGreaterThanOrEqual(3)
+  })
+
+  it('supports tight-schedule profiles with short discreet microbreaks', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'tight-schedule',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(
+      plan.dailySchedule.filter((section) => getLongestDuration(section.duration) <= 3)
+        .length,
+    ).toBeGreaterThanOrEqual(4)
+    expect(
+      plan.dailySchedule.filter((section) => section.visibilityLevel === 'discreet')
+        .length,
+    ).toBeGreaterThanOrEqual(3)
+    expect(countSpecialSetupSections(plan.dailySchedule)).toBe(0)
   })
 
   it('allows fitting walking or standing recommendations for calls and meetings', () => {
@@ -514,6 +603,10 @@ describe('generatePlan', () => {
     expect(result.plan.dailySchedule).toHaveLength(plan.dailySchedule.length)
     expect(result.replacement.ruleId).not.toBe(plan.dailySchedule[0].ruleId)
     expect(result.replacement.timeLabel).toBe(plan.dailySchedule[0].timeLabel)
+    expect(result.replacement.slotId).toBe(plan.dailySchedule[0].slotId)
+    expect(result.replacement.slotWindowMeta).toEqual(
+      plan.dailySchedule[0].slotWindowMeta,
+    )
     expect(result.plan.dailySchedule.slice(1)).toEqual(plan.dailySchedule.slice(1))
   })
 
@@ -543,7 +636,7 @@ describe('generatePlan', () => {
     expect(result.replacement.setup).not.toContain('Kleines Bewegungsequipment')
   })
 
-  it('prefers discreet recommendations for meeting replacements', () => {
+  it('prefers discreet and short recommendations for meeting replacements', () => {
     const profile = createReplacementProfile()
     const plan = generatePlan(profile)
     const result = replaceRecommendationInPlan({
@@ -557,6 +650,7 @@ describe('generatePlan', () => {
 
     expect(result.replacement.visibilityLevel).toBe('discreet')
     expect(result.replacement.visibilityLevel).not.toBe('visible')
+    expect(result.replacement.durationMinutes).toBeLessThanOrEqual(3)
   })
 
   it('prefers gentle calmer recommendations', () => {
@@ -590,6 +684,70 @@ describe('generatePlan', () => {
     })
 
     expect(result.replacement.durationMinutes).toBeLessThanOrEqual(2)
+  })
+
+  it('prefers very short recommendations when there is little time', () => {
+    const profile = createReplacementProfile({ fitnessLevel: 'active' })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 2,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'between-tasks',
+      reason: 'no-time',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.durationMinutes).toBeLessThanOrEqual(2)
+  })
+
+  it('prefers walking impulses when the reason asks for walking', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'phone',
+      goal: 'more-energy',
+      workplaceSetups: {
+        office: ['hallway'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 1,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'walk',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(['walk', 'walking_meeting']).toContain(result.replacement.movementType)
+  })
+
+  it('keeps the replacement influence scoped to the selected slot', () => {
+    const profile = createReplacementProfile({
+      workplaceSetups: {
+        office: ['hallway'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 3,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'walk',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.plan.dailySchedule[3]).not.toEqual(plan.dailySchedule[3])
+    expect(result.plan.dailySchedule.slice(0, 3)).toEqual(
+      plan.dailySchedule.slice(0, 3),
+    )
+    expect(result.plan.dailySchedule.slice(4)).toEqual(plan.dailySchedule.slice(4))
   })
 
   it('prefers no-equipment recommendations for setup mismatch', () => {

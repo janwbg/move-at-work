@@ -53,11 +53,35 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('Offen')
   })
 
-  it('does not show a direct replacement button anymore', () => {
+  it('shows a discreet replacement button next to the open action', () => {
     const html = renderCard()
 
-    expect(html).not.toContain('aria-label="Empfehlung wechseln"')
+    expect(html).toContain('Übung öffnen')
+    expect(html).toContain('aria-label="Andere Empfehlung wählen"')
+    expect(html).toContain('↻')
+    expect(html.indexOf('Übung öffnen')).toBeLessThan(
+      html.indexOf('Andere Empfehlung wählen'),
+    )
+  })
+
+  it('does not offer replacement for completed recommendations', () => {
+    const html = renderCard({ completed: true })
+
+    expect(html).not.toContain('aria-label="Andere Empfehlung wählen"')
     expect(html).not.toContain('↻')
+  })
+
+  it('can show grouped replacement reasons on the card', () => {
+    const html = renderCard({ initialReplaceDialogOpen: true })
+
+    expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
+    expect(html).toContain('Arbeitssituation')
+    expect(html).toContain('Zeit')
+    expect(html).toContain('Umgebung')
+    expect(html).toContain('Energie und Körper')
+    expect(html).toContain('Bin im Meeting')
+    expect(html).toContain('Habe wenig Zeit')
+    expect(html).toContain('Lieber gehen')
   })
 })
 

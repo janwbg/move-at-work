@@ -95,6 +95,7 @@ function TodayScreen({
               key={section.id}
               onComplete={() => onComplete(section)}
               onOpenDetails={() => setSelectedDetailIndex(index)}
+              onReplace={(reason) => onReplaceRecommendation(index, reason)}
               section={section}
               stepNumber={index + 1}
             />
