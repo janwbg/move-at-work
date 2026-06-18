@@ -12,7 +12,7 @@ function ExerciseDetailView({
   onReplace = () => {},
   section,
 }) {
-  const durationSeconds = getDurationSeconds(section.duration)
+  const durationSeconds = getDurationSeconds(section)
   const [remainingSeconds, setRemainingSeconds] = useState(
     initialRemainingSeconds ?? durationSeconds,
   )
@@ -213,7 +213,18 @@ function DetailBadge({ children, tone = 'neutral' }) {
   )
 }
 
-function getDurationSeconds(duration) {
+function getDurationSeconds(section) {
+  if (typeof section.durationMinutes === 'number') {
+    return Math.max(1, Math.round(section.durationMinutes * 60))
+  }
+
+  const duration = section.duration ?? ''
+
+  if (duration.includes('Sekunde')) {
+    const numbers = duration.match(/\d+/g)?.map(Number) ?? [120]
+    return Math.max(...numbers)
+  }
+
   const numbers = duration.match(/\d+/g)?.map(Number) ?? [2]
   return Math.max(...numbers) * 60
 }

@@ -68,6 +68,21 @@ describe('ExerciseDetailView', () => {
     expect(html).not.toContain('Fortsetzen')
   })
 
+  it('uses seconds durations for mini-resets without converting them to minutes', () => {
+    const html = renderDetail({
+      initialTimerState: 'running',
+      section: {
+        ...section,
+        duration: '30 Sekunden',
+        durationMinutes: 0.5,
+        movementType: 'mini_reset',
+      },
+    })
+
+    expect(html).toContain('0:30')
+    expect(html).not.toContain('30:00')
+  })
+
   it('keeps the remaining time visible while the timer is paused', () => {
     const html = renderDetail({
       initialRemainingSeconds: 90,

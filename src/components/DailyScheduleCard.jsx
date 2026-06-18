@@ -5,6 +5,7 @@ const movementTypeLabels = {
   activate: 'Aktivieren',
   breathing: 'Atmen',
   eyes: 'Augenpause',
+  mini_reset: 'Mini-Reset',
   mobilize: 'Mobilisieren',
   relax: 'Entspannen',
   sit_reset: 'Sitz-Reset',

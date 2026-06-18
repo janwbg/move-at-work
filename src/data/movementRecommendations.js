@@ -3629,5 +3629,470 @@ export const movementRecommendations = [
     explanation: "Die strukturierte Atmung passt besonders, wenn körperlich sichtbare Bewegung gerade nicht möglich ist.",
     similarityGroup: "breathing-focus",
     priority: 86
+  },
+  {
+    id: "mini-stand-20",
+    title: "20 Sekunden aufstehen",
+    description: "Stehe kurz auf, richte dich aus und setze dich bewusst neu hin.",
+    durationMinutes: 0.33,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "sit-less",
+      "habit",
+      "focus"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule"
+    ],
+    bodyArea: [
+      "legs",
+      "spine",
+      "whole-body"
+    ],
+    position: "mixed",
+    visibilityLevel: "normal",
+    instructionSteps: [
+      "Stehe ruhig vom Stuhl auf.",
+      "Stelle beide Fuesse stabil auf den Boden.",
+      "Richte dich kurz auf und setze dich bewusst neu hin."
+    ],
+    reason: "Minimaler Wechsel, wenn gerade kaum Zeit bleibt.",
+    explanation: "Kurz unterbrechen statt komplett ausfallen lassen.",
+    similarityGroup: "mini-reset-stand",
+    priority: 74
+  },
+  {
+    id: "mini-shoulder-circles-30",
+    title: "30 Sekunden Schultern kreisen",
+    description: "Kreise die Schultern klein und ruhig, ohne deinen Arbeitsplatz zu verlassen.",
+    durationMinutes: 0.5,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "back-neck",
+      "focus",
+      "habit"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "meeting",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "shoulders",
+      "upper-back"
+    ],
+    position: "sitting",
+    visibilityLevel: "discreet",
+    instructionSteps: [
+      "Setze dich aufrecht und lasse die Arme locker.",
+      "Kreise beide Schultern langsam nach hinten.",
+      "Wechsle nach einigen Kreisen ruhig die Richtung."
+    ],
+    reason: "Sehr unauffaellig bei Fokusarbeit oder Meetings.",
+    explanation: "Ein sehr kurzer Reset fuer volle Tage.",
+    similarityGroup: "mini-reset-shoulders",
+    priority: 82
+  },
+  {
+    id: "mini-screen-away-40",
+    title: "40 Sekunden Blick weg",
+    description: "Loese den Blick vom Bildschirm und schaue ruhig in die Ferne.",
+    durationMinutes: 0.67,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "focus",
+      "habit",
+      "back-neck"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "meeting",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "eyes"
+    ],
+    position: "sitting",
+    visibilityLevel: "discreet",
+    instructionSteps: [
+      "Loese den Blick bewusst vom Bildschirm.",
+      "Schaue auf einen entfernten Punkt im Raum.",
+      "Blinke ein paar Mal langsam und starte dann neu."
+    ],
+    reason: "Hilft, den Fokus kurz zu entlasten.",
+    explanation: "Passt, wenn gerade kaum Zeit fuer eine laengere Uebung ist.",
+    similarityGroup: "mini-reset-eyes",
+    priority: 84
+  },
+  {
+    id: "mini-walk-60",
+    title: "60 Sekunden gehen",
+    description: "Gehe eine sehr kurze Runde und kehre ohne Eile an den Arbeitsplatz zurueck.",
+    durationMinutes: 1,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "sit-less",
+      "more-energy",
+      "habit"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "between-tasks",
+      "break",
+      "phone"
+    ],
+    suitableWorkdayTypes: [
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule"
+    ],
+    bodyArea: [
+      "legs",
+      "whole-body"
+    ],
+    position: "walking",
+    visibilityLevel: "normal",
+    instructionSteps: [
+      "Stehe auf und gehe in ruhigem Tempo los.",
+      "Nutze einen sehr kurzen Weg in deiner Naehe.",
+      "Kehre nach etwa einer Minute bewusst zurueck."
+    ],
+    reason: "Kurzer Gehimpuls, wenn eine laengere Pause nicht passt.",
+    explanation: "Ein sehr kurzer Reset fuer volle Tage.",
+    similarityGroup: "mini-reset-walk",
+    priority: 81
+  },
+  {
+    id: "mini-neck-60",
+    title: "60 Sekunden Nacken mobilisieren",
+    description: "Bewege den Nacken langsam in kleinen Winkeln und halte die Schultern locker.",
+    durationMinutes: 1,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "back-neck",
+      "focus",
+      "habit"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "meeting",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "neck",
+      "shoulders"
+    ],
+    position: "sitting",
+    visibilityLevel: "discreet",
+    instructionSteps: [
+      "Setze dich aufrecht und lasse die Schultern sinken.",
+      "Neige den Kopf langsam nach rechts und links.",
+      "Drehe den Kopf klein und kontrolliert in beide Richtungen."
+    ],
+    reason: "Diskret, kurz und passend nach Bildschirmarbeit.",
+    explanation: "Kurz unterbrechen statt komplett ausfallen lassen.",
+    similarityGroup: "mini-reset-neck",
+    priority: 83
+  },
+  {
+    id: "mini-back-stretch-90",
+    title: "90 Sekunden Ruecken strecken",
+    description: "Strecke den Ruecken im Sitzen oder Stand sanft in die Laenge.",
+    durationMinutes: 1.5,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "back-neck",
+      "habit",
+      "focus"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "between-tasks",
+      "break"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "spine",
+      "upper-back",
+      "lower-back"
+    ],
+    position: "mixed",
+    visibilityLevel: "normal",
+    instructionSteps: [
+      "Richte dich im Sitzen oder Stand bewusst auf.",
+      "Schiebe den Scheitel sanft nach oben.",
+      "Atme ruhig weiter und lasse die Schultern locker."
+    ],
+    reason: "Kurzer, aber spuerbarer Reset fuer den Ruecken.",
+    explanation: "Passt, wenn gerade kaum Zeit fuer eine laengere Uebung ist.",
+    similarityGroup: "mini-reset-back",
+    priority: 77
+  },
+  {
+    id: "mini-standing-breath-3",
+    title: "3 Atemzuege im Stehen",
+    description: "Stehe auf und nimm drei ruhige Atemzuege mit aufgerichtetem Oberkoerper.",
+    durationMinutes: 0.5,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "focus",
+      "habit",
+      "back-neck"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "breathing",
+      "chest",
+      "spine"
+    ],
+    position: "standing",
+    visibilityLevel: "normal",
+    instructionSteps: [
+      "Stehe kurz auf und stelle beide Fuesse stabil ab.",
+      "Richte den Oberkoerper ruhig auf.",
+      "Nimm drei langsame Atemzuege und setze dich bewusst neu hin."
+    ],
+    reason: "Sehr kurzer Reset, ohne den Fokus stark zu unterbrechen.",
+    explanation: "Kurz unterbrechen statt komplett ausfallen lassen.",
+    similarityGroup: "mini-reset-breath",
+    priority: 78
+  },
+  {
+    id: "mini-wrists-45",
+    title: "45 Sekunden Handgelenke mobilisieren",
+    description: "Mobilisiere Handgelenke und Finger klein und ruhig direkt am Tisch.",
+    durationMinutes: 0.75,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "focus",
+      "habit",
+      "back-neck"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "meeting",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "wrists"
+    ],
+    position: "desk",
+    visibilityLevel: "discreet",
+    instructionSteps: [
+      "Loese die Haende kurz von Tastatur oder Maus.",
+      "Kreise beide Handgelenke langsam in eine Richtung.",
+      "Wechsle die Richtung und lockere danach die Finger."
+    ],
+    reason: "Diskret und passend nach Tastatur- oder Mausarbeit.",
+    explanation: "Ein sehr kurzer Reset fuer volle Tage.",
+    similarityGroup: "mini-reset-wrists",
+    priority: 80
+  },
+  {
+    id: "mini-posture-60",
+    title: "60 Sekunden Sitzhaltung resetten",
+    description: "Stelle Fuesse, Becken und Schultern bewusst neu ein.",
+    durationMinutes: 1,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "sit-less",
+      "back-neck",
+      "focus",
+      "habit"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "focus",
+      "meeting",
+      "between-tasks"
+    ],
+    suitableWorkdayTypes: [
+      "focus-heavy",
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule",
+      "study-day"
+    ],
+    bodyArea: [
+      "spine",
+      "hips",
+      "shoulders"
+    ],
+    position: "sitting",
+    visibilityLevel: "discreet",
+    instructionSteps: [
+      "Ruecke ein kleines Stueck vom Tisch weg.",
+      "Stelle beide Fuesse stabil und etwa hueftbreit auf.",
+      "Richte Becken, Ruecken und Kopf bewusst neu aus."
+    ],
+    reason: "Sehr unauffaelliger Reset fuer lange Sitzphasen.",
+    explanation: "Kurz unterbrechen statt komplett ausfallen lassen.",
+    similarityGroup: "mini-reset-posture",
+    priority: 82
+  },
+  {
+    id: "mini-calves-60",
+    title: "60 Sekunden Waden aktivieren",
+    description: "Heb und senke die Fersen langsam im Stand, ohne daraus ein Training zu machen.",
+    durationMinutes: 1,
+    movementType: "mini_reset",
+    intensity: "gentle",
+    suitableGoals: [
+      "sit-less",
+      "more-energy",
+      "habit"
+    ],
+    suitableWorkplaces: [
+      "office",
+      "homeoffice"
+    ],
+    requiredSetup: [
+      "no-equipment"
+    ],
+    suitablePhases: [
+      "between-tasks",
+      "break",
+      "phone"
+    ],
+    suitableWorkdayTypes: [
+      "meeting-heavy",
+      "mixed-day",
+      "tight-schedule"
+    ],
+    bodyArea: [
+      "calves",
+      "feet",
+      "legs"
+    ],
+    position: "standing",
+    visibilityLevel: "normal",
+    instructionSteps: [
+      "Stelle dich stabil hinter oder neben den Stuhl.",
+      "Hebe beide Fersen langsam vom Boden ab.",
+      "Senke die Fersen kontrolliert und wiederhole ruhig."
+    ],
+    reason: "Kurze Aktivierung fuer Beine und Fuesse.",
+    explanation: "Passt, wenn gerade kaum Zeit fuer eine laengere Uebung ist.",
+    similarityGroup: "mini-reset-calves",
+    priority: 79
   }
 ]

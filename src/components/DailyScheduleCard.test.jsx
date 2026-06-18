@@ -38,6 +38,20 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('Setup:')
   })
 
+  it('labels mini-resets as a deliberate category', () => {
+    const html = renderCard({
+      section: {
+        ...section,
+        duration: '30 Sekunden',
+        movementType: 'mini_reset',
+        title: '30 Sekunden Schultern kreisen',
+      },
+    })
+
+    expect(html).toContain('Mini-Reset')
+    expect(html).toContain('30 Sekunden')
+  })
+
   it('does not render inline exercise details anymore', () => {
     const html = renderCard()
 

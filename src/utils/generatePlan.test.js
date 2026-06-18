@@ -257,7 +257,14 @@ describe('generatePlan', () => {
       setup: ['no-equipment', 'standing-desk'],
       situation: 'focus-heavy',
     })
-    const microbreakTypes = ['breathing', 'eyes', 'mobilize', 'sit_reset', 'walk']
+    const microbreakTypes = [
+      'breathing',
+      'eyes',
+      'mini_reset',
+      'mobilize',
+      'sit_reset',
+      'walk',
+    ]
 
     expect(plan.dailySchedule.slice(0, 4).every((section) => microbreakTypes.includes(section.movementType))).toBe(true)
     expect(plan.dailySchedule.slice(0, 4).every((section) => getLongestDuration(section.duration) <= 5)).toBe(true)
@@ -307,6 +314,81 @@ describe('generatePlan', () => {
         .length,
     ).toBeGreaterThanOrEqual(3)
     expect(countSpecialSetupSections(plan.dailySchedule)).toBe(0)
+  })
+
+  it('keeps mini-resets from dominating a normal five-slot plan', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'focus',
+      setup: ['no-equipment'],
+      situation: 'focus-heavy',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(countMiniResets(plan.dailySchedule)).toBeLessThanOrEqual(1)
+    expect(countSubstantiveSections(plan.dailySchedule)).toBeGreaterThanOrEqual(3)
+  })
+
+  it('allows more mini-resets for tight schedules without making the whole plan tiny', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'tight-schedule',
+    })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(countMiniResets(plan.dailySchedule)).toBeLessThanOrEqual(2)
+    expect(countMiniResets(plan.dailySchedule)).toBeGreaterThanOrEqual(1)
+    expect(countSubstantiveSections(plan.dailySchedule)).toBeGreaterThanOrEqual(2)
+    expect(countTinyMiniResets(plan.dailySchedule)).toBeLessThanOrEqual(2)
+  })
+
+  it('does not fill the lunch transition with an extremely short mini-reset', () => {
+    const plan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'habit',
+      setup: ['no-equipment'],
+      situation: 'tight-schedule',
+    })
+    const lunchTransition = plan.dailySchedule.find(
+      (section) => section.slotId === 'lunch_transition',
+    )
+
+    expect(lunchTransition).toBeTruthy()
+    expect(isTinyMiniReset(lunchTransition)).toBe(false)
+  })
+
+  it('can include discreet mini-resets for focus and meeting contexts', () => {
+    const focusPlan = generatePlan({
+      currentPhase: 'focus',
+      fitnessLevel: 'balanced',
+      goal: 'focus',
+      setup: ['no-equipment'],
+      situation: 'tight-schedule',
+    })
+    const meetingPlan = generatePlan({
+      currentPhase: 'meeting',
+      currentWorkplace: 'office',
+      defaultWorkplace: 'office',
+      fitnessLevel: 'balanced',
+      goal: 'focus',
+      situation: 'meeting-heavy',
+      workplaces: ['office'],
+      workplaceSetups: {
+        office: ['no-equipment'],
+      },
+    })
+
+    expect(countMiniResets(focusPlan.dailySchedule)).toBeGreaterThanOrEqual(1)
+    expect(
+      meetingPlan.dailySchedule
+        .filter((section) => section.movementType === 'mini_reset')
+        .every((section) => section.visibilityLevel === 'discreet'),
+    ).toBe(true)
   })
 
   it('uses currentWorkdayType over the stored profile workday type', () => {
@@ -753,6 +835,23 @@ describe('generatePlan', () => {
     expect(result.replacement.durationMinutes).toBeLessThanOrEqual(2)
   })
 
+  it('can use a mini-reset when replacement reason says there is no time', () => {
+    const profile = createReplacementProfile({ goal: 'focus' })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 0,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'focus',
+      reason: 'no-time',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.movementType).toBe('mini_reset')
+    expect(result.replacement.durationMinutes).toBeLessThanOrEqual(1)
+  })
+
   it('prefers walking impulses when the reason asks for walking', () => {
     const profile = createReplacementProfile({
       currentPhase: 'phone',
@@ -774,6 +873,31 @@ describe('generatePlan', () => {
 
     expect(result.replaced).toBe(true)
     expect(['walk', 'walking_meeting']).toContain(result.replacement.movementType)
+  })
+
+  it('keeps walking replacements movement-oriented instead of quiet eye or breath resets', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'phone',
+      goal: 'more-energy',
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 1,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'walk',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.position).not.toBe('sitting')
+    expect(result.replacement.bodyArea).not.toContain('eyes')
+    expect(result.replacement.bodyArea).not.toContain('breathing')
   })
 
   it('keeps the replacement influence scoped to the selected slot', () => {
@@ -949,6 +1073,25 @@ function getUniquePositions(sections) {
 function countSpecialSetupSections(sections) {
   return sections.filter((section) => section.setup !== 'Kein besonderes Equipment')
     .length
+}
+
+function countMiniResets(sections) {
+  return sections.filter((section) => section.movementType === 'mini_reset').length
+}
+
+function countTinyMiniResets(sections) {
+  return sections.filter((section) => isTinyMiniReset(section)).length
+}
+
+function countSubstantiveSections(sections) {
+  return sections.filter((section) => (section.durationMinutes ?? 0) > 1).length
+}
+
+function isTinyMiniReset(section) {
+  return (
+    section?.movementType === 'mini_reset' &&
+    (section.durationMinutes ?? 0) <= 0.67
+  )
 }
 
 function countBy(sections, field) {

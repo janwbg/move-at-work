@@ -32,6 +32,7 @@ const allowedMovementTypes = new Set([
   'breathing',
   'sit_reset',
   'walking_meeting',
+  'mini_reset',
 ])
 
 const allowedBodyAreas = new Set([
@@ -75,8 +76,8 @@ const allowedRequiredSetup = new Set([
 ])
 
 describe('movementRecommendations', () => {
-  it('contains exactly the 80 imported recommendations', () => {
-    expect(movementRecommendations).toHaveLength(80)
+  it('contains the imported recommendations and mini-reset additions', () => {
+    expect(movementRecommendations).toHaveLength(90)
   })
 
   it('defines every required field for every recommendation', () => {

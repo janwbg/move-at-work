@@ -14,6 +14,7 @@ import {
 
 const minimumRecommendations = 3
 const maximumRecommendations = 5
+const miniResetMovementType = 'mini_reset'
 
 export const defaultDaySlotWindows = [
   {
@@ -108,6 +109,7 @@ const movementTypeLegacyTypes = {
   activate: 'strength',
   breathing: 'mobility',
   eyes: 'mobility',
+  mini_reset: 'mobility',
   mobilize: 'mobility',
   relax: 'mobility',
   sit_reset: 'posture',
@@ -120,25 +122,25 @@ const movementTypeLegacyTypes = {
 const phaseMovementTypeScores = {
   break: { activate: 26, mobilize: 12, stretch: 14, walk: 18 },
   'between-tasks': { activate: 12, mobilize: 18, sit_reset: 16, walk: 22 },
-  focus: { breathing: 24, eyes: 28, mobilize: 22, sit_reset: 20, walk: 8 },
-  meeting: { sit_reset: 24, stand: 20, walking_meeting: 24 },
+  focus: { breathing: 24, eyes: 28, mini_reset: 34, mobilize: 22, sit_reset: 20, walk: 8 },
+  meeting: { mini_reset: 22, sit_reset: 24, stand: 20, walking_meeting: 24 },
   phone: { stand: 16, walk: 30, walking_meeting: 28 },
 }
 
 const goalMovementTypeScores = {
   'back-neck': { mobilize: 28, sit_reset: 22, stretch: 22 },
-  focus: { breathing: 18, eyes: 24, mobilize: 14, sit_reset: 18 },
+  focus: { breathing: 18, eyes: 24, mini_reset: 22, mobilize: 14, sit_reset: 18 },
   habit: { mobilize: 12, sit_reset: 12, stand: 14, walk: 14 },
   'more-energy': { activate: 24, stand: 12, walk: 26, walking_meeting: 18 },
   'sit-less': { sit_reset: 18, stand: 26, walk: 24, walking_meeting: 16 },
 }
 
 const slotMovementTypeScores = {
-  start: { breathing: 24, mobilize: 22, sit_reset: 22, stand: 8 },
-  focus: { breathing: 24, mobilize: 22, sit_reset: 20 },
+  start: { breathing: 24, mini_reset: 18, mobilize: 22, sit_reset: 22, stand: 8 },
+  focus: { breathing: 24, mini_reset: 30, mobilize: 22, sit_reset: 20 },
   movement: { activate: 24, stand: 20, walk: 30, walking_meeting: 24 },
   relief: { mobilize: 24, sit_reset: 14, stretch: 28 },
-  closing: { breathing: 26, mobilize: 12, sit_reset: 22, stand: 8 },
+  closing: { breathing: 26, mini_reset: 24, mobilize: 12, sit_reset: 22, stand: 8 },
 }
 
 const slotBodyAreaScores = {
@@ -173,6 +175,7 @@ const workdayMovementTypeScores = {
   'study-day': {
     breathing: 18,
     eyes: 24,
+    mini_reset: 18,
     mobilize: 20,
     sit_reset: 20,
     stretch: 10,
@@ -181,6 +184,7 @@ const workdayMovementTypeScores = {
   'tight-schedule': {
     breathing: 24,
     eyes: 22,
+    mini_reset: 54,
     mobilize: 18,
     sit_reset: 24,
     stand: 12,
@@ -372,12 +376,27 @@ function pickReplacementRecommendation({
   )
   const slotRole = getSlotRole(currentSchedule.length, indexToReplace)
   const scheduleContext = currentSchedule.filter((_, index) => index !== indexToReplace)
+  const slotDefinition = getSlotDefinitionFromSection(
+    originalSection,
+    currentSchedule.length,
+    indexToReplace,
+  )
   const availableCandidates = movementRecommendations
     .filter((recommendation) => canUseRecommendationSetup(recommendation, context))
     .filter((recommendation) =>
       relaxedIntensities[context.fitnessLevel]?.includes(recommendation.intensity),
     )
     .filter((recommendation) => recommendation.id !== originalRuleId)
+    .filter(
+      (recommendation) =>
+        !violatesMiniResetReplacementLimits(
+          recommendation,
+          scheduleContext,
+          context,
+          slotDefinition,
+          reason,
+        ),
+    )
 
   const candidatePools = [
     availableCandidates.filter(
@@ -414,6 +433,7 @@ function pickReplacementRecommendation({
         context,
         scheduleContext,
         slotRole,
+        slotDefinition,
         originalSection,
         reason,
       ) -
@@ -422,6 +442,7 @@ function pickReplacementRecommendation({
         context,
         scheduleContext,
         slotRole,
+        slotDefinition,
         originalSection,
         reason,
       ),
@@ -433,11 +454,13 @@ function scoreReplacementRecommendation(
   context,
   schedule,
   slotRole,
+  slotDefinition,
   originalSection,
   reason,
 ) {
   return (
     scoreRecommendation(recommendation, context, schedule, slotRole) +
+    getSlotSpecificReplacementScore(recommendation, slotDefinition, reason) +
     getReplacementReasonScore(recommendation, reason, originalSection, context) +
     getReplacementDiversityScore(recommendation, originalSection)
   )
@@ -545,6 +568,10 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
     score += getMeetingVisibilityScore(recommendation.visibilityLevel)
   }
 
+  if (isMiniReset(recommendation)) {
+    score += getMiniResetContextScore(recommendation, context, schedule, slotRole)
+  }
+
   if (context.situation === 'study-day') {
     if (recommendation.durationMinutes <= 3) {
       score += 16
@@ -622,6 +649,14 @@ function schedulePenalty(recommendation, schedule) {
     (item) => item.movementType === recommendation.movementType,
   ).length * 14
 
+  if (isMiniReset(recommendation)) {
+    penalty += countMiniResets(schedule) * 90
+
+    if (countMiniResets(schedule) >= 1) {
+      penalty += 80
+    }
+  }
+
   if (countMatchingMovementType(schedule, recommendation.movementType) >= 2) {
     penalty += 42
   }
@@ -661,15 +696,35 @@ function buildDailySchedule(sortedRecommendations, context) {
   for (const slotDefinition of slotDefinitions) {
     const slotRole = slotDefinition.slotRole ?? 'movement'
     const recommendation =
-      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole) ??
-      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, {
-        allowSimilarity: true,
-      }) ??
-      pickNextRecommendation(sortedRecommendations, schedule, context, slotRole, {
-        allowDiversityFallback: true,
-        allowSequenceFallback: true,
-        allowSimilarity: true,
-      })
+      pickNextRecommendation(
+        sortedRecommendations,
+        schedule,
+        context,
+        slotRole,
+        slotDefinition,
+      ) ??
+      pickNextRecommendation(
+        sortedRecommendations,
+        schedule,
+        context,
+        slotRole,
+        slotDefinition,
+        {
+          allowSimilarity: true,
+        },
+      ) ??
+      pickNextRecommendation(
+        sortedRecommendations,
+        schedule,
+        context,
+        slotRole,
+        slotDefinition,
+        {
+          allowDiversityFallback: true,
+          allowSequenceFallback: true,
+          allowSimilarity: true,
+        },
+      )
 
     if (!recommendation) {
       continue
@@ -678,7 +733,12 @@ function buildDailySchedule(sortedRecommendations, context) {
     schedule.push(toScheduleSection(recommendation, slotDefinition, context))
   }
 
-  return schedule
+  return protectDailyScheduleValue(
+    schedule,
+    sortedRecommendations,
+    context,
+    slotDefinitions,
+  )
 }
 
 function pickNextRecommendation(
@@ -686,6 +746,7 @@ function pickNextRecommendation(
   currentSchedule,
   context,
   slotRole,
+  slotDefinition,
   {
     allowDiversityFallback = false,
     allowSequenceFallback = false,
@@ -711,8 +772,84 @@ function pickNextRecommendation(
       return false
     }
 
+    if (violatesMiniResetPlanLimits(candidate, currentSchedule, context, slotDefinition)) {
+      return false
+    }
+
     return allowSequenceFallback || canFollow(currentSchedule.at(-1), candidate)
   })
+}
+
+function protectDailyScheduleValue(schedule, candidates, context, slotDefinitions) {
+  const protectedSchedule = [...schedule]
+  const minimumSubstantiveCount = getMinimumSubstantiveCount(context)
+  const maximumMiniResetCount = getMaximumMiniResetCount(context)
+  const maximumTinyResetCount = context.situation === 'tight-schedule' ? 2 : 1
+
+  for (let index = protectedSchedule.length - 1; index >= 0; index -= 1) {
+    const section = protectedSchedule[index]
+    const slotDefinition = slotDefinitions[index]
+    const needsReplacement =
+      (isMiniReset(section) && countMiniResets(protectedSchedule) > maximumMiniResetCount) ||
+      (
+        isMiniReset(section) &&
+        countSubstantiveRecommendations(protectedSchedule) < minimumSubstantiveCount
+      ) ||
+      (
+        isTinyMiniReset(section) &&
+        countTinyMiniResets(protectedSchedule) > maximumTinyResetCount
+      ) ||
+      (
+        slotDefinition?.slotId === 'lunch_transition' &&
+        isTinyMiniReset(section)
+      )
+
+    if (!needsReplacement) {
+      continue
+    }
+
+    const replacement = pickValueGuardReplacement({
+      candidates,
+      context,
+      currentSchedule: protectedSchedule,
+      indexToReplace: index,
+      slotDefinition,
+    })
+
+    if (replacement) {
+      protectedSchedule[index] = toScheduleSection(replacement, slotDefinition, context)
+    }
+  }
+
+  return protectedSchedule
+}
+
+function pickValueGuardReplacement({
+  candidates,
+  context,
+  currentSchedule,
+  indexToReplace,
+  slotDefinition,
+}) {
+  const scheduleContext = currentSchedule.filter((_, index) => index !== indexToReplace)
+  const existingRuleIds = new Set(
+    scheduleContext.map((section) => section.ruleId ?? section.id),
+  )
+  const previousSection = currentSchedule[indexToReplace - 1]
+  const nextSection = currentSchedule[indexToReplace + 1]
+  const slotRole = slotDefinition?.slotRole ?? 'movement'
+
+  return [...candidates]
+    .filter((candidate) => !isMiniReset(candidate))
+    .filter((candidate) => !existingRuleIds.has(candidate.id))
+    .filter((candidate) => !isTooSimilar(candidate, scheduleContext))
+    .filter((candidate) => canFollow(previousSection, candidate))
+    .filter((candidate) => canFollow(candidate, nextSection))
+    .sort(
+      (first, second) =>
+        scoreRecommendation(second, context, scheduleContext, slotRole) -
+        scoreRecommendation(first, context, scheduleContext, slotRole),
+    )[0]
 }
 
 function avoidBadSequences(recommendations, recommendationCount) {
@@ -885,6 +1022,18 @@ function toScheduleSection(recommendation, slotDefinitionOrLabel, context) {
 
 function buildReason(recommendation, context) {
   const phaseLabel = getOptionLabel(workPhaseOptions, context.currentPhase)
+
+  if (isMiniReset(recommendation)) {
+    if (context.situation === 'tight-schedule') {
+      return 'Ein sehr kurzer Reset fuer volle Tage.'
+    }
+
+    if (context.currentPhase === 'focus' || context.currentPhase === 'meeting') {
+      return 'Kurz unterbrechen statt komplett ausfallen lassen.'
+    }
+
+    return 'Passt, wenn gerade kaum Zeit fuer eine laengere Uebung ist.'
+  }
 
   if (recommendation.requiredSetup.includes('walking-pad')) {
     return 'Das Walking Pad ist an deinem aktuellen Arbeitsort verfügbar und passt zu diesem Impuls.'
@@ -1253,6 +1402,152 @@ function countMatchingMovementType(schedule, movementType) {
   return schedule.filter((item) => item.movementType === movementType).length
 }
 
+function countMiniResets(schedule) {
+  return schedule.filter((item) => isMiniReset(item)).length
+}
+
+function countTinyMiniResets(schedule) {
+  return schedule.filter((item) => isTinyMiniReset(item)).length
+}
+
+function countSubstantiveRecommendations(schedule) {
+  return schedule.filter((item) => isSubstantiveRecommendation(item)).length
+}
+
+function isMiniReset(recommendation) {
+  return recommendation?.movementType === miniResetMovementType
+}
+
+function isTinyMiniReset(recommendation) {
+  return isMiniReset(recommendation) && (recommendation.durationMinutes ?? 0) <= 0.67
+}
+
+function isSubstantiveRecommendation(recommendation) {
+  return (recommendation?.durationMinutes ?? 0) > 1
+}
+
+function getMaximumMiniResetCount(context) {
+  if (context.situation === 'tight-schedule') {
+    return 2
+  }
+
+  if (context.currentPhase === 'meeting' || context.situation === 'meeting-heavy') {
+    return 2
+  }
+
+  return 1
+}
+
+function getMinimumSubstantiveCount(context) {
+  return context.situation === 'tight-schedule' ? 2 : 3
+}
+
+function isMeetingContext(context) {
+  return context.currentPhase === 'meeting' || context.situation === 'meeting-heavy'
+}
+
+function violatesMiniResetPlanLimits(
+  recommendation,
+  currentSchedule,
+  context,
+  slotDefinition,
+) {
+  if (!isMiniReset(recommendation)) {
+    return false
+  }
+
+  if (countMiniResets(currentSchedule) >= getMaximumMiniResetCount(context)) {
+    return true
+  }
+
+  if (slotDefinition?.slotId === 'lunch_transition' && isTinyMiniReset(recommendation)) {
+    return true
+  }
+
+  if (isMeetingContext(context) && recommendation.visibilityLevel !== 'discreet') {
+    return true
+  }
+
+  return false
+}
+
+function violatesMiniResetReplacementLimits(
+  recommendation,
+  scheduleContext,
+  context,
+  slotDefinition,
+  reason,
+) {
+  if (!isMiniReset(recommendation)) {
+    return false
+  }
+
+  if (countMiniResets(scheduleContext) >= getMaximumMiniResetCount(context)) {
+    return true
+  }
+
+  if (slotDefinition?.slotId === 'lunch_transition' && isTinyMiniReset(recommendation)) {
+    return true
+  }
+
+  if (isMeetingContext(context) && recommendation.visibilityLevel !== 'discreet') {
+    return true
+  }
+
+  if (
+    countSubstantiveRecommendations([...scheduleContext, recommendation]) <
+    getMinimumSubstantiveCount(context)
+  ) {
+    return true
+  }
+
+  return reason === 'walk' && isQuietReset(recommendation)
+}
+
+function isQuietReset(recommendation) {
+  return recommendation.bodyArea?.some((bodyArea) =>
+    ['breathing', 'eyes'].includes(bodyArea),
+  )
+}
+
+function getMiniResetContextScore(recommendation, context, schedule, slotRole) {
+  let score = 0
+
+  if (context.situation === 'tight-schedule') {
+    score += 70
+  }
+
+  if (context.currentPhase === 'focus') {
+    score += 36
+  }
+
+  if (isMeetingContext(context) && recommendation.visibilityLevel === 'discreet') {
+    score += 26
+  }
+
+  if (context.currentPhase === 'break' && context.situation !== 'tight-schedule') {
+    score -= 80
+  }
+
+  if (['start', 'focus', 'closing'].includes(slotRole)) {
+    score += 18
+  }
+
+  if (slotRole === 'movement') {
+    score -= 36
+  }
+
+  if (recommendation.durationMinutes <= 0.67 && context.situation !== 'tight-schedule') {
+    score -= 18
+  }
+
+  if (countMiniResets(schedule) >= 1) {
+    score -= context.situation === 'tight-schedule' ? 42 : 120
+  }
+
+  return score
+}
+
 function exceedsSoftDiversityLimit(recommendation, schedule) {
   const mainBodyArea = recommendation.bodyArea[0]
 
@@ -1287,6 +1582,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       : 0
     score += ['walk', 'activate'].includes(recommendation.movementType) ? -45 : 0
     score += recommendation.intensity === 'active' ? -35 : 0
+    score += isMiniReset(recommendation) ? 55 : 0
   }
 
   if (reason === 'focus-work') {
@@ -1306,6 +1602,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     ]) * 28
     score += recommendation.visibilityLevel === 'discreet' ? 40 : 0
     score += recommendation.visibilityLevel === 'visible' ? -80 : 0
+    score += isMiniReset(recommendation) ? 85 : 0
   }
 
   if (reason === 'phone') {
@@ -1326,6 +1623,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       : 0
     score += recommendation.durationMinutes <= 3 ? 34 : 0
     score += recommendation.visibilityLevel === 'visible' ? -18 : 0
+    score += isMiniReset(recommendation) ? 26 : 0
   }
 
   if (reason === 'calmer') {
@@ -1339,6 +1637,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += ['stairs', 'activate'].includes(recommendation.movementType) ? -55 : 0
     score += recommendation.position === 'stairs' ? -70 : 0
     score += recommendation.visibilityLevel === 'visible' ? -45 : 0
+    score += isMiniReset(recommendation) ? -90 : 0
   }
 
   if (['no-time', 'shorter'].includes(reason)) {
@@ -1349,6 +1648,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score -= recommendation.durationMinutes * 12
     score += hasNoSpecialSetup(recommendation.requiredSetup) ? 45 : -35
     score += recommendation.visibilityLevel === 'discreet' ? 24 : 0
+    score += isMiniReset(recommendation) ? 120 : 0
   }
 
   if (reason === 'too-visible') {
@@ -1360,6 +1660,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       recommendation.visibilityLevel === 'discreet'
         ? 30
         : 0
+    score += isMiniReset(recommendation) ? 65 : 0
   }
 
   if (reason === 'no-space') {
@@ -1377,6 +1678,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     )
       ? -55
       : 0
+    score += isMiniReset(recommendation) ? 70 : 0
   }
 
   if (reason === 'too-hard') {
@@ -1399,6 +1701,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.intensity === 'active' ? 26 : 0
     score += recommendation.intensity === 'gentle' ? 10 : 0
     score += recommendation.position === 'walking' ? 54 : 0
+    score += isMiniReset(recommendation) ? 48 : 0
   }
 
   if (reason === 'neck-shoulder') {
@@ -1435,6 +1738,8 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       : 0
     score += recommendation.position === 'walking' ? 80 : 0
     score += recommendation.durationMinutes <= 5 ? 26 : -20
+    score += isMiniReset(recommendation) && recommendation.position === 'walking' ? 65 : 0
+    score += isQuietReset(recommendation) ? -240 : 0
   }
 
   if (reason === 'not-appealing') {
@@ -1442,6 +1747,28 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       recommendation.similarityGroup === originalSection.similarityGroup ? -120 : 35
     score += recommendation.movementType === originalSection.movementType ? -70 : 30
     score -= countBodyAreaOverlap(recommendation.bodyArea, originalSection.bodyArea) * 35
+  }
+
+  return score
+}
+
+function getSlotSpecificReplacementScore(recommendation, slotDefinition, reason) {
+  if (slotDefinition?.slotId !== 'lunch_transition') {
+    return 0
+  }
+
+  let score = 0
+
+  if (isTinyMiniReset(recommendation)) {
+    score -= 180
+  }
+
+  if (['walk', 'stand', 'activate'].includes(recommendation.movementType)) {
+    score += 60
+  }
+
+  if (reason === 'walk' && recommendation.position === 'walking') {
+    score += 45
   }
 
   return score
@@ -1464,6 +1791,10 @@ function getReplacementDiversityScore(recommendation, originalSection) {
 }
 
 function formatDuration(durationMinutes) {
+  if (durationMinutes < 1 || !Number.isInteger(durationMinutes)) {
+    return `${Math.round(durationMinutes * 60)} Sekunden`
+  }
+
   return `${durationMinutes} ${durationMinutes === 1 ? 'Minute' : 'Minuten'}`
 }
 
