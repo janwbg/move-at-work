@@ -37,6 +37,7 @@ function TodayScreen({
   initialReminderState,
   onComplete,
   onReplacementBlocked = () => {},
+  onOpenUpgrade = () => {},
   onReplaceRecommendation = () => {},
   onWorkplaceChange,
   onWorkdayTypeChange = () => {},
@@ -223,7 +224,9 @@ function TodayScreen({
           </p>
         )}
 
-        {replacementLimitNoticeVisible && <ReplacementLimitNotice />}
+        {replacementLimitNoticeVisible && (
+          <ReplacementLimitNotice onOpenUpgrade={onOpenUpgrade} />
+        )}
 
         {dueReminder && (
           <ReminderBanner
@@ -284,7 +287,9 @@ function TodayScreen({
           onReplace={(reason) => replaceRecommendation(selectedDetailIndex, reason)}
           onReplaceBlocked={handleReplacementBlocked}
           replacementLimitNotice={
-            replacementLimitNoticeVisible ? <ReplacementLimitNotice /> : null
+            replacementLimitNoticeVisible ? (
+              <ReplacementLimitNotice onOpenUpgrade={onOpenUpgrade} />
+            ) : null
           }
           section={selectedDetailSection}
         />
@@ -293,7 +298,7 @@ function TodayScreen({
   )
 }
 
-function ReplacementLimitNotice() {
+function ReplacementLimitNotice({ onOpenUpgrade }) {
   return (
     <aside className="mb-4 rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10">
       <p className="text-sm font-extrabold text-slate-950 dark:text-white">
@@ -302,9 +307,13 @@ function ReplacementLimitNotice() {
       <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-200">
         In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.
       </p>
-      <p className="mt-3 w-fit rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
-        Plus wird vorbereitet
-      </p>
+      <button
+        type="button"
+        onClick={onOpenUpgrade}
+        className="mt-3 min-h-10 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#1d4ed8] shadow-sm transition hover:bg-blue-50 dark:bg-white/10 dark:text-blue-100 dark:hover:bg-white/15"
+      >
+        Plus ansehen
+      </button>
     </aside>
   )
 }

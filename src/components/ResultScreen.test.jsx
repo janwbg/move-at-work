@@ -131,6 +131,21 @@ describe('ResultScreen daily workday context helpers', () => {
       intensity: 'Leicht',
     })
   })
+
+  it('can render the upgrade view from the screen controller', () => {
+    const html = renderToStaticMarkup(
+      <ResultScreen
+        answers={createCompleteAnswers()}
+        initialActiveTab="upgrade"
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+      />,
+    )
+
+    expect(html).toContain('Move at work Plus')
+    expect(html).toContain('2,99 € / Monat')
+    expect(html).toContain('Plus wird vorbereitet')
+  })
 })
 
 function createCompleteAnswers(overrides = {}) {

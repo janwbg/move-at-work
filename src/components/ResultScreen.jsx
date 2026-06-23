@@ -7,6 +7,7 @@ import {
 } from './resultScreenHelpers.js'
 import SettingsScreen from './SettingsScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
+import UpgradeScreen from './UpgradeScreen.jsx'
 import { FEEDBACK_URL } from '../data/feedback.js'
 import {
   deriveWorkPhaseFromWorkday,
@@ -42,9 +43,15 @@ const feedbackReasons = [
   'Hat mich nicht angesprochen',
 ]
 
-function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
+function ResultScreen({
+  answers,
+  initialActiveTab = 'today',
+  onChangeAnswers,
+  onRestartOnboarding,
+}) {
   const normalizedAnswers = useMemo(() => normalizeProfileAnswers(answers), [answers])
-  const [activeTab, setActiveTab] = useState('today')
+  const [activeTab, setActiveTab] = useState(initialActiveTab)
+  const [upgradeReturnTab, setUpgradeReturnTab] = useState('settings')
   const [selectedWorkdayType, setSelectedWorkdayType] = useState(
     () => loadDailyContext()?.currentWorkdayType ?? normalizedAnswers.situation,
   )
@@ -205,6 +212,15 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
     setRecommendationFeedback(recordRecommendationFeedback(feedbackEntry))
   }
 
+  function handleOpenUpgrade() {
+    setUpgradeReturnTab(activeTab === 'upgrade' ? 'settings' : activeTab)
+    setActiveTab('upgrade')
+  }
+
+  function handleCloseUpgrade() {
+    setActiveTab(upgradeReturnTab)
+  }
+
   return (
     <section className="w-full max-w-6xl pb-24">
       {activeTab === 'today' && (
@@ -217,6 +233,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
           activeWorkplace={activeWorkplace}
           activeWorkdayType={activeWorkdayType}
           canReplaceRecommendation={canReplaceRecommendation}
+          onOpenUpgrade={handleOpenUpgrade}
           onReplaceRecommendation={handleReplaceRecommendation}
           onWorkplaceChange={handleWorkplaceChange}
           onWorkdayTypeChange={handleWorkdayTypeChange}
@@ -237,7 +254,15 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
           answers={normalizedAnswers}
           feedbackUrl={FEEDBACK_URL}
           onChangeAnswers={onChangeAnswers}
+          onOpenUpgrade={handleOpenUpgrade}
           onRestartOnboarding={onRestartOnboarding}
+        />
+      )}
+
+      {activeTab === 'upgrade' && (
+        <UpgradeScreen
+          onBack={handleCloseUpgrade}
+          premiumStatus={premiumStatus}
         />
       )}
 

@@ -50,6 +50,35 @@ describe('SettingsScreen', () => {
     expect(html).toContain('rel="noreferrer"')
   })
 
+  it('shows the Move at work Plus area', () => {
+    const html = renderToStaticMarkup(
+      <SettingsScreen
+        answers={answers}
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+      />,
+    )
+
+    expect(html).toContain('Move at work Plus')
+    expect(html).toContain('Mehr Freiheit für deinen Tagesplan')
+    expect(html).toContain('Plus ansehen')
+  })
+
+  it('opens the upgrade view from the Plus button', () => {
+    const openUpgrade = vi.fn()
+    const tree = SettingsScreen({
+      answers,
+      onChangeAnswers: () => {},
+      onOpenUpgrade: openUpgrade,
+      onRestartOnboarding: () => {},
+    })
+    const button = findElementByText(tree, 'Plus ansehen')
+
+    button.props.onClick()
+
+    expect(openUpgrade).toHaveBeenCalledTimes(1)
+  })
+
   it('reopens onboarding only after confirmation', () => {
     const restart = vi.fn()
 
@@ -60,3 +89,27 @@ describe('SettingsScreen', () => {
     expect(restart).toHaveBeenCalledTimes(1)
   })
 })
+
+function findElementByText(element, text) {
+  if (!element || typeof element !== 'object') {
+    return null
+  }
+
+  if (element.props?.children === text) {
+    return element
+  }
+
+  const children = Array.isArray(element.props?.children)
+    ? element.props.children
+    : [element.props?.children]
+
+  for (const child of children) {
+    const result = findElementByText(child, text)
+
+    if (result) {
+      return result
+    }
+  }
+
+  return null
+}

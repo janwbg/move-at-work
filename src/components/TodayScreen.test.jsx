@@ -178,7 +178,7 @@ describe('TodayScreen', () => {
     expect(html).toContain(
       'In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.',
     )
-    expect(html).toContain('Plus wird vorbereitet')
+    expect(html).toContain('Plus ansehen')
     expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
   })
 

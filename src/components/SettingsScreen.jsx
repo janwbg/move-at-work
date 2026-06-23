@@ -7,6 +7,7 @@ function SettingsScreen({
   answers,
   feedbackUrl = FEEDBACK_URL,
   onChangeAnswers,
+  onOpenUpgrade = () => {},
   onRestartOnboarding,
 }) {
   function handleRestartOnboarding() {
@@ -30,6 +31,24 @@ function SettingsScreen({
 
       <ProfileSettings answers={answers} onChange={onChangeAnswers} />
       <ReminderSettings />
+      <section className="rounded-2xl border border-[#2563eb]/20 bg-[#2563eb]/5 p-5 dark:bg-[#2563eb]/10 sm:p-6">
+        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          Move at work Plus
+        </p>
+        <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+          Mehr Freiheit für deinen Tagesplan
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          Sieh dir an, was Plus aktuell enthält und welche Funktionen als Nächstes geplant sind.
+        </p>
+        <button
+          type="button"
+          onClick={onOpenUpgrade}
+          className="mt-4 min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+        >
+          Plus ansehen
+        </button>
+      </section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
           Feedback
