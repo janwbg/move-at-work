@@ -48,7 +48,7 @@ describe('reminderStorage helpers', () => {
 
   it.each([
     ['gentle', reminderModeWindowDefaults.gentle],
-    ['standard', reminderModeWindowDefaults.standard],
+    ['normal', reminderModeWindowDefaults.normal],
     ['active', reminderModeWindowDefaults.active],
   ])('derives reminder windows from %s mode', (mode, expectedWindows) => {
     expect(
@@ -66,7 +66,7 @@ describe('reminderStorage helpers', () => {
       reminderSettingsStorageKey,
       JSON.stringify({
         enabled: true,
-        mode: 'standard',
+        mode: 'normal',
         enabledWindows: ['morning', 'lunch_transition', 'wrap_up'],
         quietUntil: null,
       }),
@@ -78,11 +78,25 @@ describe('reminderStorage helpers', () => {
     ])
   })
 
-  it('normalizes old settings without system notification preference', () => {
+  it('migrates the old standard mode to normal', () => {
     expect(
       normalizeReminderSettings({
         enabled: true,
         mode: 'standard',
+        enabledWindows: ['morning', 'afternoon'],
+        quietUntil: null,
+      }),
+    ).toMatchObject({
+      mode: 'normal',
+      enabledWindows: reminderModeWindowDefaults.normal,
+    })
+  })
+
+  it('normalizes old settings without system notification preference', () => {
+    expect(
+      normalizeReminderSettings({
+        enabled: true,
+        mode: 'normal',
         enabledWindows: ['morning'],
         quietUntil: null,
       }).systemNotificationsEnabled,
@@ -103,10 +117,19 @@ describe('reminderStorage helpers', () => {
     saveDailyReminderState(
       {
         date: '2026-06-17',
+        lastCompletedAt: '2026-06-17T09:40:00.000Z',
+        lastInteractionAt: '2026-06-17T09:45:00.000Z',
         snoozedSlots: {
           morning: '2026-06-17T10:45:00.000Z',
         },
+        snoozeCounts: {
+          morning: 2,
+        },
+        pausedForDay: true,
         skippedSlots: ['lunch_transition'],
+        skipCounts: {
+          lunch_transition: 1,
+        },
         lastReminderShownAt: {
           morning: '2026-06-17T09:45:00.000Z',
         },
@@ -116,10 +139,19 @@ describe('reminderStorage helpers', () => {
 
     expect(loadDailyReminderState(date)).toEqual({
       date: '2026-06-17',
+      lastCompletedAt: '2026-06-17T09:40:00.000Z',
+      lastInteractionAt: '2026-06-17T09:45:00.000Z',
       snoozedSlots: {
         morning: '2026-06-17T10:45:00.000Z',
       },
+      snoozeCounts: {
+        morning: 2,
+      },
+      pausedForDay: true,
       skippedSlots: ['lunch_transition'],
+      skipCounts: {
+        lunch_transition: 1,
+      },
       lastReminderShownAt: {
         morning: '2026-06-17T09:45:00.000Z',
       },

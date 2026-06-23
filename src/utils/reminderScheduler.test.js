@@ -12,9 +12,9 @@ const plan = {
   ],
 }
 
-const enabledStandardSettings = {
+const enabledNormalSettings = {
   enabled: true,
-  mode: 'standard',
+  mode: 'normal',
   enabledWindows: ['morning', 'afternoon'],
   quietUntil: null,
 }
@@ -25,7 +25,7 @@ describe('reminderScheduler', () => {
       getDueReminder({
         now: dateAt(9, 45),
         plan,
-        settings: { ...enabledStandardSettings, enabled: false },
+        settings: { ...enabledNormalSettings, enabled: false },
         state: createDailyReminderState(dateAt(9, 45)),
       }),
     ).toBeNull()
@@ -37,7 +37,7 @@ describe('reminderScheduler', () => {
         now: dateAt(9, 45),
         plan,
         settings: {
-          ...enabledStandardSettings,
+          ...enabledNormalSettings,
           quietUntil: dateAt(11, 0).toISOString(),
         },
         state: createDailyReminderState(dateAt(9, 45)),
@@ -99,7 +99,7 @@ describe('reminderScheduler', () => {
   it('only considers enabled windows', () => {
     expect(
       getReminderAt(12, 30, {
-        settings: enabledStandardSettings,
+        settings: enabledNormalSettings,
       }),
     ).toBeNull()
   })
@@ -108,11 +108,97 @@ describe('reminderScheduler', () => {
     expect(getReminderAt(8, 15)).toBeNull()
   })
 
-  it('supports morning and afternoon in standard mode', () => {
+  it('supports morning and afternoon in normal mode', () => {
     expect(getReminderAt(9, 45)?.slotId).toBe('morning')
     expect(
       getReminderAt(14, 30, { completedIds: ['morning-id'] })?.slotId,
     ).toBe('afternoon')
+  })
+
+  it('uses longer cool downs in gentle mode and shorter cool downs in active mode', () => {
+    const recentlyShownState = {
+      ...createDailyReminderState(dateAt(10, 20)),
+      lastReminderShownAt: {
+        morning: dateAt(9, 45).toISOString(),
+      },
+    }
+
+    expect(
+      getReminderAt(10, 20, {
+        settings: {
+          enabled: true,
+          mode: 'gentle',
+          enabledWindows: ['morning'],
+          quietUntil: null,
+        },
+        state: recentlyShownState,
+      }),
+    ).toBeNull()
+    expect(
+      getReminderAt(10, 20, {
+        settings: {
+          enabled: true,
+          mode: 'active',
+          enabledWindows: ['morning'],
+          quietUntil: null,
+        },
+        state: recentlyShownState,
+      })?.slotId,
+    ).toBe('morning')
+  })
+
+  it('reduces reminders after repeated snoozing on the same day', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          lastInteractionAt: dateAt(13, 30).toISOString(),
+          snoozeCounts: {
+            morning: 3,
+          },
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('reduces reminders after repeated skipping on the same day', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          lastInteractionAt: dateAt(13, 30).toISOString(),
+          skipCounts: {
+            morning: 3,
+          },
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('keeps today-not-more active for the rest of the day', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          pausedForDay: true,
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('does not show another reminder directly after a completed exercise', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          lastCompletedAt: dateAt(14, 10).toISOString(),
+        },
+      }),
+    ).toBeNull()
   })
 
   it('derives active windows from reminder mode even with old stored windows', () => {
@@ -148,7 +234,7 @@ function getReminderAt(hours, minutes, overrides = {}) {
     completedIds: overrides.completedIds ?? [],
     now,
     plan,
-    settings: overrides.settings ?? enabledStandardSettings,
+        settings: overrides.settings ?? enabledNormalSettings,
     state: overrides.state ?? createDailyReminderState(now),
   })
 }

@@ -601,7 +601,7 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
   score += getPhaseVisibilityScore(recommendation, context)
   score += getWorkplaceVisibilityScore(recommendation, context)
   score += getPositionTransitionScore(recommendation, context, schedule)
-  score += getSetupContextScore(recommendation, context, schedule)
+  score += getSetupContextScore(recommendation, context, schedule, slotRole)
   score += getBodyAreaDiversityScore(recommendation, schedule)
 
   score -= schedulePenalty(recommendation, schedule)
@@ -1316,7 +1316,7 @@ function getPositionTransitionScore(recommendation, context, schedule) {
   return score
 }
 
-function getSetupContextScore(recommendation, context, schedule) {
+function getSetupContextScore(recommendation, context, schedule, slotRole) {
   const primarySetup = getPrimarySpecialSetup(recommendation.requiredSetup)
   let score = 0
 
@@ -1325,22 +1325,36 @@ function getSetupContextScore(recommendation, context, schedule) {
   }
 
   if (primarySetup === 'walking-pad') {
-    score += ['phone', 'meeting'].includes(context.currentPhase) ? 28 : 8
-    score += recommendation.movementType === 'walking_meeting' ? 14 : 0
+    score += ['phone', 'meeting'].includes(context.currentPhase) ? 38 : 4
+    score += ['movement', 'relief'].includes(slotRole) ? 18 : 0
+    score += recommendation.movementType === 'walking_meeting' ? 22 : 0
+    score += recommendation.movementType === 'walk' ? 12 : 0
+    score += context.currentPhase === 'focus' && slotRole === 'focus' ? -18 : 0
   }
 
   if (primarySetup === 'stairs') {
-    score += context.currentPhase === 'break' ? 26 : 4
-    score += ['balanced', 'active'].includes(recommendation.intensity) ? 10 : 0
+    score += context.currentPhase === 'break' ? 30 : 0
+    score += ['movement', 'relief'].includes(slotRole) ? 24 : -8
+    score += slotRole === 'focus' ? -28 : 0
+    score += context.currentPhase === 'meeting' ? -18 : 0
+    score += ['balanced', 'active'].includes(recommendation.intensity) ? 8 : 0
   }
 
   if (primarySetup === 'hallway') {
-    score += recommendation.movementType === 'walk' ? 22 : 0
-    score += ['phone', 'between-tasks'].includes(context.currentPhase) ? 12 : 0
+    score += recommendation.movementType === 'walk' ? 30 : 0
+    score += ['phone', 'between-tasks'].includes(context.currentPhase) ? 18 : 0
+    score += ['movement', 'relief'].includes(slotRole) ? 16 : 0
+    score += context.currentPhase === 'focus' && slotRole === 'focus' ? -12 : 0
   }
 
   if (primarySetup === 'standing-desk') {
-    score += ['stand', 'sit_reset'].includes(recommendation.movementType) ? 16 : 6
+    score += ['stand', 'sit_reset'].includes(recommendation.movementType) ? 28 : 8
+    score += ['focus', 'closing'].includes(slotRole) ? 10 : 0
+    score += schedule.at(-1)?.position === 'sitting' ? 18 : 0
+    score +=
+      context.currentPhase === 'focus' && recommendation.durationMinutes > 5
+        ? -42
+        : 0
   }
 
   if (primarySetup === 'ergonomic-support') {

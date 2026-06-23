@@ -20,8 +20,8 @@ const reminderModes = [
     description: 'Wenige Hinweise',
   },
   {
-    id: 'standard',
-    label: 'Standard',
+    id: 'normal',
+    label: 'Normal',
     description: 'Sinnvolle Grundbegleitung',
   },
   {

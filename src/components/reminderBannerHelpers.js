@@ -1,6 +1,7 @@
 import { getLaterTodaySnoozeUntil } from '../utils/reminderScheduler.js'
 import {
   markReminderShown,
+  pauseRemindersForDay,
   skipReminderSlot,
   snoozeReminderState,
   snoozeReminderStateUntil,
@@ -13,30 +14,30 @@ export function getReminderCopy({
 }) {
   const copies = {
     'focus-heavy': {
-      title: 'Kurzer Fokus-Reset?',
-      text: 'Ein kleiner Wechsel kann helfen, die nächste Fokusphase sauber zu starten.',
+      title: 'Passt gerade ein kurzer Reset?',
+      text: 'Nur 60 Sekunden, falls es gerade in deine Fokusphase passt.',
     },
     'meeting-heavy': {
       title: 'Zwischen zwei Terminen?',
-      text: 'Ein kurzer, diskreter Impuls reicht oft schon.',
+      text: 'Ein kurzer, diskreter Impuls wartet, falls der Moment passt.',
     },
     'mixed-day': {
-      title: 'Kurzer Wechsel gefällig?',
-      text: `${getSlotImpulseLabel(reminder)} ist noch offen.`,
+      title: 'Kleiner Wechselmoment?',
+      text: `${getSlotImpulseLabel(reminder)} ist noch offen, wenn es gerade reinpasst.`,
     },
     'study-day': {
       title: 'Kurzer Lern-Reset?',
-      text: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzulernen.',
+      text: 'Ein ruhiger Wechsel kann warten, bis es in deinen Lernfluss passt.',
     },
     'tight-schedule': {
-      title: '60 Sekunden reichen.',
-      text: 'Ein kurzer Microbreak passt auch in enge Tage.',
+      title: 'Nur kurz, falls es passt.',
+      text: 'Heute lieber etwas ruhiger? Du kannst die Impulse pausieren.',
     },
   }
 
   return {
     ...(copies[activeWorkdayType] ?? copies['mixed-day']),
-    contextHint: getWorkplaceReminderHint(activeWorkplace),
+    contextHint: getReminderContextHint({ activeWorkplace, reminder }),
   }
 }
 
@@ -45,24 +46,24 @@ export function getReminderNotificationCopy({
 } = {}) {
   const copies = {
     'focus-heavy': {
-      title: 'Kurzer Fokus-Reset?',
-      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzuarbeiten.',
+      title: 'Passt gerade ein kurzer Reset?',
+      body: 'Nur 60 Sekunden, falls es gerade reinpasst.',
     },
     'meeting-heavy': {
       title: 'Zwischen zwei Terminen?',
-      body: 'Ein kurzer, diskreter Impuls wartet auf dich.',
+      body: 'Ein kurzer, diskreter Impuls wartet, falls der Moment passt.',
     },
     'mixed-day': {
-      title: 'Kurzer Wechsel gefällig?',
-      body: 'Dein nächster Bewegungsimpuls ist noch offen.',
+      title: 'Kleiner Wechselmoment?',
+      body: 'Dein nächster Impuls ist offen, wenn es gerade passt.',
     },
     'study-day': {
       title: 'Kurzer Lern-Reset?',
-      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzulernen.',
+      body: 'Ein ruhiger Wechsel wartet, falls er gerade passt.',
     },
     'tight-schedule': {
-      title: '60 Sekunden reichen.',
-      body: 'Ein kurzer Microbreak ist noch offen.',
+      title: 'Nur kurz, falls es passt.',
+      body: 'Du kannst die Impulse heute auch pausieren.',
     },
   }
 
@@ -115,7 +116,10 @@ export function applyReminderBannerAction({
 
   if (action === 'skip-today') {
     return {
-      state: skipReminderSlot(state, reminder.slotId, now),
+      state: pauseRemindersForDay(
+        skipReminderSlot(state, reminder.slotId, now),
+        now,
+      ),
     }
   }
 
@@ -133,13 +137,47 @@ function getSlotImpulseLabel(reminder) {
   return labels[reminder?.slotId] ?? 'Dein nächster Bewegungsimpuls'
 }
 
-function getWorkplaceReminderHint(activeWorkplace) {
+function getReminderContextHint({ activeWorkplace, reminder }) {
+  const setupHint = getSetupReminderHint(reminder)
+
+  if (setupHint) {
+    return setupHint
+  }
+
   if (activeWorkplace === 'office') {
-    return 'Direkt am Arbeitsplatz möglich.'
+    return 'Diskret am Arbeitsplatz möglich.'
   }
 
   if (activeWorkplace === 'homeoffice') {
-    return 'Nutze den kurzen Raumwechsel.'
+    return 'Im Homeoffice darf der Wechsel etwas freier sein.'
+  }
+
+  return ''
+}
+
+function getSetupReminderHint(reminder) {
+  const requiredSetup = reminder?.section?.requiredSetup ?? []
+  const movementType = reminder?.section?.movementType
+  const position = reminder?.section?.position
+
+  if (requiredSetup.includes('standing-desk')) {
+    return 'Kleiner Sitz-Steh-Wechsel, wenn dein Stehpult gerade passt.'
+  }
+
+  if (requiredSetup.includes('walking-pad')) {
+    return 'Gehimpuls nur, wenn das Walking Pad gerade gut in die Aufgabe passt.'
+  }
+
+  if (requiredSetup.includes('hallway')) {
+    return 'Ein kurzer Weg reicht, falls du gerade aufstehen möchtest.'
+  }
+
+  if (requiredSetup.includes('stairs')) {
+    return 'Treppenimpuls nur, wenn du gerade einen aktiveren Moment willst.'
+  }
+
+  if (movementType === 'walk' || position === 'walking') {
+    return 'Ein kurzer Gehwechsel ist genug.'
   }
 
   return ''

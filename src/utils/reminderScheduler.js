@@ -7,8 +7,36 @@ import {
   reminderWindowIds,
 } from './reminderStorage.js'
 
-const reminderCooldownMinutes = 30
 const reminderWindowOrder = ['morning', 'lunch_transition', 'afternoon', 'wrap_up']
+const reminderModeRules = {
+  gentle: {
+    completionCooldownMinutes: 90,
+    dailyReminderLimit: 1,
+    fatigueCooldownMinutes: 180,
+    fatigueStartsAfter: 1,
+    maxSkipsBeforeQuiet: 2,
+    maxSnoozesBeforeQuiet: 2,
+    reminderCooldownMinutes: 90,
+  },
+  normal: {
+    completionCooldownMinutes: 45,
+    dailyReminderLimit: 2,
+    fatigueCooldownMinutes: 90,
+    fatigueStartsAfter: 3,
+    maxSkipsBeforeQuiet: 3,
+    maxSnoozesBeforeQuiet: 3,
+    reminderCooldownMinutes: 30,
+  },
+  active: {
+    completionCooldownMinutes: 30,
+    dailyReminderLimit: 4,
+    fatigueCooldownMinutes: 60,
+    fatigueStartsAfter: 4,
+    maxSkipsBeforeQuiet: 4,
+    maxSnoozesBeforeQuiet: 4,
+    reminderCooldownMinutes: 20,
+  },
+}
 
 export function getDueReminder({
   completedIds = [],
@@ -23,6 +51,10 @@ export function getDueReminder({
   const normalizedState = normalizeDailyReminderState(state, now)
 
   if (!normalizedSettings.enabled || isQuietNow(normalizedSettings, now)) {
+    return null
+  }
+
+  if (isReminderFatiguedForDay(normalizedState, normalizedSettings.mode, now)) {
     return null
   }
 
@@ -73,12 +105,29 @@ export function isReminderCandidate({
   }
 
   const snoozedUntil = parseDate(normalizedState.snoozedSlots[slotId])
+  const modeRule = getReminderModeRule(normalizedSettings.mode)
 
   if (snoozedUntil && snoozedUntil > now) {
     return false
   }
 
-  if (recentlyShown(normalizedState.lastReminderShownAt[slotId], now)) {
+  if (
+    recentlyOccurred(
+      normalizedState.lastReminderShownAt[slotId],
+      now,
+      modeRule.reminderCooldownMinutes,
+    )
+  ) {
+    return false
+  }
+
+  if (
+    recentlyOccurred(
+      normalizedState.lastCompletedAt,
+      now,
+      modeRule.completionCooldownMinutes,
+    )
+  ) {
     return false
   }
 
@@ -138,6 +187,43 @@ export function isQuietNow(settings, now = new Date()) {
   return Boolean(quietUntil && quietUntil > now)
 }
 
+export function isReminderFatiguedForDay(
+  state,
+  mode = getDefaultReminderSettings().mode,
+  now = new Date(),
+) {
+  const normalizedState = normalizeDailyReminderState(state, now)
+  const modeRule = getReminderModeRule(mode)
+  const totalSnoozes = sumCounts(normalizedState.snoozeCounts)
+  const totalSkips = sumCounts(normalizedState.skipCounts)
+  const totalInteractions = totalSnoozes + totalSkips
+  const shownCount = Object.keys(normalizedState.lastReminderShownAt).length
+
+  if (normalizedState.pausedForDay) {
+    return true
+  }
+
+  if (shownCount >= modeRule.dailyReminderLimit) {
+    return true
+  }
+
+  if (
+    totalSnoozes >= modeRule.maxSnoozesBeforeQuiet ||
+    totalSkips >= modeRule.maxSkipsBeforeQuiet
+  ) {
+    return true
+  }
+
+  return (
+    totalInteractions >= modeRule.fatigueStartsAfter &&
+    recentlyOccurred(
+      normalizedState.lastInteractionAt,
+      now,
+      modeRule.fatigueCooldownMinutes,
+    )
+  )
+}
+
 function getSlotWindowMeta(section) {
   if (section?.slotWindowMeta) {
     return section.slotWindowMeta
@@ -148,14 +234,14 @@ function getSlotWindowMeta(section) {
   )?.slotWindowMeta
 }
 
-function recentlyShown(lastShownAt, now) {
-  const shownAt = parseDate(lastShownAt)
+function recentlyOccurred(value, now, cooldownMinutes) {
+  const occurredAt = parseDate(value)
 
-  if (!shownAt) {
+  if (!occurredAt) {
     return false
   }
 
-  return now.getTime() - shownAt.getTime() < reminderCooldownMinutes * 60 * 1000
+  return now.getTime() - occurredAt.getTime() < cooldownMinutes * 60 * 1000
 }
 
 function buildLocalTime(date, timeValue) {
@@ -183,4 +269,12 @@ function isAfterDayEnd(now) {
   dayEnd.setHours(23, 59, 59, 999)
 
   return now > dayEnd
+}
+
+function getReminderModeRule(mode) {
+  return reminderModeRules[mode] ?? reminderModeRules.normal
+}
+
+function sumCounts(counts) {
+  return Object.values(counts ?? {}).reduce((total, count) => total + count, 0)
 }

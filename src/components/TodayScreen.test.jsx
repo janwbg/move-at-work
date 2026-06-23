@@ -319,18 +319,20 @@ describe('TodayScreen', () => {
   it('shows the reminder banner for a due open slot', () => {
     const html = renderTodayScreen(withDueReminder())
 
-    expect(html).toContain('Kurzer Wechsel gefällig?')
-    expect(html).toContain('Dein Vormittagsimpuls ist noch offen.')
+    expect(html).toContain('Kleiner Wechselmoment?')
+    expect(html).toContain(
+      'Dein Vormittagsimpuls ist noch offen, wenn es gerade reinpasst.',
+    )
     expect(html).toContain('Übung öffnen')
     expect(html).toContain('15 Min. später')
     expect(html).toContain('Heute nicht mehr')
   })
 
   it.each([
-    ['focus-heavy', 'Kurzer Fokus-Reset?'],
+    ['focus-heavy', 'Passt gerade ein kurzer Reset?'],
     ['meeting-heavy', 'Zwischen zwei Terminen?'],
     ['study-day', 'Kurzer Lern-Reset?'],
-    ['tight-schedule', '60 Sekunden reichen.'],
+    ['tight-schedule', 'Nur kurz, falls es passt.'],
   ])('shows fitting reminder copy for %s', (activeWorkdayType, title) => {
     const html = renderTodayScreen(withDueReminder({ activeWorkdayType }))
 
@@ -367,7 +369,7 @@ describe('TodayScreen', () => {
     expect(actionResult.state.snoozedSlots.morning).toBe(
       new Date(2026, 5, 17, 10, 0).toISOString(),
     )
-    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
   it('snoozes for 30 minutes and hides the banner', () => {
@@ -385,7 +387,7 @@ describe('TodayScreen', () => {
     expect(actionResult.state.snoozedSlots.morning).toBe(
       new Date(2026, 5, 17, 10, 15).toISOString(),
     )
-    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
   it('skips the reminder slot for today', () => {
@@ -401,7 +403,8 @@ describe('TodayScreen', () => {
     )
 
     expect(actionResult.state.skippedSlots).toContain('morning')
-    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+    expect(actionResult.state.pausedForDay).toBe(true)
+    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
   it('moves the reminder to a later enabled window today', () => {
@@ -423,7 +426,7 @@ describe('TodayScreen', () => {
       withDueReminder({ completedIds: ['morning-reset'] }),
     )
 
-    expect(html).not.toContain('Kurzer Wechsel gefällig?')
+    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
   it('creates compact reminder copy for office and homeoffice', () => {
@@ -433,14 +436,65 @@ describe('TodayScreen', () => {
         activeWorkplace: 'office',
         reminder: createDueReminder(),
       }).contextHint,
-    ).toBe('Direkt am Arbeitsplatz möglich.')
+    ).toBe('Diskret am Arbeitsplatz möglich.')
     expect(
       getReminderCopy({
         activeWorkdayType: 'mixed-day',
         activeWorkplace: 'homeoffice',
         reminder: createDueReminder(),
       }).contextHint,
-    ).toBe('Nutze den kurzen Raumwechsel.')
+    ).toBe('Im Homeoffice darf der Wechsel etwas freier sein.')
+  })
+
+  it('uses setup-specific reminder hints when a due impulse has context', () => {
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'office',
+        reminder: createDueReminder({
+          section: {
+            ...baseSections[0],
+            requiredSetup: ['standing-desk'],
+          },
+        }),
+      }).contextHint,
+    ).toContain('Sitz-Steh-Wechsel')
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'homeoffice',
+        reminder: createDueReminder({
+          section: {
+            ...baseSections[0],
+            requiredSetup: ['walking-pad'],
+          },
+        }),
+      }).contextHint,
+    ).toContain('Walking Pad')
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'office',
+        reminder: createDueReminder({
+          section: {
+            ...baseSections[0],
+            requiredSetup: ['hallway'],
+          },
+        }),
+      }).contextHint,
+    ).toContain('kurzer Weg')
+    expect(
+      getReminderCopy({
+        activeWorkdayType: 'mixed-day',
+        activeWorkplace: 'office',
+        reminder: createDueReminder({
+          section: {
+            ...baseSections[0],
+            requiredSetup: ['stairs'],
+          },
+        }),
+      }).contextHint,
+    ).toContain('Treppenimpuls')
   })
 
   it('uses only the in-app banner when the app is visible', () => {
@@ -477,8 +531,8 @@ describe('TodayScreen', () => {
       state: createDailyReminderState(morningNow()),
     })
 
-    expect(NotificationApi).toHaveBeenCalledWith('Kurzer Fokus-Reset?', {
-      body: 'Ein kleiner Wechsel kann helfen, wieder frischer weiterzuarbeiten.',
+    expect(NotificationApi).toHaveBeenCalledWith('Passt gerade ein kurzer Reset?', {
+      body: 'Nur 60 Sekunden, falls es gerade reinpasst.',
       tag: 'move-at-work-2026-06-17-morning',
     })
     expect(nextState.lastReminderShownAt.morning).toBe(morningNow().toISOString())
@@ -577,7 +631,7 @@ function withDueReminder(props = {}) {
 function enabledReminderSettings() {
   return {
     enabled: true,
-    mode: 'standard',
+    mode: 'normal',
     enabledWindows: ['morning', 'afternoon'],
     quietUntil: null,
     systemNotificationsEnabled: false,
@@ -591,12 +645,13 @@ function enabledSystemReminderSettings() {
   }
 }
 
-function createDueReminder() {
+function createDueReminder(overrides = {}) {
   return {
     index: 0,
     section: baseSections[0],
     slotId: 'morning',
     slotLabel: 'Vormittag',
+    ...overrides,
   }
 }
 

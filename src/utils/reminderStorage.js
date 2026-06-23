@@ -12,14 +12,14 @@ export const reminderWindowIds = [
 
 export const reminderModeWindowDefaults = {
   gentle: ['morning'],
-  standard: ['morning', 'afternoon'],
+  normal: ['morning', 'afternoon'],
   active: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
 }
 
 const defaultReminderSettings = {
   enabled: false,
-  mode: 'standard',
-  enabledWindows: reminderModeWindowDefaults.standard,
+  mode: 'normal',
+  enabledWindows: reminderModeWindowDefaults.normal,
   quietUntil: null,
   systemNotificationsEnabled: false,
 }
@@ -62,9 +62,7 @@ export function normalizeReminderSettings(settings) {
     return getDefaultReminderSettings()
   }
 
-  const mode = Object.hasOwn(reminderModeWindowDefaults, settings.mode)
-    ? settings.mode
-    : defaultReminderSettings.mode
+  const mode = normalizeReminderMode(settings.mode)
   const quietUntil = isValidIsoDateTime(settings.quietUntil)
     ? settings.quietUntil
     : null
@@ -114,8 +112,13 @@ export function saveDailyReminderState(state, date = new Date()) {
 export function createDailyReminderState(date = new Date()) {
   return {
     date: getLocalDateKey(date),
+    lastCompletedAt: null,
+    lastInteractionAt: null,
     snoozedSlots: {},
+    snoozeCounts: {},
+    pausedForDay: false,
     skippedSlots: [],
+    skipCounts: {},
     lastReminderShownAt: {},
   }
 }
@@ -129,8 +132,17 @@ export function normalizeDailyReminderState(state, date = new Date()) {
 
   return {
     date: dateKey,
+    lastCompletedAt: isValidIsoDateTime(state.lastCompletedAt)
+      ? state.lastCompletedAt
+      : null,
+    lastInteractionAt: isValidIsoDateTime(state.lastInteractionAt)
+      ? state.lastInteractionAt
+      : null,
     snoozedSlots: normalizeSlotDateMap(state.snoozedSlots),
+    snoozeCounts: normalizeSlotCountMap(state.snoozeCounts),
+    pausedForDay: state.pausedForDay === true,
     skippedSlots: normalizeSlotList(state.skippedSlots),
+    skipCounts: normalizeSlotCountMap(state.skipCounts),
     lastReminderShownAt: normalizeSlotDateMap(state.lastReminderShownAt),
   }
 }
@@ -160,6 +172,11 @@ export function snoozeReminderStateUntil(
       ...normalizedState.snoozedSlots,
       [slotId]: isoDateTime,
     },
+    snoozeCounts: {
+      ...normalizedState.snoozeCounts,
+      [slotId]: (normalizedState.snoozeCounts[slotId] ?? 0) + 1,
+    },
+    lastInteractionAt: date.toISOString(),
     skippedSlots: normalizedState.skippedSlots.filter(
       (skippedSlotId) => skippedSlotId !== slotId,
     ),
@@ -169,13 +186,39 @@ export function snoozeReminderStateUntil(
 export function skipReminderSlot(state, slotId, date = new Date()) {
   const normalizedState = normalizeDailyReminderState(state, date)
 
-  if (!slotId || normalizedState.skippedSlots.includes(slotId)) {
+  if (!slotId) {
     return normalizedState
   }
 
   return {
     ...normalizedState,
-    skippedSlots: [...normalizedState.skippedSlots, slotId],
+    lastInteractionAt: date.toISOString(),
+    skippedSlots: normalizedState.skippedSlots.includes(slotId)
+      ? normalizedState.skippedSlots
+      : [...normalizedState.skippedSlots, slotId],
+    skipCounts: {
+      ...normalizedState.skipCounts,
+      [slotId]: (normalizedState.skipCounts[slotId] ?? 0) + 1,
+    },
+  }
+}
+
+export function pauseRemindersForDay(state, date = new Date()) {
+  const normalizedState = normalizeDailyReminderState(state, date)
+
+  return {
+    ...normalizedState,
+    lastInteractionAt: date.toISOString(),
+    pausedForDay: true,
+  }
+}
+
+export function markExerciseCompleted(state, date = new Date()) {
+  const normalizedState = normalizeDailyReminderState(state, date)
+
+  return {
+    ...normalizedState,
+    lastCompletedAt: date.toISOString(),
   }
 }
 
@@ -231,6 +274,23 @@ function normalizeSlotDateMap(value) {
   )
 }
 
+function normalizeSlotCountMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([slotId, count]) => [slotId, Number(count)])
+      .filter(
+        ([slotId, count]) =>
+          typeof slotId === 'string' &&
+          Number.isInteger(count) &&
+          count > 0,
+      ),
+  )
+}
+
 function normalizeSlotList(value) {
   if (!Array.isArray(value)) {
     return []
@@ -244,4 +304,14 @@ function normalizeSlotList(value) {
 
 function isValidIsoDateTime(value) {
   return typeof value === 'string' && !Number.isNaN(new Date(value).getTime())
+}
+
+function normalizeReminderMode(mode) {
+  if (mode === 'standard') {
+    return 'normal'
+  }
+
+  return Object.hasOwn(reminderModeWindowDefaults, mode)
+    ? mode
+    : defaultReminderSettings.mode
 }

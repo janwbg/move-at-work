@@ -14,14 +14,14 @@ describe('ReminderSettings', () => {
     )
   })
 
-  it('renders the gentle, standard and active modes', () => {
+  it('renders the gentle, normal and active modes', () => {
     const html = renderSettings({
       mode: 'active',
       enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
     })
 
     expect(html).toContain('Sanft')
-    expect(html).toContain('Standard')
+    expect(html).toContain('Normal')
     expect(html).toContain('Aktiv')
     expect(html).toMatch(/aria-pressed="true"[^>]*>.*Aktiv/s)
   })
@@ -147,7 +147,7 @@ function renderSettings(
       initialNotificationSupported={notificationSupported}
       initialSettings={{
         enabled: false,
-        mode: 'standard',
+        mode: 'normal',
         enabledWindows: ['morning', 'afternoon'],
         quietUntil: null,
         systemNotificationsEnabled: false,

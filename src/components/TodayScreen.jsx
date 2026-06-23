@@ -13,6 +13,7 @@ import { getDueReminder } from '../utils/reminderScheduler.js'
 import {
   loadDailyReminderState,
   loadReminderSettings,
+  markExerciseCompleted,
   saveDailyReminderState,
 } from '../utils/reminderStorage.js'
 
@@ -135,6 +136,12 @@ function TodayScreen({
 
   function completeFromDetail(section) {
     setSelectedDetailIndex(null)
+    updateReminderState(markExerciseCompleted(reminderState, now))
+    onComplete(section)
+  }
+
+  function completeFromSchedule(section) {
+    updateReminderState(markExerciseCompleted(reminderState, now))
     onComplete(section)
   }
 
@@ -243,7 +250,7 @@ function TodayScreen({
               canReplace={canReplaceRecommendation}
               completed={completedIds.includes(section.id)}
               key={section.id}
-              onComplete={() => onComplete(section)}
+              onComplete={() => completeFromSchedule(section)}
               onOpenDetails={() => setSelectedDetailIndex(index)}
               onReplace={(reason) => replaceRecommendation(index, reason)}
               onReplaceBlocked={handleReplacementBlocked}
