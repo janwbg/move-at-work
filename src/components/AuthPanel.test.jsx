@@ -22,6 +22,26 @@ describe('AuthPanel', () => {
     )
   })
 
+  it('shows missing env names without exposing configured values', async () => {
+    await renderAuthPanel({
+      configStatus: {
+        isConfigured: false,
+        missingKeys: ['VITE_SUPABASE_ANON_KEY'],
+      },
+      isAuthAvailable: false,
+    })
+
+    expect(document.body.textContent).toContain(
+      'Auth ist noch nicht konfiguriert.',
+    )
+    expect(document.body.textContent).toContain(
+      'Fehlende Variable: VITE_SUPABASE_ANON_KEY',
+    )
+    expect(document.body.textContent).toContain('.env.local')
+    expect(document.body.textContent).toContain('Dev-Server neu')
+    expect(document.body.textContent).not.toContain('configured-anon-token')
+  })
+
   it('updates email and password inputs', async () => {
     await renderAuthPanel()
     const [emailInput, passwordInput] = document.querySelectorAll('input')
@@ -31,6 +51,38 @@ describe('AuthPanel', () => {
 
     expect(emailInput.value).toBe('test@example.com')
     expect(passwordInput.value).toBe('secret123')
+  })
+
+  it('toggles the password field from password to text', async () => {
+    await renderAuthPanel()
+    const passwordInput = getPasswordInputs()[0]
+
+    expect(passwordInput.type).toBe('password')
+    expect(document.body.textContent).toContain('Passwort anzeigen')
+
+    await clickButton('Passwort anzeigen')
+
+    expect(passwordInput.type).toBe('text')
+    expect(document.body.textContent).toContain('Passwort verbergen')
+
+    await clickButton('Passwort verbergen')
+
+    expect(passwordInput.type).toBe('password')
+    expect(document.body.textContent).toContain('Passwort anzeigen')
+  })
+
+  it('shows password confirmation only in register mode', async () => {
+    await renderAuthPanel()
+
+    expect(document.body.textContent).not.toContain('Passwort bestätigen')
+
+    await clickButton('Konto erstellen')
+
+    expect(document.body.textContent).toContain('Passwort bestätigen')
+
+    await clickButton('Anmelden')
+
+    expect(document.body.textContent).not.toContain('Passwort bestätigen')
   })
 
   it('calls signIn with the entered credentials', async () => {
@@ -51,15 +103,36 @@ describe('AuthPanel', () => {
 
     await renderAuthPanel({ signUp })
     await clickButton('Konto erstellen')
-    const [emailInput, passwordInput] = document.querySelectorAll('input')
+    const [emailInput, passwordInput, passwordConfirmationInput] =
+      document.querySelectorAll('input')
 
     await changeInput(emailInput, 'new@example.com')
     await changeInput(passwordInput, 'secret123')
+    await changeInput(passwordConfirmationInput, 'secret123')
     await submitForm()
 
     expect(signUp).toHaveBeenCalledWith('new@example.com', 'secret123')
     expect(document.body.textContent).toContain(
       'Prüfe ggf. deine E-Mails zur Bestätigung.',
+    )
+  })
+
+  it('does not call signUp when password confirmation differs', async () => {
+    const signUp = vi.fn().mockResolvedValue({ data: {}, error: null })
+
+    await renderAuthPanel({ signUp })
+    await clickButton('Konto erstellen')
+    const [emailInput, passwordInput, passwordConfirmationInput] =
+      document.querySelectorAll('input')
+
+    await changeInput(emailInput, 'new@example.com')
+    await changeInput(passwordInput, 'secret123')
+    await changeInput(passwordConfirmationInput, 'different123')
+    await submitForm()
+
+    expect(signUp).not.toHaveBeenCalled()
+    expect(document.body.textContent).toContain(
+      'Die Passwörter stimmen nicht überein.',
     )
   })
 
@@ -106,6 +179,10 @@ async function renderAuthPanel(authOverrides = {}) {
 function createAuth(overrides = {}) {
   return {
     authError: '',
+    configStatus: {
+      isConfigured: true,
+      missingKeys: [],
+    },
     isAuthenticated: false,
     isAuthAvailable: true,
     isLoading: false,
@@ -145,4 +222,12 @@ async function clickButton(label) {
   await act(async () => {
     button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
+}
+
+function getPasswordInputs() {
+  return [...document.querySelectorAll('input')].filter(
+    (input) =>
+      input.autocomplete === 'current-password' ||
+      input.autocomplete === 'new-password',
+  )
 }

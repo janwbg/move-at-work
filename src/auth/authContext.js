@@ -5,6 +5,10 @@ export const unavailableAuthMessage =
 
 export const defaultAuthContext = {
   authError: '',
+  configStatus: {
+    isConfigured: false,
+    missingKeys: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'],
+  },
   isAuthenticated: false,
   isAuthAvailable: false,
   isLoading: false,
@@ -22,4 +26,3 @@ export const defaultAuthContext = {
 }
 
 export const AuthContext = createContext(defaultAuthContext)
-

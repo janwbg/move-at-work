@@ -4,10 +4,17 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { supabase } from '../lib/supabaseClient.js'
+import {
+  supabase,
+  supabaseConfigStatus,
+} from '../lib/supabaseClient.js'
 import { AuthContext, unavailableAuthMessage } from './authContext.js'
 
-export function AuthProvider({ children, client = supabase }) {
+export function AuthProvider({
+  children,
+  client = supabase,
+  configStatus = supabaseConfigStatus,
+}) {
   const [session, setSession] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(client))
   const [authError, setAuthError] = useState('')
@@ -98,6 +105,7 @@ export function AuthProvider({ children, client = supabase }) {
   const value = useMemo(
     () => ({
       authError,
+      configStatus,
       isAuthenticated: Boolean(session?.user),
       isAuthAvailable,
       isLoading,
@@ -109,6 +117,7 @@ export function AuthProvider({ children, client = supabase }) {
     }),
     [
       authError,
+      configStatus,
       isAuthAvailable,
       isLoading,
       session,

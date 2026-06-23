@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../auth/useAuth.js'
+import { getSupabaseConfigStatus } from '../lib/supabaseClient.js'
 
 function AuthPanel({ auth: providedAuth }) {
   const contextAuth = useAuth()
@@ -7,14 +8,25 @@ function AuthPanel({ auth: providedAuth }) {
   const [mode, setMode] = useState('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const [localError, setLocalError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const isSignUp = mode === 'sign-up'
+  const passwordInputType = passwordVisible ? 'text' : 'password'
+  const passwordVisibilityLabel = passwordVisible
+    ? 'Passwort verbergen'
+    : 'Passwort anzeigen'
 
   async function handleSubmit(event) {
     event.preventDefault()
     setLocalError('')
     setSuccessMessage('')
+
+    if (isSignUp && password !== passwordConfirmation) {
+      setLocalError('Die Passwörter stimmen nicht überein.')
+      return
+    }
 
     const result = isSignUp
       ? await auth.signUp(email, password)
@@ -40,17 +52,15 @@ function AuthPanel({ auth: providedAuth }) {
     }
   }
 
+  function switchMode(nextMode) {
+    setMode(nextMode)
+    setPasswordConfirmation('')
+    setLocalError('')
+    setSuccessMessage('')
+  }
+
   if (!auth.isAuthAvailable) {
-    return (
-      <div className="mt-4 space-y-3">
-        <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-          Melde dich an, damit Plus später deinem Konto zugeordnet werden kann.
-        </p>
-        <p className="rounded-lg bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-500 dark:bg-white/5 dark:text-slate-400">
-          Konto-Funktionen sind aktuell nicht konfiguriert.
-        </p>
-      </div>
-    )
+    return <UnavailableAuthNotice configStatus={auth.configStatus} />
   }
 
   if (auth.isAuthenticated) {
@@ -89,11 +99,7 @@ function AuthPanel({ auth: providedAuth }) {
         <button
           type="button"
           aria-pressed={!isSignUp}
-          onClick={() => {
-            setMode('sign-in')
-            setLocalError('')
-            setSuccessMessage('')
-          }}
+          onClick={() => switchMode('sign-in')}
           className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
             !isSignUp
               ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
@@ -105,11 +111,7 @@ function AuthPanel({ auth: providedAuth }) {
         <button
           type="button"
           aria-pressed={isSignUp}
-          onClick={() => {
-            setMode('sign-up')
-            setLocalError('')
-            setSuccessMessage('')
-          }}
+          onClick={() => switchMode('sign-up')}
           className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
             isSignUp
               ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
@@ -134,16 +136,41 @@ function AuthPanel({ auth: providedAuth }) {
 
       <label className="block text-sm font-bold text-slate-700 dark:text-slate-200">
         Passwort
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete={isSignUp ? 'new-password' : 'current-password'}
-          required
-          minLength={6}
-          className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
-        />
+        <span className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <input
+            type={passwordInputType}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            required
+            minLength={6}
+            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+          <button
+            type="button"
+            aria-label={passwordVisibilityLabel}
+            onClick={() => setPasswordVisible((current) => !current)}
+            className="min-h-11 shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+          >
+            {passwordVisibilityLabel}
+          </button>
+        </span>
       </label>
+
+      {isSignUp && (
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-200">
+          Passwort bestätigen
+          <input
+            type={passwordInputType}
+            value={passwordConfirmation}
+            onChange={(event) => setPasswordConfirmation(event.target.value)}
+            autoComplete="new-password"
+            required
+            minLength={6}
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+        </label>
+      )}
 
       {(localError || auth.authError) && (
         <p className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700 dark:bg-red-400/10 dark:text-red-100">
@@ -169,6 +196,40 @@ function AuthPanel({ auth: providedAuth }) {
             : 'Anmelden'}
       </button>
     </form>
+  )
+}
+
+function UnavailableAuthNotice({ configStatus }) {
+  const safeConfigStatus = configStatus ?? getSupabaseConfigStatus()
+  const missingKeys = safeConfigStatus.missingKeys ?? []
+
+  return (
+    <div className="mt-4 space-y-3">
+      <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+        Melde dich an, damit Plus später deinem Konto zugeordnet werden kann.
+      </p>
+      <div className="rounded-lg bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-500 dark:bg-white/5 dark:text-slate-400">
+        <p className="font-extrabold text-slate-700 dark:text-slate-200">
+          Auth ist noch nicht konfiguriert.
+        </p>
+        {missingKeys.length > 0 && (
+          <p className="mt-1">
+            {missingKeys.length === 1
+              ? 'Fehlende Variable: '
+              : 'Fehlende Variablen: '}
+            {missingKeys.map((missingKey, index) => (
+              <span key={missingKey}>
+                {index > 0 ? ', ' : ''}
+                <code>{missingKey}</code>
+              </span>
+            ))}
+          </p>
+        )}
+        <p className="mt-1">
+          Prüfe deine <code>.env.local</code> im Projektordner und starte den Dev-Server neu.
+        </p>
+      </div>
+    </div>
   )
 }
 

@@ -77,7 +77,11 @@ describe('SettingsScreen', () => {
     expect(html).toContain(
       'Melde dich an, damit Plus später deinem Konto zugeordnet werden kann.',
     )
-    expect(html).toContain('Konto-Funktionen sind aktuell nicht konfiguriert.')
+    expect(html).toContain('Auth ist noch nicht konfiguriert.')
+    expect(html).toContain('VITE_SUPABASE_URL')
+    expect(html).toContain('VITE_SUPABASE_ANON_KEY')
+    expect(html).toContain('.env.local')
+    expect(html).toContain('Dev-Server neu')
   })
 
   it('opens the upgrade view from the Plus button', () => {
