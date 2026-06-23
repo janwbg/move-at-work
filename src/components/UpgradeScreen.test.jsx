@@ -39,6 +39,24 @@ describe('UpgradeScreen', () => {
     expect(html).not.toContain('Checkout folgt im nächsten Schritt')
   })
 
+  it('shows an account hint for logged-out users', () => {
+    const html = renderUpgradeScreen()
+
+    expect(html).toContain('Für ein späteres Plus-Abo brauchst du ein Konto.')
+  })
+
+  it('shows an account hint for authenticated users', () => {
+    const html = renderUpgradeScreen({
+      auth: {
+        isAuthenticated: true,
+      },
+    })
+
+    expect(html).toContain(
+      'Du bist angemeldet. Plus kann später diesem Konto zugeordnet werden.',
+    )
+  })
+
   it('does not trigger a real checkout for Free users', () => {
     const html = renderUpgradeScreen()
 
@@ -53,10 +71,10 @@ describe('UpgradeScreen', () => {
 function renderUpgradeScreen(props = {}) {
   return renderToStaticMarkup(
     <UpgradeScreen
+      auth={{ isAuthenticated: false }}
       onBack={() => {}}
       premiumStatus="free"
       {...props}
     />,
   )
 }
-

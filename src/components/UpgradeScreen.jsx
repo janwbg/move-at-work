@@ -1,11 +1,15 @@
 import { plusPlan } from '../data/premiumPlans.js'
+import { useAuth } from '../auth/useAuth.js'
 import { isPlusUser, loadPremiumStatus } from '../utils/premiumStatus.js'
 
 function UpgradeScreen({
+  auth: providedAuth,
   onBack,
   plan = plusPlan,
   premiumStatus = loadPremiumStatus(),
 }) {
+  const contextAuth = useAuth()
+  const auth = providedAuth ?? contextAuth
   const plusActive = isPlusUser(premiumStatus)
 
   return (
@@ -49,6 +53,12 @@ function UpgradeScreen({
 
       <p className="rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/5 p-4 text-sm font-semibold leading-6 text-slate-600 dark:bg-[#2563eb]/10 dark:text-slate-200">
         {plan.earlyAccessNote}
+      </p>
+
+      <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm font-semibold leading-6 text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+        {auth.isAuthenticated
+          ? 'Du bist angemeldet. Plus kann später diesem Konto zugeordnet werden.'
+          : 'Für ein späteres Plus-Abo brauchst du ein Konto.'}
       </p>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
@@ -149,4 +159,3 @@ function UpgradeScreen({
 }
 
 export default UpgradeScreen
-

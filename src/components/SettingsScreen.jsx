@@ -1,3 +1,4 @@
+import AuthPanel from './AuthPanel.jsx'
 import ProfileSettings from './ProfileSettings.jsx'
 import ReminderSettings from './ReminderSettings.jsx'
 import { confirmRestartOnboarding } from './settingsActions.js'
@@ -31,6 +32,15 @@ function SettingsScreen({
 
       <ProfileSettings answers={answers} onChange={onChangeAnswers} />
       <ReminderSettings />
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          Konto
+        </p>
+        <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+          Anmeldung vorbereiten
+        </h2>
+        <AuthPanel />
+      </section>
       <section className="rounded-2xl border border-[#2563eb]/20 bg-[#2563eb]/5 p-5 dark:bg-[#2563eb]/10 sm:p-6">
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
           Move at work Plus

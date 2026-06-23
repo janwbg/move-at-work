@@ -64,6 +64,22 @@ describe('SettingsScreen', () => {
     expect(html).toContain('Plus ansehen')
   })
 
+  it('shows the account area without requiring login', () => {
+    const html = renderToStaticMarkup(
+      <SettingsScreen
+        answers={answers}
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+      />,
+    )
+
+    expect(html).toContain('Konto')
+    expect(html).toContain(
+      'Melde dich an, damit Plus später deinem Konto zugeordnet werden kann.',
+    )
+    expect(html).toContain('Konto-Funktionen sind aktuell nicht konfiguriert.')
+  })
+
   it('opens the upgrade view from the Plus button', () => {
     const openUpgrade = vi.fn()
     const tree = SettingsScreen({
