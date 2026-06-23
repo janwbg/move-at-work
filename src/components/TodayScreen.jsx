@@ -27,13 +27,16 @@ const todayWorkdayOptions = [
 function TodayScreen({
   activeWorkdayType = 'mixed-day',
   activeWorkplace,
+  canReplaceRecommendation = true,
   completedIds,
   currentDate,
   feedbackUrl = FEEDBACK_URL,
   initialDetailIndex = null,
+  initialReplacementLimitNoticeVisible = false,
   initialReminderSettings,
   initialReminderState,
   onComplete,
+  onReplacementBlocked = () => {},
   onReplaceRecommendation = () => {},
   onWorkplaceChange,
   onWorkdayTypeChange = () => {},
@@ -43,6 +46,10 @@ function TodayScreen({
   workplaces,
 }) {
   const [selectedDetailIndex, setSelectedDetailIndex] = useState(initialDetailIndex)
+  const [
+    replacementLimitNoticeVisible,
+    setReplacementLimitNoticeVisible,
+  ] = useState(initialReplacementLimitNoticeVisible)
   const [liveNow, setLiveNow] = useState(() => new Date())
   const now = currentDate ?? liveNow
   const [reminderSettings] = useState(
@@ -130,6 +137,16 @@ function TodayScreen({
     onComplete(section)
   }
 
+  function handleReplacementBlocked() {
+    setReplacementLimitNoticeVisible(true)
+    onReplacementBlocked()
+  }
+
+  function replaceRecommendation(index, reason) {
+    setReplacementLimitNoticeVisible(false)
+    onReplaceRecommendation(index, reason)
+  }
+
   function handleReminderAction(action) {
     const result = applyReminderBannerAction({
       action,
@@ -206,6 +223,8 @@ function TodayScreen({
           </p>
         )}
 
+        {replacementLimitNoticeVisible && <ReplacementLimitNotice />}
+
         {dueReminder && (
           <ReminderBanner
             activeWorkdayType={activeWorkdayType}
@@ -218,11 +237,13 @@ function TodayScreen({
         <div className="grid gap-4">
           {plan.dailySchedule.map((section, index) => (
             <DailyScheduleCard
+              canReplace={canReplaceRecommendation}
               completed={completedIds.includes(section.id)}
               key={section.id}
               onComplete={() => onComplete(section)}
               onOpenDetails={() => setSelectedDetailIndex(index)}
-              onReplace={(reason) => onReplaceRecommendation(index, reason)}
+              onReplace={(reason) => replaceRecommendation(index, reason)}
+              onReplaceBlocked={handleReplacementBlocked}
               section={section}
               stepNumber={index + 1}
             />
@@ -255,15 +276,36 @@ function TodayScreen({
 
       {selectedDetailSection && (
         <ExerciseDetailView
+          canReplace={canReplaceRecommendation}
           completed={completedIds.includes(selectedDetailSection.id)}
           key={selectedDetailSection.id}
           onBack={() => setSelectedDetailIndex(null)}
           onComplete={() => completeFromDetail(selectedDetailSection)}
-          onReplace={(reason) => onReplaceRecommendation(selectedDetailIndex, reason)}
+          onReplace={(reason) => replaceRecommendation(selectedDetailIndex, reason)}
+          onReplaceBlocked={handleReplacementBlocked}
+          replacementLimitNotice={
+            replacementLimitNoticeVisible ? <ReplacementLimitNotice /> : null
+          }
           section={selectedDetailSection}
         />
       )}
     </div>
+  )
+}
+
+function ReplacementLimitNotice() {
+  return (
+    <aside className="mb-4 rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10">
+      <p className="text-sm font-extrabold text-slate-950 dark:text-white">
+        Heute schon gewechselt
+      </p>
+      <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-200">
+        In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.
+      </p>
+      <p className="mt-3 w-fit rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
+        Plus wird vorbereitet
+      </p>
+    </aside>
   )
 }
 

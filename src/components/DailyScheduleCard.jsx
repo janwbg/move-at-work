@@ -16,8 +16,10 @@ const movementTypeLabels = {
 }
 
 function DailyScheduleCard({
+  canReplace = true,
   completed,
   initialReplaceDialogOpen = false,
+  onReplaceBlocked = () => {},
   onComplete,
   onOpenDetails,
   onReplace = () => {},
@@ -25,8 +27,22 @@ function DailyScheduleCard({
   stepNumber,
 }) {
   const [replaceDialogOpen, setReplaceDialogOpen] = useState(
-    initialReplaceDialogOpen,
+    initialReplaceDialogOpen && canReplace,
   )
+
+  function openReplacementDialog() {
+    if (completed) {
+      return
+    }
+
+    if (!canReplace) {
+      setReplaceDialogOpen(false)
+      onReplaceBlocked()
+      return
+    }
+
+    setReplaceDialogOpen(true)
+  }
 
   function submitReplacement(reason) {
     if (completed) {
@@ -100,7 +116,7 @@ function DailyScheduleCard({
             type="button"
             aria-label="Andere Empfehlung wählen"
             title="Andere Empfehlung wählen"
-            onClick={() => setReplaceDialogOpen(true)}
+            onClick={openReplacementDialog}
             className="flex min-h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300"
           >
             ↻
@@ -120,7 +136,7 @@ function DailyScheduleCard({
         </button>
       </div>
 
-      {!completed && replaceDialogOpen && (
+      {!completed && canReplace && replaceDialogOpen && (
         <ReplacementReasonPicker
           idPrefix={`${section.id}-card`}
           onCancel={() => setReplaceDialogOpen(false)}

@@ -97,6 +97,16 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Habe wenig Zeit')
     expect(html).toContain('Lieber gehen')
   })
+
+  it('does not open replacement reasons when replacements are blocked', () => {
+    const html = renderCard({
+      canReplace: false,
+      initialReplaceDialogOpen: true,
+    })
+
+    expect(html).toContain('Andere Empfehlung')
+    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+  })
 })
 
 function renderCard(props = {}) {

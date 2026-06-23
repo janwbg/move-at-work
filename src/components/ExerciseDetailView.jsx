@@ -3,6 +3,7 @@ import { getTimerActionLabel, shouldAdvanceTimer } from './exerciseTimer.js'
 import ReplacementReasonPicker from './ReplacementReasonPicker.jsx'
 
 function ExerciseDetailView({
+  canReplace = true,
   completed,
   initialReplaceDialogOpen = false,
   initialRemainingSeconds,
@@ -10,6 +11,8 @@ function ExerciseDetailView({
   onBack,
   onComplete,
   onReplace = () => {},
+  onReplaceBlocked = () => {},
+  replacementLimitNotice = null,
   section,
 }) {
   const durationSeconds = getDurationSeconds(section)
@@ -18,7 +21,7 @@ function ExerciseDetailView({
   )
   const [timerState, setTimerState] = useState(initialTimerState)
   const [replaceDialogOpen, setReplaceDialogOpen] = useState(
-    initialReplaceDialogOpen,
+    initialReplaceDialogOpen && canReplace,
   )
   const instructionSteps = Array.isArray(section.instructionSteps)
     ? section.instructionSteps.filter(Boolean)
@@ -64,6 +67,20 @@ function ExerciseDetailView({
 
     setTimerState('idle')
     setRemainingSeconds(durationSeconds)
+  }
+
+  function openReplacementDialog() {
+    if (completed) {
+      return
+    }
+
+    if (!canReplace) {
+      setReplaceDialogOpen(false)
+      onReplaceBlocked()
+      return
+    }
+
+    setReplaceDialogOpen(true)
   }
 
   function submitReplacement(reason) {
@@ -178,13 +195,15 @@ function ExerciseDetailView({
             <section className="mt-5">
               <button
                 type="button"
-                onClick={() => setReplaceDialogOpen(true)}
+                onClick={openReplacementDialog}
                 className="min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
               >
                 Andere Empfehlung
               </button>
 
-              {replaceDialogOpen && (
+              {replacementLimitNotice}
+
+              {canReplace && replaceDialogOpen && (
                 <ReplacementReasonPicker
                   idPrefix={`${section.id}-detail`}
                   onCancel={() => setReplaceDialogOpen(false)}

@@ -15,6 +15,7 @@ import {
 } from '../data/profileOptions.js'
 import { loadDailyContext, saveDailyContext } from '../utils/dailyContextStorage.js'
 import { generatePlan, replaceRecommendationInPlan } from '../utils/generatePlan.js'
+import { loadPremiumStatus } from '../utils/premiumStatus.js'
 import {
   calculateProgressSummary,
   getCompletedIdsForDate,
@@ -26,6 +27,11 @@ import {
   loadRecommendationFeedback,
   recordRecommendationFeedback,
 } from '../utils/recommendationFeedbackStorage.js'
+import {
+  canUseReplacement,
+  loadReplacementUsage,
+  recordReplacementUsage,
+} from '../utils/replacementUsageStorage.js'
 
 const feedbackReasons = [
   'Zu auffällig',
@@ -48,6 +54,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
+  const [premiumStatus] = useState(() => loadPremiumStatus())
+  const [replacementUsage, setReplacementUsage] = useState(() =>
+    loadReplacementUsage(),
+  )
   const [, setRecommendationFeedback] = useState(() =>
     loadRecommendationFeedback(),
   )
@@ -77,6 +87,10 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
   const plan = planOverride?.contextKey === planContextKey ? planOverride.plan : basePlan
   const currentReplacementMessage =
     replacementMessage?.contextKey === planContextKey ? replacementMessage.message : ''
+  const canReplaceRecommendation = canUseReplacement({
+    premiumStatus,
+    usage: replacementUsage,
+  })
   const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
   const progressSummary = useMemo(
     () => calculateProgressSummary(progress),
@@ -140,6 +154,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
 
     setPlanOverride({ contextKey: planContextKey, plan: result.plan })
     setReplacementMessage(null)
+    setReplacementUsage(recordReplacementUsage())
     setRecommendationFeedback(
       recordRecommendationFeedback({
         ...createRecommendationFeedbackContext({
@@ -201,6 +216,7 @@ function ResultScreen({ answers, onChangeAnswers, onRestartOnboarding }) {
           progressSummary={progressSummary}
           activeWorkplace={activeWorkplace}
           activeWorkdayType={activeWorkdayType}
+          canReplaceRecommendation={canReplaceRecommendation}
           onReplaceRecommendation={handleReplaceRecommendation}
           onWorkplaceChange={handleWorkplaceChange}
           onWorkdayTypeChange={handleWorkdayTypeChange}

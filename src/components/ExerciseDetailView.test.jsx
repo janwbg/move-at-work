@@ -130,6 +130,18 @@ describe('ExerciseDetailView', () => {
     }
   })
 
+  it('does not open replacement reasons when replacements are blocked', () => {
+    const html = renderDetail({
+      canReplace: false,
+      initialReplaceDialogOpen: true,
+      replacementLimitNotice: <p>Heute schon gewechselt</p>,
+    })
+
+    expect(html).toContain('Andere Empfehlung')
+    expect(html).toContain('Heute schon gewechselt')
+    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+  })
+
   it('shows completed state without removing the detail content', () => {
     const html = renderDetail({ completed: true })
 

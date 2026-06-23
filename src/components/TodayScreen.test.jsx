@@ -157,6 +157,31 @@ describe('TodayScreen', () => {
     expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
   })
 
+  it('keeps five recommendations visible for Free users', () => {
+    const html = renderTodayScreen({
+      canReplaceRecommendation: false,
+      plan: createPlan(5),
+    })
+
+    expect(html).toContain('0 von 5')
+    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
+  })
+
+  it('shows the prepared Plus hint after a blocked Free replacement attempt', () => {
+    const html = renderTodayScreen({
+      canReplaceRecommendation: false,
+      initialReplacementLimitNoticeVisible: true,
+      plan: createPlan(5),
+    })
+
+    expect(html).toContain('Heute schon gewechselt')
+    expect(html).toContain(
+      'In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.',
+    )
+    expect(html).toContain('Plus wird vorbereitet')
+    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+  })
+
   it('shows completed recommendations as completed while other cards remain open internally', () => {
     const html = renderTodayScreen({
       completedIds: ['morning-reset'],
