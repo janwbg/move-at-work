@@ -2,6 +2,21 @@ import { getLocalDateKey } from './progressStorage.js'
 
 const recommendationFeedbackStorageKey = 'move-at-work-recommendation-feedback'
 
+export const recommendationBenefitOptions = [
+  { id: 'more-awake', label: 'Wacher' },
+  { id: 'more-relaxed', label: 'Entspannter' },
+  { id: 'more-focused', label: 'Fokussierter' },
+  { id: 'looser', label: 'Lockerer' },
+  { id: 'no-difference', label: 'Kein Unterschied' },
+]
+
+const positiveBenefitIds = new Set([
+  'more-awake',
+  'more-relaxed',
+  'more-focused',
+  'looser',
+])
+
 export function loadRecommendationFeedback() {
   if (typeof window === 'undefined') {
     return []
@@ -48,7 +63,7 @@ export function recordRecommendationFeedback(feedbackEntry, date = new Date()) {
   const nextFeedback =
     existingIndex >= 0
       ? currentFeedback.map((entry, index) =>
-          index === existingIndex ? normalizedEntry : entry,
+          index === existingIndex ? { ...entry, ...normalizedEntry } : entry,
         )
       : [...currentFeedback, normalizedEntry]
 
@@ -75,20 +90,30 @@ export function summarizeRecommendationFeedback(
   const mostCommonReason =
     Object.entries(reasonCounts).sort((first, second) => second[1] - first[1])[0]?.[0] ??
     ''
+  const benefitEntries = safeFeedbackEntries.filter((entry) => entry.effect)
+  const positiveBenefitCount = benefitEntries.filter((entry) =>
+    positiveBenefitIds.has(entry.effect),
+  ).length
 
   return {
     total: safeFeedbackEntries.length,
     fit: safeFeedbackEntries.filter((entry) => entry.feedback === 'fit').length,
     notFit: safeFeedbackEntries.filter((entry) => entry.feedback === 'not-fit').length,
     mostCommonReason,
+    benefitTotal: benefitEntries.length,
+    positiveBenefitCount,
   }
 }
 
 function normalizeRecommendationFeedbackEntry(feedbackEntry, date) {
-  if (
-    !feedbackEntry?.recommendationId ||
-    !['fit', 'not-fit'].includes(feedbackEntry.feedback)
-  ) {
+  if (!feedbackEntry?.recommendationId) {
+    return null
+  }
+
+  const feedback = normalizeFitFeedback(feedbackEntry.feedback)
+  const effect = normalizeBenefitFeedback(feedbackEntry.effect)
+
+  if (!feedback && !effect) {
     return null
   }
 
@@ -102,7 +127,14 @@ function normalizeRecommendationFeedbackEntry(feedbackEntry, date) {
     currentWorkplace,
     workdayType: feedbackEntry.workdayType ?? '',
     intensity: feedbackEntry.intensity ?? '',
-    feedback: feedbackEntry.feedback,
+  }
+
+  if (feedback) {
+    normalizedEntry.feedback = feedback
+  }
+
+  if (effect) {
+    normalizedEntry.effect = effect
   }
 
   if (currentPhase) {
@@ -147,10 +179,20 @@ function isRecommendationFeedbackEntry(entry) {
     entry &&
       typeof entry.recommendationId === 'string' &&
       typeof entry.date === 'string' &&
-      ['fit', 'not-fit'].includes(entry.feedback),
+      (normalizeFitFeedback(entry.feedback) || normalizeBenefitFeedback(entry.effect)),
   )
 }
 
 function getFeedbackEntryKey(entry) {
   return `${entry.date}:${entry.recommendationId}:${entry.slotId ?? entry.scheduleSectionId ?? ''}`
+}
+
+function normalizeFitFeedback(feedback) {
+  return ['fit', 'not-fit'].includes(feedback) ? feedback : ''
+}
+
+function normalizeBenefitFeedback(effect) {
+  return recommendationBenefitOptions.some((option) => option.id === effect)
+    ? effect
+    : ''
 }

@@ -3,16 +3,40 @@ import ProfileSettings from './ProfileSettings.jsx'
 import ReminderSettings from './ReminderSettings.jsx'
 import { confirmRestartOnboarding } from './settingsActions.js'
 import { FEEDBACK_URL } from '../data/feedback.js'
+import {
+  normalizeRoutineSettings,
+  routineWeekdayOptions,
+} from '../utils/progressStorage.js'
 
 function SettingsScreen({
   answers,
   feedbackUrl = FEEDBACK_URL,
   onChangeAnswers,
   onOpenUpgrade = () => {},
+  onRoutineSettingsChange = () => {},
   onRestartOnboarding,
+  routineSettings,
 }) {
+  const normalizedRoutineSettings = normalizeRoutineSettings(routineSettings)
+
   function handleRestartOnboarding() {
     confirmRestartOnboarding(onRestartOnboarding)
+  }
+
+  function handleRoutineDayToggle(weekday) {
+    const activeWeekdays = normalizedRoutineSettings.activeWeekdays
+    const isActive = activeWeekdays.includes(weekday)
+    const nextActiveWeekdays = isActive
+      ? activeWeekdays.filter((activeWeekday) => activeWeekday !== weekday)
+      : [...activeWeekdays, weekday]
+
+    if (!nextActiveWeekdays.length) {
+      return
+    }
+
+    onRoutineSettingsChange(
+      normalizeRoutineSettings({ activeWeekdays: nextActiveWeekdays }),
+    )
   }
 
   return (
@@ -31,6 +55,44 @@ function SettingsScreen({
       </section>
 
       <ProfileSettings answers={answers} onChange={onChangeAnswers} />
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          Arbeits-/Lernroutine
+        </p>
+        <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+          An welchen Tagen nutzt du Move at work normalerweise?
+        </h2>
+        <div
+          aria-label="Aktive Arbeits- oder Lerntage auswählen"
+          className="mt-4 flex flex-wrap gap-2"
+          role="group"
+        >
+          {routineWeekdayOptions.map((weekday) => {
+            const isActive = normalizedRoutineSettings.activeWeekdays.includes(
+              weekday.id,
+            )
+
+            return (
+              <button
+                aria-pressed={isActive}
+                className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+                  isActive
+                    ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+                }`}
+                key={weekday.id}
+                onClick={() => handleRoutineDayToggle(weekday.id)}
+                type="button"
+              >
+                {weekday.label}
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          Pausentage und nicht ausgewählte Tage brechen deine Routine nicht.
+        </p>
+      </section>
       <ReminderSettings />
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
         <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">

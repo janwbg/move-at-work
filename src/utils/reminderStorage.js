@@ -213,6 +213,16 @@ export function pauseRemindersForDay(state, date = new Date()) {
   }
 }
 
+export function resumeRemindersForDay(state, date = new Date()) {
+  const normalizedState = normalizeDailyReminderState(state, date)
+
+  return {
+    ...normalizedState,
+    lastInteractionAt: date.toISOString(),
+    pausedForDay: false,
+  }
+}
+
 export function markExerciseCompleted(state, date = new Date()) {
   const normalizedState = normalizeDailyReminderState(state, date)
 

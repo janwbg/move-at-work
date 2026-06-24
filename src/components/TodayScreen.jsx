@@ -14,6 +14,8 @@ import {
   loadDailyReminderState,
   loadReminderSettings,
   markExerciseCompleted,
+  pauseRemindersForDay,
+  resumeRemindersForDay,
   saveDailyReminderState,
 } from '../utils/reminderStorage.js'
 
@@ -36,7 +38,9 @@ function TodayScreen({
   initialReplacementLimitNoticeVisible = false,
   initialReminderSettings,
   initialReminderState,
+  isPauseDay = false,
   onComplete,
+  onPauseDayChange = () => {},
   onReplacementBlocked = () => {},
   onOpenUpgrade = () => {},
   onReplaceRecommendation = () => {},
@@ -77,7 +81,7 @@ function TodayScreen({
     now,
     plan,
     settings: reminderSettings,
-    state: reminderState,
+    state: isPauseDay ? pauseRemindersForDay(reminderState, now) : reminderState,
   })
   const updateReminderState = useCallback((nextState) => {
     setReminderState(nextState)
@@ -112,7 +116,7 @@ function TodayScreen({
       dueReminder,
       now,
       settings: reminderSettings,
-      state: reminderState,
+      state: isPauseDay ? pauseRemindersForDay(reminderState, now) : reminderState,
     })
 
     if (nextReminderState) {
@@ -131,6 +135,7 @@ function TodayScreen({
     now,
     reminderSettings,
     reminderState,
+    isPauseDay,
     updateReminderState,
   ])
 
@@ -175,6 +180,17 @@ function TodayScreen({
     }
   }
 
+  function handlePauseDayToggle() {
+    const nextPauseState = !isPauseDay
+
+    updateReminderState(
+      nextPauseState
+        ? pauseRemindersForDay(reminderState, now)
+        : resumeRemindersForDay(reminderState, now),
+    )
+    onPauseDayChange(nextPauseState)
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <section className="rounded-2xl bg-[#2563eb] p-6 text-white shadow-xl shadow-[#2563eb]/20 sm:p-8">
@@ -197,6 +213,28 @@ function TodayScreen({
           totalToday={plan.dailySchedule.length}
         />
         <StreakCard streak={progressSummary?.streak ?? 0} />
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+            {isPauseDay
+              ? 'Heute ist Pausentag. Deine Routine bleibt erhalten.'
+              : 'Heute zählt normal für deine Arbeits-/Lernroutine.'}
+          </p>
+          <button
+            type="button"
+            aria-pressed={isPauseDay}
+            onClick={handlePauseDayToggle}
+            className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+              isPauseDay
+                ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
+            }`}
+          >
+            Heute Pausentag
+          </button>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">

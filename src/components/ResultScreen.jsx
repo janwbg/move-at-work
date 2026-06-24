@@ -4,6 +4,7 @@ import ProgressScreen from './ProgressScreen.jsx'
 import {
   createRecommendationFeedbackContext,
   preserveCompletedSections,
+  shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
 import SettingsScreen from './SettingsScreen.jsx'
 import TodayScreen from './TodayScreen.jsx'
@@ -20,13 +21,20 @@ import { loadPremiumStatus } from '../utils/premiumStatus.js'
 import {
   calculateProgressSummary,
   getCompletedIdsForDate,
+  isPauseDay,
   loadProgress,
+  loadRoutineSettings,
+  markCompleteDayCelebration,
   recordCompletion,
   saveProgress,
+  saveRoutineSettings,
+  setPauseDay,
 } from '../utils/progressStorage.js'
 import {
   loadRecommendationFeedback,
+  recommendationBenefitOptions,
   recordRecommendationFeedback,
+  summarizeRecommendationFeedback,
 } from '../utils/recommendationFeedbackStorage.js'
 import {
   canUseReplacement,
@@ -61,11 +69,14 @@ function ResultScreen({
   const [selectedWorkplace, setSelectedWorkplace] = useState(defaultWorkplace)
   const [workplaceWasChanged, setWorkplaceWasChanged] = useState(false)
   const [progress, setProgress] = useState(() => loadProgress())
+  const [routineSettings, setRoutineSettings] = useState(() =>
+    loadRoutineSettings(),
+  )
   const [premiumStatus] = useState(() => loadPremiumStatus())
   const [replacementUsage, setReplacementUsage] = useState(() =>
     loadReplacementUsage(),
   )
-  const [, setRecommendationFeedback] = useState(() =>
+  const [recommendationFeedback, setRecommendationFeedback] = useState(() =>
     loadRecommendationFeedback(),
   )
   const [successState, setSuccessState] = useState(null)
@@ -100,8 +111,12 @@ function ResultScreen({
   })
   const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
   const progressSummary = useMemo(
-    () => calculateProgressSummary(progress),
-    [progress],
+    () => calculateProgressSummary(progress, new Date(), routineSettings),
+    [progress, routineSettings],
+  )
+  const feedbackSummary = useMemo(
+    () => summarizeRecommendationFeedback(recommendationFeedback),
+    [recommendationFeedback],
   )
   function handleWorkplaceChange(workplace) {
     setSelectedWorkplace(workplace)
@@ -189,11 +204,25 @@ function ResultScreen({
       return
     }
 
-    const nextProgress = recordCompletion(progress, exerciseId)
-    const nextSummary = calculateProgressSummary(nextProgress)
+    const completionDate = new Date()
+    const nextProgress = recordCompletion(progress, exerciseId, completionDate)
+    const nextSummary = calculateProgressSummary(
+      nextProgress,
+      completionDate,
+      routineSettings,
+    )
+    const showCompleteDaySuccess = shouldShowCompleteDaySuccess({
+      completedBefore: completedIds.length,
+      date: completionDate,
+      progress,
+      totalToday: plan.dailySchedule.length,
+    })
+    const progressToSave = showCompleteDaySuccess
+      ? markCompleteDayCelebration(nextProgress, completionDate)
+      : nextProgress
 
-    setProgress(nextProgress)
-    saveProgress(nextProgress)
+    setProgress(progressToSave)
+    saveProgress(progressToSave)
     setSuccessState({
       feedbackContext: createRecommendationFeedbackContext({
         activeWorkPhase,
@@ -202,6 +231,7 @@ function ResultScreen({
         fallbackIntensity: normalizedAnswers.fitnessLevel,
         section,
       }),
+      isCompleteDaySuccess: showCompleteDaySuccess,
       summary: nextSummary,
       title: section.title,
       totalToday: plan.dailySchedule.length,
@@ -210,6 +240,18 @@ function ResultScreen({
 
   function handleRecommendationFeedback(feedbackEntry) {
     setRecommendationFeedback(recordRecommendationFeedback(feedbackEntry))
+  }
+
+  function handleRoutineSettingsChange(nextRoutineSettings) {
+    setRoutineSettings(nextRoutineSettings)
+    saveRoutineSettings(nextRoutineSettings)
+  }
+
+  function handlePauseDayChange(paused) {
+    const nextProgress = setPauseDay(progress, new Date(), paused)
+
+    setProgress(nextProgress)
+    saveProgress(nextProgress)
   }
 
   function handleOpenUpgrade() {
@@ -227,7 +269,9 @@ function ResultScreen({
         <TodayScreen
           completedIds={completedIds}
           feedbackUrl={FEEDBACK_URL}
+          isPauseDay={isPauseDay(progress)}
           onComplete={handleComplete}
+          onPauseDayChange={handlePauseDayChange}
           plan={plan}
           progressSummary={progressSummary}
           activeWorkplace={activeWorkplace}
@@ -244,6 +288,7 @@ function ResultScreen({
 
       {activeTab === 'progress' && (
         <ProgressScreen
+          feedbackSummary={feedbackSummary}
           summary={progressSummary}
           totalToday={plan.dailySchedule.length}
         />
@@ -255,7 +300,9 @@ function ResultScreen({
           feedbackUrl={FEEDBACK_URL}
           onChangeAnswers={onChangeAnswers}
           onOpenUpgrade={handleOpenUpgrade}
+          onRoutineSettingsChange={handleRoutineSettingsChange}
           onRestartOnboarding={onRestartOnboarding}
+          routineSettings={routineSettings}
         />
       )}
 
@@ -272,6 +319,7 @@ function ResultScreen({
         <SuccessDialog
           feedbackContext={successState.feedbackContext}
           feedbackUrl={FEEDBACK_URL}
+          isCompleteDaySuccess={successState.isCompleteDaySuccess}
           onFeedback={handleRecommendationFeedback}
           summary={successState.summary}
           title={successState.title}
@@ -296,7 +344,9 @@ export function SuccessDialog({
   feedbackContext = {},
   feedbackUrl = FEEDBACK_URL,
   initialFeedback = '',
+  initialEffect = '',
   initialReason = '',
+  isCompleteDaySuccess = false,
   onClose,
   onFeedback = () => {},
   summary,
@@ -304,6 +354,7 @@ export function SuccessDialog({
   totalToday,
 }) {
   const [selectedFeedback, setSelectedFeedback] = useState(initialFeedback)
+  const [selectedEffect, setSelectedEffect] = useState(initialEffect)
   const [selectedReason, setSelectedReason] = useState(initialReason)
 
   function submitFeedback(feedback, reason = '') {
@@ -313,6 +364,14 @@ export function SuccessDialog({
       ...feedbackContext,
       feedback,
       reason: reason || undefined,
+    })
+  }
+
+  function submitEffect(effect) {
+    setSelectedEffect(effect)
+    onFeedback({
+      ...feedbackContext,
+      effect,
     })
   }
 
@@ -333,11 +392,12 @@ export function SuccessDialog({
               id="success-title"
               className="text-xl font-extrabold tracking-normal text-slate-950 dark:text-white"
             >
-              Stark, Übung erledigt!
+              {isCompleteDaySuccess ? 'Kompletter Tag geschafft.' : 'Reset erledigt.'}
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {title} ist abgehakt. Du hast heute {summary.completedToday} von{' '}
-              {totalToday} Übungen geschafft.
+              {isCompleteDaySuccess
+                ? `Du hast heute alle ${totalToday} Impulse abgeschlossen.`
+                : `${title} ist abgehakt. Du hast heute ${summary.completedToday} von ${totalToday} Übungen geschafft.`}
             </p>
           </div>
         </div>
@@ -347,6 +407,23 @@ export function SuccessDialog({
           {summary.streak === 1 ? 'Arbeitstag' : 'Arbeitstage'} in Folge.
           Jede kurze Bewegung zählt.
         </div>
+
+        <section className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-white/10">
+          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+            Wie fühlst du dich jetzt?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {recommendationBenefitOptions.map((effect) => (
+              <FeedbackButton
+                active={selectedEffect === effect.id}
+                key={effect.id}
+                onClick={() => submitEffect(effect.id)}
+              >
+                {effect.label}
+              </FeedbackButton>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-white/10">
           <p className="text-sm font-extrabold text-slate-900 dark:text-white">

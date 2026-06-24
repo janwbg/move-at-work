@@ -1,3 +1,5 @@
+import { hasCompleteDayCelebration } from '../utils/progressStorage.js'
+
 export function createRecommendationFeedbackContext({
   activeWorkPhase,
   activeWorkdayType,
@@ -15,6 +17,20 @@ export function createRecommendationFeedbackContext({
     workdayType: activeWorkdayType,
     intensity: section.intensity ?? fallbackIntensity,
   }
+}
+
+export function shouldShowCompleteDaySuccess({
+  completedBefore = 0,
+  date = new Date(),
+  progress,
+  totalToday = 0,
+} = {}) {
+  return Boolean(
+    totalToday >= 5 &&
+      completedBefore < totalToday &&
+      completedBefore + 1 >= totalToday &&
+      !hasCompleteDayCelebration(progress, date),
+  )
 }
 
 export function preserveCompletedSections(currentPlan, nextPlan, completedIds) {

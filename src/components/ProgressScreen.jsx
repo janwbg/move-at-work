@@ -1,6 +1,6 @@
 import ProgressSummary from './ProgressSummary.jsx'
 
-function ProgressScreen({ summary, totalToday }) {
+function ProgressScreen({ feedbackSummary, summary, totalToday }) {
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <section className="rounded-2xl bg-[#2563eb] p-6 text-white shadow-xl shadow-[#2563eb]/20 sm:p-8">
@@ -12,12 +12,16 @@ function ProgressScreen({ summary, totalToday }) {
         </h1>
         <p className="mt-4 max-w-2xl leading-7 text-blue-50">
           Dein Fortschritt bleibt lokal in diesem Browser gespeichert und zeigt
-          dir, wie regelmäßig du im Arbeitsalltag kurze Sitzphasen
-          unterbrichst. Wochenenden unterbrechen deine Streak nicht.
+          dir, wie regelmäßig du an deinen Arbeits- und Lerntagen kurze
+          Sitzphasen unterbrichst. Pausentage brechen deine Routine nicht.
         </p>
       </section>
 
-      <ProgressSummary summary={summary} totalToday={totalToday} />
+      <ProgressSummary
+        feedbackSummary={feedbackSummary}
+        summary={summary}
+        totalToday={totalToday}
+      />
     </div>
   )
 }

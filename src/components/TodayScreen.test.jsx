@@ -274,6 +274,26 @@ describe('TodayScreen', () => {
     expect(html).toMatch(/aria-pressed="true"[^>]*>Lernen<\/button>/)
   })
 
+  it('shows a subtle pause day option', () => {
+    const html = renderTodayScreen()
+
+    expect(html).toContain('Heute zählt normal für deine Arbeits-/Lernroutine.')
+    expect(html).toContain('Heute Pausentag')
+    expect(html).toMatch(/aria-pressed="false"[^>]*>Heute Pausentag<\/button>/)
+  })
+
+  it('shows pause day status and hides due reminders', () => {
+    const html = renderTodayScreen(
+      withDueReminder({
+        isPauseDay: true,
+      }),
+    )
+
+    expect(html).toContain('Heute ist Pausentag. Deine Routine bleibt erhalten.')
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Heute Pausentag<\/button>/)
+    expect(html).not.toContain('Kleiner Wechselmoment?')
+  })
+
   it('marks the active workplace semantically', () => {
     const officeHtml = renderTodayScreen({
       activeWorkplace: 'office',

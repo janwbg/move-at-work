@@ -64,6 +64,57 @@ describe('SettingsScreen', () => {
     expect(html).toContain('Plus ansehen')
   })
 
+  it('shows Monday to Friday as the default work and study routine', () => {
+    const html = renderToStaticMarkup(
+      <SettingsScreen
+        answers={answers}
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+      />,
+    )
+
+    expect(html).toContain('Arbeits-/Lernroutine')
+    expect(html).toContain('An welchen Tagen nutzt du Move at work normalerweise?')
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Mo<\/button>/)
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Fr<\/button>/)
+    expect(html).toMatch(/aria-pressed="false"[^>]*>Sa<\/button>/)
+    expect(html).toMatch(/aria-pressed="false"[^>]*>So<\/button>/)
+  })
+
+  it('emits changed active weekdays from the routine settings', () => {
+    const changeRoutine = vi.fn()
+    const tree = SettingsScreen({
+      answers,
+      onChangeAnswers: () => {},
+      onRoutineSettingsChange: changeRoutine,
+      onRestartOnboarding: () => {},
+      routineSettings: { activeWeekdays: [1, 2, 3, 4, 5] },
+    })
+    const saturdayButton = findElementByText(tree, 'Sa')
+
+    saturdayButton.props.onClick()
+
+    expect(changeRoutine).toHaveBeenCalledWith({
+      activeWeekdays: [1, 2, 3, 4, 5, 6],
+    })
+  })
+
+  it('keeps at least one active routine day selected', () => {
+    const changeRoutine = vi.fn()
+    const tree = SettingsScreen({
+      answers,
+      onChangeAnswers: () => {},
+      onRoutineSettingsChange: changeRoutine,
+      onRestartOnboarding: () => {},
+      routineSettings: { activeWeekdays: [1] },
+    })
+    const mondayButton = findElementByText(tree, 'Mo')
+
+    mondayButton.props.onClick()
+
+    expect(changeRoutine).not.toHaveBeenCalled()
+  })
+
   it('shows the account area without requiring login', () => {
     const html = renderToStaticMarkup(
       <SettingsScreen

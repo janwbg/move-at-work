@@ -86,6 +86,69 @@ describe('recommendationFeedbackStorage helpers', () => {
       fit: 1,
       notFit: 2,
       mostCommonReason: 'Keine Zeit',
+      benefitTotal: 0,
+      positiveBenefitCount: 0,
+    })
+  })
+
+  it('stores benefit feedback with stable internal keys', () => {
+    const feedback = recordRecommendationFeedback(
+      {
+        recommendationId: 'office-neck-reset',
+        currentWorkplace: 'office',
+        currentPhase: 'focus',
+        workdayType: 'focus-heavy',
+        intensity: 'Leicht',
+        effect: 'more-awake',
+      },
+      new Date(2026, 4, 13),
+    )
+
+    expect(feedback).toEqual([
+      {
+        recommendationId: 'office-neck-reset',
+        date: '2026-05-13',
+        workplace: 'office',
+        currentWorkplace: 'office',
+        phase: 'focus',
+        currentPhase: 'focus',
+        workdayType: 'focus-heavy',
+        intensity: 'Leicht',
+        effect: 'more-awake',
+      },
+    ])
+    expect(summarizeRecommendationFeedback(feedback)).toMatchObject({
+      benefitTotal: 1,
+      positiveBenefitCount: 1,
+    })
+  })
+
+  it('merges fit feedback and benefit feedback for the same recommendation', () => {
+    recordRecommendationFeedback(
+      {
+        recommendationId: 'office-neck-reset',
+        currentWorkplace: 'office',
+        currentPhase: 'focus',
+        feedback: 'fit',
+        slotId: 'morning',
+      },
+      new Date(2026, 4, 13),
+    )
+    const feedback = recordRecommendationFeedback(
+      {
+        recommendationId: 'office-neck-reset',
+        currentWorkplace: 'office',
+        currentPhase: 'focus',
+        effect: 'more-focused',
+        slotId: 'morning',
+      },
+      new Date(2026, 4, 13),
+    )
+
+    expect(feedback).toHaveLength(1)
+    expect(feedback[0]).toMatchObject({
+      feedback: 'fit',
+      effect: 'more-focused',
     })
   })
 
@@ -149,6 +212,38 @@ describe('recommendationFeedbackStorage helpers', () => {
     ])
   })
 
+  it('keeps old feedback entries without benefit feedback readable', () => {
+    saveRecommendationFeedback([
+      {
+        recommendationId: 'old-entry',
+        date: '2026-05-13',
+        workplace: 'office',
+        currentWorkplace: 'office',
+        feedback: 'fit',
+      },
+    ])
+
+    expect(loadRecommendationFeedback()[0].effect).toBeUndefined()
+    expect(summarizeRecommendationFeedback(loadRecommendationFeedback())).toMatchObject({
+      benefitTotal: 0,
+      positiveBenefitCount: 0,
+    })
+  })
+
+  it('ignores invalid benefit feedback values without crashing', () => {
+    const feedback = recordRecommendationFeedback(
+      {
+        recommendationId: 'office-neck-reset',
+        currentWorkplace: 'office',
+        currentPhase: 'focus',
+        effect: 'superhuman-focus',
+      },
+      new Date(2026, 4, 13),
+    )
+
+    expect(feedback).toEqual([])
+  })
+
   it('does not break on invalid or empty localStorage data', () => {
     expect(loadRecommendationFeedback()).toEqual([])
 
@@ -158,6 +253,18 @@ describe('recommendationFeedbackStorage helpers', () => {
     window.localStorage.setItem(
       'move-at-work-recommendation-feedback',
       JSON.stringify({ feedback: 'fit' }),
+    )
+    expect(loadRecommendationFeedback()).toEqual([])
+
+    window.localStorage.setItem(
+      'move-at-work-recommendation-feedback',
+      JSON.stringify([
+        {
+          recommendationId: 'bad-effect',
+          date: '2026-05-13',
+          effect: 'not-real',
+        },
+      ]),
     )
     expect(loadRecommendationFeedback()).toEqual([])
   })
