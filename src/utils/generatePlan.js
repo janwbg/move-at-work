@@ -15,6 +15,16 @@ import {
 const minimumRecommendations = 3
 const maximumRecommendations = 5
 const miniResetMovementType = 'mini_reset'
+const concreteSmallEquipmentIds = [
+  'resistance_band',
+  'balance_cushion',
+  'exercise_ball',
+]
+
+const setupDisplayLabels = {
+  'small-equipment': 'Kleines Bewegungsequipment',
+  'ergonomic-support': 'Ergonomische Sitz- oder Stehhilfe',
+}
 
 export const defaultDaySlotWindows = [
   {
@@ -1098,7 +1108,7 @@ function buildSummary(context) {
   const intensityLabel = getOptionLabel(intensityOptions, context.fitnessLevel)
   const workplaceLabel = getOptionLabel(workplaceOptions, context.currentWorkplace)
   const setupLabel = context.setup
-    .map((setup) => getOptionLabel(setupOptions, setup))
+    .map((setup) => getSetupLabel(setup))
     .join(', ')
 
   return `${goalLabel} mit ${intensityLabel.toLowerCase()}en Empfehlungen: dein Plan orientiert sich an ${setupLabel}, ${workdayLabel.toLowerCase()} und ${workplaceLabel}.`
@@ -1109,7 +1119,7 @@ function formatSetup(requiredSetup) {
     return 'Kein besonderes Equipment'
   }
 
-  return requiredSetup.map((setup) => getOptionLabel(setupOptions, setup)).join(', ')
+  return requiredSetup.map((setup) => getSetupLabel(setup)).join(', ')
 }
 
 function uniqueRecommendations(recommendations) {
@@ -1121,8 +1131,8 @@ function uniqueRecommendations(recommendations) {
 }
 
 function hasRequiredSetup(requiredSetup, availableSetup) {
-  return requiredSetup.every(
-    (setup) => setup === 'no-equipment' || availableSetup.includes(setup),
+  return requiredSetup.every((setup) =>
+    setup === 'no-equipment' || hasAvailableSetup(setup, availableSetup),
   )
 }
 
@@ -1147,6 +1157,20 @@ function countSpecialSetupRecommendations(schedule) {
 
 function getPrimarySpecialSetup(requiredSetup = []) {
   return requiredSetup.find((setup) => setup !== 'no-equipment') ?? ''
+}
+
+function getSetupLabel(setup) {
+  return setupDisplayLabels[setup] ?? getOptionLabel(setupOptions, setup)
+}
+
+function hasAvailableSetup(setup, availableSetup) {
+  if (setup === 'small-equipment') {
+    return concreteSmallEquipmentIds.some((equipmentId) =>
+      availableSetup.includes(equipmentId),
+    ) || availableSetup.includes(setup)
+  }
+
+  return availableSetup.includes(setup)
 }
 
 function getSlotBodyAreaScore(recommendation, slotRole) {

@@ -7,7 +7,7 @@ import {
 
 const unavailableEquipment = [
   'Walking Pad',
-  'Flur oder kurzer Weg in der Nähe',
+  'Flur in der Nähe',
   'Treppe in der Nähe',
   'Höhenverstellbarer Schreibtisch',
   'Kleines Bewegungsequipment',
@@ -498,7 +498,7 @@ describe('generatePlan', () => {
       situation: 'meeting-heavy',
     })
 
-    expect(hasSetup(plan, 'Flur oder kurzer Weg in der Nähe')).toBe(false)
+    expect(hasSetup(plan, 'Flur in der Nähe')).toBe(false)
   })
 
   it('uses stairs for stair impulses when stairs are available', () => {
@@ -764,7 +764,7 @@ describe('generatePlan', () => {
     expect(result.replacement.setup).toContain('Kein besonderes Equipment')
     expect(result.replacement.setup).not.toContain('Walking Pad')
     expect(result.replacement.setup).not.toContain('Treppe in der Nähe')
-    expect(result.replacement.setup).not.toContain('Flur oder kurzer Weg in der Nähe')
+    expect(result.replacement.setup).not.toContain('Flur in der Nähe')
     expect(result.replacement.setup).not.toContain('Platz für kurze Übungen')
     expect(result.replacement.setup).not.toContain('Kleines Bewegungsequipment')
   })

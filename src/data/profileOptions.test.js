@@ -16,9 +16,11 @@ describe('profileOptions', () => {
       'Weniger sitzen',
       'Mehr Energie im Arbeitstag',
       'Rücken & Nacken entlasten',
-      'Konzentration halten',
-      'Bewegung zur Gewohnheit machen',
+      'Konzentration verbessern',
     ])
+    expect(goalOptions.map((option) => option.label)).not.toContain(
+      'Bewegung zur Gewohnheit machen',
+    )
   })
 
   it('contains the final setup options', () => {
@@ -27,13 +29,20 @@ describe('profileOptions', () => {
       'standing-desk',
       'walking-pad',
       'space',
-      'small-equipment',
       'hallway',
       'stairs',
-      'ergonomic-support',
+      'resistance_band',
+      'balance_cushion',
+      'exercise_ball',
     ])
     expect(setupOptions.map((option) => option.label)).not.toContain(
       'Treppe oder Flur in der Nähe',
+    )
+    expect(setupOptions.map((option) => option.label)).toContain(
+      'Flur in der Nähe',
+    )
+    expect(setupOptions.map((option) => option.label)).not.toContain(
+      'Ergonomische Sitz- oder Stehhilfe',
     )
   })
 
@@ -146,6 +155,20 @@ describe('profileOptions', () => {
     expect(normalizeProfileAnswers({ situation: 'does-not-exist' }).situation).toBe(
       'mixed-day',
     )
+  })
+
+  it('migrates old habit and small equipment values safely', () => {
+    expect(normalizeProfileAnswers({ goal: 'habit' }).goal).toBe('sit-less')
+    expect(
+      normalizeProfileAnswers({
+        setup: ['Kleines Bewegungsequipment'],
+      }).setup,
+    ).toEqual(['resistance_band', 'balance_cushion', 'exercise_ball'])
+    expect(
+      normalizeProfileAnswers({
+        setup: ['ergonomic-support'],
+      }).setup,
+    ).toEqual(['no-equipment'])
   })
 
   it('keeps existing workplace profiles and falls back safely', () => {

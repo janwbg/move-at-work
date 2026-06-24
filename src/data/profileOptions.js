@@ -1,7 +1,7 @@
 export const workplaceIds = ['office', 'homeoffice']
 
 export const defaultProfile = {
-  goal: 'habit',
+  goal: 'sit-less',
   setup: ['no-equipment'],
   fitnessLevel: 'balanced',
   situation: 'mixed-day',
@@ -32,29 +32,28 @@ export const goalOptions = [
   {
     id: 'sit-less',
     label: 'Weniger sitzen',
+    icon: '⇅',
     description:
-      'Lange Sitzphasen unterbrechen und öfter die Position wechseln.',
+      'Kleine Unterbrechungen statt stundenlangem Durchsitzen.',
   },
   {
     id: 'more-energy',
     label: 'Mehr Energie im Arbeitstag',
-    description: 'Dich wacher, aktiver und weniger träge fühlen.',
+    icon: '⚡',
+    description: 'Kurze Aktivierungen, wenn Kopf und Körper müde werden.',
   },
   {
     id: 'back-neck',
     label: 'Rücken & Nacken entlasten',
-    description: 'Schultern, Nacken und Rücken regelmäßig mobilisieren.',
+    icon: '⤴',
+    description: 'Sanfte Impulse für typische Schreibtisch-Belastungen.',
   },
   {
     id: 'focus',
-    label: 'Konzentration halten',
+    label: 'Konzentration verbessern',
+    icon: '◎',
     description:
-      'Kurze Bewegung nutzen, ohne aus dem Arbeitsfluss zu kommen.',
-  },
-  {
-    id: 'habit',
-    label: 'Bewegung zur Gewohnheit machen',
-    description: 'Mit kleinen Schritten regelmäßig aktiver werden.',
+      'Mini-Pausen, die deine Konzentrationsfähigkeit wieder verbessern.',
   },
 ]
 
@@ -62,46 +61,60 @@ export const setupOptions = [
   {
     id: 'no-equipment',
     label: 'Kein besonderes Equipment',
+    icon: '▱',
     description: 'Normaler Schreibtisch und Stuhl reichen aus.',
   },
   {
     id: 'standing-desk',
     label: 'Höhenverstellbarer Schreibtisch',
+    icon: '↕',
     description: 'Für Sitz-Steh-Wechsel und kurze Stehphasen.',
   },
   {
     id: 'walking-pad',
     label: 'Walking Pad',
+    icon: '↝',
     description: 'Für langsames Gehen während geeigneter Aufgaben.',
   },
   {
     id: 'space',
     label: 'Platz für kurze Übungen',
+    icon: '▢',
     description:
       'Für Mobilisation und kurze Bewegungspausen neben dem Schreibtisch.',
   },
   {
-    id: 'small-equipment',
-    label: 'Kleines Bewegungsequipment',
-    description:
-      'Zum Beispiel Widerstandsband, Balancekissen oder Gymnastikball.',
-  },
-  {
     id: 'hallway',
-    label: 'Flur oder kurzer Weg in der Nähe',
+    label: 'Flur in der Nähe',
+    icon: '→',
     description:
       'Du kannst kurze Gehpausen oder Wege im Büro/Homeoffice nutzen.',
   },
   {
     id: 'stairs',
     label: 'Treppe in der Nähe',
+    icon: '▟',
     description:
       'Du kannst Treppen für kurze aktivierende Bewegungsimpulse nutzen.',
   },
   {
-    id: 'ergonomic-support',
-    label: 'Ergonomische Sitz- oder Stehhilfe',
-    description: 'Zum Beispiel Stehhocker, Aktivstuhl oder Stehmatte.',
+    id: 'resistance_band',
+    label: 'Widerstandsband',
+    icon: '〰',
+    description:
+      'Für kurze Zug- und Mobilisationsimpulse am Arbeitsplatz.',
+  },
+  {
+    id: 'balance_cushion',
+    label: 'Balancekissen',
+    icon: '◒',
+    description: 'Für kleine Sitz- und Stabilitätswechsel.',
+  },
+  {
+    id: 'exercise_ball',
+    label: 'Gymnastikball',
+    icon: '●',
+    description: 'Für sanfte Mobilisation und kurze Lockerungsimpulse.',
   },
 ]
 
@@ -191,40 +204,50 @@ export const workPhaseOptions = [
 const goalAliases = {
   'Bessere Haltung': 'back-neck',
   'Bessere Konzentration': 'focus',
-  'Kraft aufbauen': 'habit',
+  'Bewegung zur Gewohnheit machen': 'sit-less',
+  'Kraft aufbauen': 'sit-less',
   'Mehr Bewegung im Arbeitsalltag': 'sit-less',
   'Ruecken & Nacken entlasten': 'back-neck',
   'Weniger Rueckenschmerzen': 'back-neck',
   'Weniger Rückenschmerzen': 'back-neck',
   'Weniger sitzen': 'sit-less',
   'gegen Verspannungen': 'back-neck',
+  habit: 'sit-less',
   'mehr Bewegung': 'sit-less',
   'mehr Energie': 'more-energy',
 }
 
 const setupAliases = {
-  'Balance Board': 'small-equipment',
+  'Balance Board': 'balance_cushion',
   Boden: 'space',
   'Bürostuhl': 'no-equipment',
   Buerostuhl: 'no-equipment',
-  Ergometer: 'small-equipment',
+  Ergometer: 'exercise_ball',
   'exercise-space': 'space',
-  Gymnastikball: 'small-equipment',
+  Gymnastikball: 'exercise_ball',
   'Hoehenverstellbarer Schreibtisch': 'standing-desk',
   'Höhenverstellbarer Schreibtisch': 'standing-desk',
-  Kniestuhl: 'ergonomic-support',
+  Kniestuhl: [],
   'Kein Equipment': 'no-equipment',
   'Kein besonderes Equipment': 'no-equipment',
   'Kein spezielles Equipment': 'no-equipment',
-  'Kleines Bewegungsequipment': 'small-equipment',
+  'Kleines Bewegungsequipment': [
+    'resistance_band',
+    'balance_cushion',
+    'exercise_ball',
+  ],
   'Platz fuer kurze Uebungen': 'space',
   'Platz für kurze Übungen': 'space',
+  'Resistance Band': 'resistance_band',
+  Widerstandsband: 'resistance_band',
+  Balancekissen: 'balance_cushion',
   Sitzschreibtisch: 'no-equipment',
-  'Sofa/Lounge': 'ergonomic-support',
+  'Sofa/Lounge': [],
   Stehschreibtisch: 'standing-desk',
-  Stehhocker: 'ergonomic-support',
+  Stehhocker: [],
   hallway: 'hallway',
   Flur: 'hallway',
+  'Flur in der Nähe': 'hallway',
   'Flur oder kurzer Weg in der Nähe': 'hallway',
   stairs: 'stairs',
   Treppenstufen: 'stairs',
@@ -233,6 +256,12 @@ const setupAliases = {
   'Treppe oder Flur in der Naehe': ['hallway', 'stairs'],
   'Treppe oder Flur in der Nähe': ['hallway', 'stairs'],
   'Walking Pad': 'walking-pad',
+  'ergonomic-support': [],
+  'small-equipment': [
+    'resistance_band',
+    'balance_cushion',
+    'exercise_ball',
+  ],
 }
 
 const intensityAliases = {

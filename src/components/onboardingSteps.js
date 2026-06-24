@@ -1,19 +1,30 @@
 import { getSelectedWorkplaces, getOptionLabel, workplaceOptions } from '../data/profileOptions.js'
 
 export function getOnboardingSteps(answers) {
-  const workplaces = getSelectedWorkplaces(answers, true)
+  const selectedWorkplaces = getSelectedWorkplaces(answers, true)
+  const workplaces = workplaceOptions
+    .map((workplace) => workplace.id)
+    .filter((workplace) => selectedWorkplaces.includes(workplace))
   const steps = [
+    {
+      eyebrow: 'Start',
+      helper:
+        'Move at work erstellt kurze Bewegungsimpulse für Büro, Homeoffice oder Lernphasen. Ohne Sportkleidung, ohne schlechtes Gewissen und ohne komplizierte Planung.',
+      kind: 'landing',
+      question:
+        'Bewegung, die in deinen Tag passt — ohne dass du sie planen musst.',
+    },
     {
       eyebrow: 'Ziel',
       helper:
-        'Wähle dein wichtigstes Ziel. Du kannst es später in den Einstellungen ändern.',
+        'Wähle aus, was dir im Alltag am meisten helfen soll. Du kannst es später in den Einstellungen ändern.',
       kind: 'goal',
       question: 'Was möchtest du mit Move at work erreichen?',
     },
     {
       eyebrow: 'Arbeitsort',
       helper:
-        'Wähle aus, ob du im Büro, im Homeoffice oder an beiden Orten arbeitest. Du kannst das später jederzeit in den Einstellungen anpassen.',
+        'Wähle einen oder beide Orte aus. Du kannst das später jederzeit anpassen.',
       kind: 'workplaces',
       question: 'Wo arbeitest du regelmäßig?',
     },
@@ -23,10 +34,19 @@ export function getOnboardingSteps(answers) {
     steps.push({
       eyebrow: 'Setup',
       helper:
-        'Wähle alles aus, was du an diesem Arbeitsort regelmäßig nutzen kannst.',
+        `Jetzt richten wir dein ${getOptionLabel(workplaceOptions, workplace)}-Setup ein.`,
       kind: `setup-${workplace}`,
-      question: `Welches Setup steht dir ${getSetupQuestionPlace(workplace)} zur Verfügung?`,
+      question: `Was steht dir ${getSetupQuestionPlace(workplace)} zur Verfügung?`,
       workplace,
+    })
+  }
+
+  if (workplaces.length > 0) {
+    steps.push({
+      eyebrow: 'Setup',
+      helper: '',
+      kind: 'setup-confirmation',
+      question: '',
     })
   }
 
@@ -36,19 +56,25 @@ export function getOnboardingSteps(answers) {
       helper:
         'Du kannst den Arbeitsort für einzelne Tage später direkt im Heute-Bereich wechseln.',
       kind: 'default-workplace',
-      question:
-        'Welcher Arbeitsort soll standardmäßig für deinen Tagesplan verwendet werden?',
+      question: 'Wo startest du meistens in den Tag?',
     })
   }
 
   return [
     ...steps,
     {
-      eyebrow: 'Intensität',
+      eyebrow: 'Routine',
       helper:
-        'Wähle, was sich für dich im Arbeitsalltag realistisch anfühlt. Du kannst es später in den Einstellungen ändern.',
-      kind: 'intensity',
-      question: 'Wie aktiv sollen deine Bewegungsempfehlungen sein?',
+        'Diese Tage nutzt Move at work für deine Routine, deinen Fortschritt und deine Erinnerungen.',
+      kind: 'routine',
+      question: 'An welchen Tagen möchtest du Move at work normalerweise nutzen?',
+    },
+    {
+      eyebrow: 'Reminder',
+      helper:
+        'Du kannst auch ohne Erinnerungen starten. Wenn du sie aktivierst, bleiben sie lokal, ruhig und anpassbar.',
+      kind: 'reminder',
+      question: 'Soll Move at work dich erinnern?',
     },
     {
       eyebrow: 'Arbeitstag',
@@ -56,6 +82,20 @@ export function getOnboardingSteps(answers) {
         'Diese Auswahl hilft Move at work, deinen Tagesplan grob zu strukturieren.',
       kind: 'workday',
       question: 'Was beschreibt deinen typischen Arbeits- oder Lernalltag am besten?',
+    },
+    {
+      eyebrow: 'Intensität',
+      helper:
+        'Wähle, was sich für dich im Arbeitsalltag realistisch anfühlt. Wenn dein Tag mal anders läuft, kannst du das direkt im Tagesplan ändern.',
+      kind: 'intensity',
+      question: 'Wie aktiv sollen deine Bewegungsempfehlungen sein?',
+    },
+    {
+      eyebrow: 'Bereit',
+      helper:
+        'Move at work nutzt deine Angaben lokal, um einen Tagesplan mit kurzen, passenden Impulsen zu erstellen.',
+      kind: 'final',
+      question: 'Bereit für deinen ersten Tagesplan?',
     },
   ]
 }
