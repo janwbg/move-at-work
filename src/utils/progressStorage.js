@@ -114,21 +114,48 @@ export function setPauseDay(progress, date = new Date(), paused = true) {
   const normalizedProgress = normalizeProgress(progress)
   const dateKey = getLocalDateKey(date)
   const pauseDates = new Set(normalizedProgress.pauseDates)
+  const activeDates = new Set(normalizedProgress.activeDates)
 
   if (paused) {
     pauseDates.add(dateKey)
+    activeDates.delete(dateKey)
   } else {
     pauseDates.delete(dateKey)
   }
 
   return {
     ...normalizedProgress,
+    activeDates: [...activeDates].sort(),
     pauseDates: [...pauseDates].sort(),
   }
 }
 
 export function isPauseDay(progress, date = new Date()) {
   return normalizeProgress(progress).pauseDates.includes(getLocalDateKey(date))
+}
+
+export function setActiveDay(progress, date = new Date(), active = true) {
+  const normalizedProgress = normalizeProgress(progress)
+  const dateKey = getLocalDateKey(date)
+  const activeDates = new Set(normalizedProgress.activeDates)
+  const pauseDates = new Set(normalizedProgress.pauseDates)
+
+  if (active) {
+    activeDates.add(dateKey)
+    pauseDates.delete(dateKey)
+  } else {
+    activeDates.delete(dateKey)
+  }
+
+  return {
+    ...normalizedProgress,
+    activeDates: [...activeDates].sort(),
+    pauseDates: [...pauseDates].sort(),
+  }
+}
+
+export function isManuallyActiveDay(progress, date = new Date()) {
+  return normalizeProgress(progress).activeDates.includes(getLocalDateKey(date))
 }
 
 export function hasCompleteDayCelebration(progress, date = new Date()) {
@@ -181,12 +208,14 @@ export function calculateProgressSummary(
       progress: normalizedProgress,
       referenceDate: date,
       routineSettings: normalizedRoutineSettings,
+      treatInactiveAsPause: true,
     }),
   }
 }
 
 function createEmptyProgress() {
   return {
+    activeDates: [],
     completedByDate: {},
     completeDayCelebrationDates: [],
     pauseDates: [],
@@ -229,11 +258,14 @@ export function getRoutineDayStatus({
   progress = createEmptyProgress(),
   referenceDate = new Date(),
   routineSettings = getDefaultRoutineSettings(),
+  treatInactiveAsPause = false,
 } = {}) {
   const normalizedProgress = normalizeProgress(progress)
   const completedCount = getCompletedIdsForDate(normalizedProgress, date).length
   const paused = isPauseDay(normalizedProgress, date)
-  const active = isRoutineActiveDay(date, routineSettings)
+  const active =
+    isRoutineActiveDay(date, routineSettings) ||
+    isManuallyActiveDay(normalizedProgress, date)
 
   if (paused) {
     return {
@@ -245,6 +277,15 @@ export function getRoutineDayStatus({
   }
 
   if (!active) {
+    if (treatInactiveAsPause) {
+      return {
+        id: 'pause',
+        completedCount,
+        label: 'Pausentag',
+        neutral: true,
+      }
+    }
+
     return {
       id: 'neutral',
       completedCount,
@@ -292,7 +333,7 @@ function getCompletedThisWeek(progress, date, routineSettings) {
       if (
         currentDate >= weekStart &&
         currentDate <= weekEnd &&
-        isRoutineActiveDay(currentDate, routineSettings)
+        isCountableRoutineDay(progress, currentDate, routineSettings)
       ) {
         return total + exerciseIds.length
       }
@@ -322,7 +363,7 @@ function getRoutineWeekSummary(progress, date, routineSettings) {
   let completedDays = 0
 
   for (let cursor = weekStart; cursor <= today; cursor = addDays(cursor, 1)) {
-    if (!isRoutineActiveDay(cursor, routineSettings) || isPauseDay(progress, cursor)) {
+    if (!isCountableRoutineDay(progress, cursor, routineSettings)) {
       continue
     }
 
@@ -381,7 +422,10 @@ function getPreviousRoutineDay(progress, date, routineSettings) {
 }
 
 function isCountableRoutineDay(progress, date, routineSettings) {
-  return isRoutineActiveDay(date, routineSettings) && !isPauseDay(progress, date)
+  return (
+    (isRoutineActiveDay(date, routineSettings) || isManuallyActiveDay(progress, date)) &&
+    !isPauseDay(progress, date)
+  )
 }
 
 function parseDateKey(dateKey) {
@@ -395,6 +439,7 @@ function normalizeProgress(progress) {
   }
 
   return {
+    activeDates: normalizeDateList(progress.activeDates),
     completedByDate: normalizeCompletedByDate(progress.completedByDate),
     completeDayCelebrationDates: normalizeDateList(
       progress.completeDayCelebrationDates,

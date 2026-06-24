@@ -80,6 +80,7 @@ function TodayScreen({
     replacementLimitNoticeVisible,
     setReplacementLimitNoticeVisible,
   ] = useState(initialReplacementLimitNoticeVisible)
+  const [openReplacementSlotId, setOpenReplacementSlotId] = useState(null)
   const [liveNow, setLiveNow] = useState(() => new Date())
   const now = currentDate ?? liveNow
   const [reminderSettings] = useState(
@@ -97,11 +98,13 @@ function TodayScreen({
     completedIds.includes(section.id),
   )
   const completedCount = completedSections.length
-  const activeScheduleIndex = getActiveScheduleIndex({
-    completedIds,
-    now,
-    sections: plan.dailySchedule,
-  })
+  const activeScheduleIndex = isPauseDay
+    ? null
+    : getActiveScheduleIndex({
+        completedIds,
+        now,
+        sections: plan.dailySchedule,
+      })
   const canSwitchWorkplace = workplaces?.length > 1
   const selectedDetailSection =
     selectedDetailIndex === null ? null : plan.dailySchedule[selectedDetailIndex]
@@ -170,24 +173,49 @@ function TodayScreen({
   ])
 
   function completeFromDetail(section) {
+    setOpenReplacementSlotId(null)
     setSelectedDetailIndex(null)
     updateReminderState(markExerciseCompleted(reminderState, now))
     onComplete(section)
   }
 
   function completeFromSchedule(section) {
+    setOpenReplacementSlotId(null)
     updateReminderState(markExerciseCompleted(reminderState, now))
     onComplete(section)
   }
 
   function handleReplacementBlocked() {
+    setOpenReplacementSlotId(null)
     setReplacementLimitNoticeVisible(true)
     onReplacementBlocked()
   }
 
   function replaceRecommendation(index, reason) {
+    setOpenReplacementSlotId(null)
     setReplacementLimitNoticeVisible(false)
     onReplaceRecommendation(index, reason)
+  }
+
+  function toggleReplacementMenu(sectionId) {
+    setOpenReplacementSlotId((currentId) =>
+      currentId === sectionId ? null : sectionId,
+    )
+  }
+
+  function openScheduleDetail(index) {
+    setOpenReplacementSlotId(null)
+    setSelectedDetailIndex(index)
+  }
+
+  function handleWorkplaceChange(workplace) {
+    setOpenReplacementSlotId(null)
+    onWorkplaceChange?.(workplace)
+  }
+
+  function handleWorkdayTypeChange(workdayType) {
+    setOpenReplacementSlotId(null)
+    onWorkdayTypeChange(workdayType)
   }
 
   function handleReminderAction(action) {
@@ -206,6 +234,7 @@ function TodayScreen({
     updateReminderState(result.state)
 
     if (typeof result.detailIndex === 'number') {
+      setOpenReplacementSlotId(null)
       setSelectedDetailIndex(result.detailIndex)
     }
   }
@@ -213,6 +242,7 @@ function TodayScreen({
   function handlePauseDayToggle() {
     const nextPauseState = !isPauseDay
 
+    setOpenReplacementSlotId(null)
     updateReminderState(
       nextPauseState
         ? pauseRemindersForDay(reminderState, now)
@@ -272,14 +302,14 @@ function TodayScreen({
               {canSwitchWorkplace && (
                 <WorkplaceSwitcher
                   activeWorkplace={activeWorkplace}
-                  onWorkplaceChange={onWorkplaceChange}
+                  onWorkplaceChange={handleWorkplaceChange}
                   workplaces={workplaces}
                 />
               )}
             </div>
             <WorkdayTypeSelect
               activeWorkdayType={activeWorkdayType}
-              onWorkdayTypeChange={onWorkdayTypeChange}
+              onWorkdayTypeChange={handleWorkdayTypeChange}
             />
           </div>
         </div>
@@ -304,7 +334,25 @@ function TodayScreen({
             />
           )}
 
-          {activeScheduleIndex === null && (
+          {isPauseDay && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+              <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                Heute ist Pausentag.
+              </p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+                Du kannst den Tag aktivieren, wenn du trotzdem Bewegungsimpulse machen möchtest.
+              </p>
+              <button
+                type="button"
+                onClick={handlePauseDayToggle}
+                className="mt-3 min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+              >
+                Heute aktivieren
+              </button>
+            </div>
+          )}
+
+          {!isPauseDay && activeScheduleIndex === null && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-400/20 dark:bg-emerald-400/10">
               <p className="text-lg font-extrabold text-emerald-900 dark:text-emerald-100">
                 Alles erledigt für heute.
@@ -323,16 +371,20 @@ function TodayScreen({
 
               return (
                 <DailyScheduleCard
-                  actionLabel={active ? 'Übung starten' : 'Übung öffnen'}
+                  actionLabel="Öffnen"
                   canReplace={canReplaceRecommendation}
                   compact={!active || completed}
                   completed={completed}
                   featured={active}
+                  isReplacementOpen={openReplacementSlotId === section.id}
                   key={section.id}
+                  onCloseReplacement={() => setOpenReplacementSlotId(null)}
                   onComplete={() => completeFromSchedule(section)}
-                  onOpenDetails={() => setSelectedDetailIndex(index)}
+                  onOpenDetails={() => openScheduleDetail(index)}
                   onReplace={(reason) => replaceRecommendation(index, reason)}
                   onReplaceBlocked={handleReplacementBlocked}
+                  onToggleReplacement={() => toggleReplacementMenu(section.id)}
+                  paused={isPauseDay}
                   section={section}
                 />
               )
@@ -346,7 +398,10 @@ function TodayScreen({
           canReplace={canReplaceRecommendation}
           completed={completedIds.includes(selectedDetailSection.id)}
           key={selectedDetailSection.id}
-          onBack={() => setSelectedDetailIndex(null)}
+          onBack={() => {
+            setOpenReplacementSlotId(null)
+            setSelectedDetailIndex(null)
+          }}
           onComplete={() => completeFromDetail(selectedDetailSection)}
           onReplace={(reason) => replaceRecommendation(selectedDetailIndex, reason)}
           onReplaceBlocked={handleReplacementBlocked}

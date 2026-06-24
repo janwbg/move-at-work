@@ -21,18 +21,19 @@ import { loadPremiumStatus } from '../utils/premiumStatus.js'
 import {
   calculateProgressSummary,
   getCompletedIdsForDate,
-  isPauseDay,
+  getRoutineDayStatus,
+  isRoutineActiveDay,
   loadProgress,
   loadRoutineSettings,
   markCompleteDayCelebration,
   recordCompletion,
   saveProgress,
   saveRoutineSettings,
+  setActiveDay,
   setPauseDay,
 } from '../utils/progressStorage.js'
 import {
   loadRecommendationFeedback,
-  recommendationBenefitOptions,
   recordRecommendationFeedback,
   summarizeRecommendationFeedback,
 } from '../utils/recommendationFeedbackStorage.js'
@@ -41,15 +42,6 @@ import {
   loadReplacementUsage,
   recordReplacementUsage,
 } from '../utils/replacementUsageStorage.js'
-
-const feedbackReasons = [
-  'Zu auffällig',
-  'Keine Zeit',
-  'Zu anstrengend',
-  'Zu leicht',
-  'Setup hat nicht gepasst',
-  'Hat mich nicht angesprochen',
-]
 
 function ResultScreen({
   answers,
@@ -115,6 +107,30 @@ function ResultScreen({
     () => calculateProgressSummary(progress, new Date(), routineSettings),
     [progress, routineSettings],
   )
+  const planCompletedToday = useMemo(
+    () => getPlanCompletedCount({ completedIds, plan }),
+    [completedIds, plan],
+  )
+  const todayStatus = useMemo(
+    () =>
+      getRoutineDayStatus({
+        date: new Date(),
+        progress,
+        referenceDate: new Date(),
+        routineSettings,
+        treatInactiveAsPause: true,
+      }),
+    [progress, routineSettings],
+  )
+  const displayProgressSummary = useMemo(
+    () => ({
+      ...progressSummary,
+      completedToday: planCompletedToday,
+      todayStatus: getStatusForCompletedCount(todayStatus, planCompletedToday),
+    }),
+    [planCompletedToday, progressSummary, todayStatus],
+  )
+  const todayIsPaused = todayStatus.id === 'pause'
   const feedbackSummary = useMemo(
     () => summarizeRecommendationFeedback(recommendationFeedback),
     [recommendationFeedback],
@@ -125,8 +141,35 @@ function ResultScreen({
   }, [activeTab, onActiveTabChange])
 
   function handleWorkplaceChange(workplace) {
+    const nextWorkplace = normalizedAnswers.workplaces.includes(workplace)
+      ? workplace
+      : defaultWorkplace
+    const nextPlan = generatePlan({
+      ...normalizedAnswers,
+      currentPhase: activeWorkPhase,
+      currentWorkplace: nextWorkplace,
+      currentWorkdayType: activeWorkdayType,
+    })
+    const nextContextKey = createPlanContextKey({
+      activeWorkPhase,
+      activeWorkdayType,
+      activeWorkplace: nextWorkplace,
+      normalizedAnswers,
+    })
+
     setSelectedWorkplace(workplace)
     setWorkplaceWasChanged(true)
+    setReplacementMessage(null)
+
+    if (!completedIds.length) {
+      setPlanOverride(null)
+      return
+    }
+
+    setPlanOverride({
+      contextKey: nextContextKey,
+      plan: preserveCompletedSections(plan, nextPlan, completedIds),
+    })
   }
 
   function handleWorkdayTypeChange(workdayType) {
@@ -230,22 +273,11 @@ function ResultScreen({
     setProgress(progressToSave)
     saveProgress(progressToSave)
     setSuccessState({
-      feedbackContext: createRecommendationFeedbackContext({
-        activeWorkPhase,
-        activeWorkdayType,
-        activeWorkplace,
-        fallbackIntensity: normalizedAnswers.fitnessLevel,
-        section,
-      }),
       isCompleteDaySuccess: showCompleteDaySuccess,
       summary: nextSummary,
       title: section.title,
       totalToday: plan.dailySchedule.length,
     })
-  }
-
-  function handleRecommendationFeedback(feedbackEntry) {
-    setRecommendationFeedback(recordRecommendationFeedback(feedbackEntry))
   }
 
   function handleRoutineSettingsChange(nextRoutineSettings) {
@@ -254,7 +286,12 @@ function ResultScreen({
   }
 
   function handlePauseDayChange(paused) {
-    const nextProgress = setPauseDay(progress, new Date(), paused)
+    const today = new Date()
+    const nextProgress = paused
+      ? setPauseDay(progress, today, true)
+      : isRoutineActiveDay(today, routineSettings)
+        ? setPauseDay(progress, today, false)
+        : setActiveDay(progress, today, true)
 
     setProgress(nextProgress)
     saveProgress(nextProgress)
@@ -275,11 +312,11 @@ function ResultScreen({
         <TodayScreen
           completedIds={completedIds}
           feedbackUrl={FEEDBACK_URL}
-          isPauseDay={isPauseDay(progress)}
+          isPauseDay={todayIsPaused}
           onComplete={handleComplete}
           onPauseDayChange={handlePauseDayChange}
           plan={plan}
-          progressSummary={progressSummary}
+          progressSummary={displayProgressSummary}
           activeWorkplace={activeWorkplace}
           activeWorkdayType={activeWorkdayType}
           canReplaceRecommendation={canReplaceRecommendation}
@@ -295,7 +332,7 @@ function ResultScreen({
       {activeTab === 'progress' && (
         <ProgressScreen
           feedbackSummary={feedbackSummary}
-          summary={progressSummary}
+          summary={displayProgressSummary}
           totalToday={plan.dailySchedule.length}
         />
       )}
@@ -323,14 +360,15 @@ function ResultScreen({
 
       {successState && (
         <SuccessDialog
-          feedbackContext={successState.feedbackContext}
-          feedbackUrl={FEEDBACK_URL}
           isCompleteDaySuccess={successState.isCompleteDaySuccess}
-          onFeedback={handleRecommendationFeedback}
           summary={successState.summary}
           title={successState.title}
           totalToday={successState.totalToday}
           onClose={() => setSuccessState(null)}
+          onOpenProgress={() => {
+            setSuccessState(null)
+            setActiveTab('progress')
+          }}
         />
       )}
     </section>
@@ -346,40 +384,60 @@ function createPlanContextKey({
   return `${activeWorkPhase}:${activeWorkdayType}:${activeWorkplace}:${JSON.stringify(normalizedAnswers)}`
 }
 
+function getPlanCompletedCount({ completedIds, plan }) {
+  const completedIdSet = new Set(completedIds)
+
+  return plan.dailySchedule.filter((section) => completedIdSet.has(section.id))
+    .length
+}
+
+function getStatusForCompletedCount(todayStatus, completedToday) {
+  if (todayStatus.id === 'pause') {
+    return {
+      ...todayStatus,
+      completedCount: completedToday,
+    }
+  }
+
+  if (completedToday >= 5) {
+    return { id: 'complete', completedCount: completedToday, label: 'Kompletter Tag' }
+  }
+
+  if (completedToday >= 3) {
+    return { id: 'strong', completedCount: completedToday, label: 'Starker Tag' }
+  }
+
+  if (completedToday >= 1) {
+    return { id: 'held', completedCount: completedToday, label: 'Routine gehalten' }
+  }
+
+  return {
+    ...todayStatus,
+    completedCount: completedToday,
+    id: todayStatus.id === 'neutral' ? 'pause' : todayStatus.id,
+    label: todayStatus.id === 'neutral' ? 'Pausentag' : todayStatus.label,
+    neutral: todayStatus.id === 'neutral' ? true : todayStatus.neutral,
+  }
+}
+
 export function SuccessDialog({
-  feedbackContext = {},
-  feedbackUrl = FEEDBACK_URL,
-  initialFeedback = '',
-  initialEffect = '',
-  initialReason = '',
   isCompleteDaySuccess = false,
   onClose,
-  onFeedback = () => {},
+  onOpenProgress = () => {},
   summary,
   title,
   totalToday,
 }) {
-  const [selectedFeedback, setSelectedFeedback] = useState(initialFeedback)
-  const [selectedEffect, setSelectedEffect] = useState(initialEffect)
-  const [selectedReason, setSelectedReason] = useState(initialReason)
-
-  function submitFeedback(feedback, reason = '') {
-    setSelectedFeedback(feedback)
-    setSelectedReason(reason)
-    onFeedback({
-      ...feedbackContext,
-      feedback,
-      reason: reason || undefined,
-    })
-  }
-
-  function submitEffect(effect) {
-    setSelectedEffect(effect)
-    onFeedback({
-      ...feedbackContext,
-      effect,
-    })
-  }
+  const completedToday = Math.min(summary.completedToday, totalToday)
+  const headline = isCompleteDaySuccess
+    ? 'Kompletter Tag geschafft!'
+    : 'Stark gemacht!'
+  const progressText = isCompleteDaySuccess
+    ? `Du hast heute alle ${totalToday} Impulse abgeschlossen.`
+    : `Du hast heute ${completedToday} von ${totalToday} Übungen geschafft.`
+  const closingText = isCompleteDaySuccess
+    ? 'Starker Arbeitstag. Deine Routine wächst.'
+    : 'Jede kurze Bewegung zählt.'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 px-4 py-5 backdrop-blur-sm sm:items-center">
@@ -387,126 +445,69 @@ export function SuccessDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="success-title"
-        className="w-full max-w-md rounded-2xl border border-emerald-200 bg-white p-5 shadow-2xl shadow-slate-950/20 dark:border-emerald-400/20 dark:bg-[#1b1b1b] sm:p-6"
+        className="w-full max-w-md rounded-2xl border border-emerald-200 bg-white p-5 text-center shadow-2xl shadow-slate-950/20 dark:border-emerald-400/20 dark:bg-[#1b1b1b] sm:p-6"
       >
-        <div className="flex items-start gap-4">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl font-extrabold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200">
-            ✓
-          </span>
-          <div>
-            <p
-              id="success-title"
-              className="text-xl font-extrabold tracking-normal text-slate-950 dark:text-white"
-            >
-              {isCompleteDaySuccess ? 'Kompletter Tag geschafft.' : 'Reset erledigt.'}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {isCompleteDaySuccess
-                ? `Du hast heute alle ${totalToday} Impulse abgeschlossen.`
-                : `${title} ist abgehakt. Du hast heute ${summary.completedToday} von ${totalToday} Übungen geschafft.`}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-100">
-          Aktueller Arbeitsstreak: {summary.streak}{' '}
-          {summary.streak === 1 ? 'Arbeitstag' : 'Arbeitstage'} in Folge.
-          Jede kurze Bewegung zählt.
-        </div>
-
-        <section className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-white/10">
-          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-            Wie fühlst du dich jetzt?
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {recommendationBenefitOptions.map((effect) => (
-              <FeedbackButton
-                active={selectedEffect === effect.id}
-                key={effect.id}
-                onClick={() => submitEffect(effect.id)}
-              >
-                {effect.label}
-              </FeedbackButton>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-lg border border-slate-200 p-4 dark:border-white/10">
-          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-            Hat diese Empfehlung gerade gepasst?
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <FeedbackButton
-              active={selectedFeedback === 'fit'}
-              onClick={() => submitFeedback('fit')}
-            >
-              Ja, hat gepasst
-            </FeedbackButton>
-            <FeedbackButton
-              active={selectedFeedback === 'not-fit'}
-              onClick={() => submitFeedback('not-fit')}
-            >
-              Eher nicht
-            </FeedbackButton>
-          </div>
-
-          {selectedFeedback === 'not-fit' && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {feedbackReasons.map((reason) => (
-                <FeedbackButton
-                  active={selectedReason === reason}
-                  key={reason}
-                  onClick={() => submitFeedback('not-fit', reason)}
-                >
-                  {reason}
-                </FeedbackButton>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
-          <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-            War die Empfehlung hilfreich? Du testest gerade eine frühe Version
-            von Move at work. Dein Feedback hilft dabei, die Empfehlungen
-            verständlicher, passender und alltagstauglicher zu machen.
-          </p>
-          <a
-            href={feedbackUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
-          >
-            Feedback geben
-          </a>
-        </section>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 min-h-11 w-full rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl font-extrabold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200">
+          ✓
+        </span>
+        <p
+          id="success-title"
+          className="mt-4 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white"
         >
-          Zurück zum Tagesplan
-        </button>
+          {headline}
+        </p>
+        {!isCompleteDaySuccess && (
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+            {title} ist erledigt.
+          </p>
+        )}
+        <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+          {progressText}
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 text-left">
+          <ProgressStatCard label="Heute" value={`${completedToday}/${totalToday}`} />
+          <ProgressStatCard
+            label="Arbeitsstreak"
+            value={`🚀 ${Math.max(summary.streak, 0)}`}
+          />
+        </div>
+
+        <p className="mt-4 text-sm font-bold leading-6 text-emerald-800 dark:text-emerald-100">
+          {closingText}
+        </p>
+
+        <div className="mt-5 grid gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 w-full rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+          >
+            Zurück zum Tagesplan
+          </button>
+          <button
+            type="button"
+            onClick={onOpenProgress}
+            className="min-h-11 w-full rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-white/10 dark:text-slate-200"
+          >
+            Fortschritt ansehen
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-function FeedbackButton({ active, children, onClick }) {
+function ProgressStatCard({ label, value }) {
   return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
-        active
-          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-      }`}
-    >
-      {children}
-    </button>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
+      <p className="text-xl font-extrabold text-slate-950 dark:text-white">
+        {value}
+      </p>
+      <p className="mt-1 text-xs font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
+        {label}
+      </p>
+    </div>
   )
 }
 

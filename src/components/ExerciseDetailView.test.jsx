@@ -1,8 +1,14 @@
+// @vitest-environment happy-dom
+
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { getTimerActionLabel, shouldAdvanceTimer } from './exerciseTimer.js'
 import { replacementReasonOptions } from './replacementReasons.js'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const section = {
   description: 'Kurz bewegen und Schultern lockern.',
@@ -21,23 +27,57 @@ const section = {
 }
 
 describe('ExerciseDetailView', () => {
-  it('shows title, duration and numbered instruction steps', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('shows title, slot label and numbered instruction steps', () => {
     const html = renderDetail()
 
     expect(html).toContain('Schulterkreisen')
-    expect(html).toContain('2 Minuten')
+    expect(html).toContain('Morgens')
+    expect(html).toContain('Ohne Equipment')
+    expect(html).not.toContain('2 Minuten')
+    expect(html).toContain('2:00')
     expect(html).toContain('So geht')
     expect(html).toContain('Kreise die Schultern langsam nach hinten.')
     expect(html).toContain('<ol')
+    expect(html.indexOf('>1</span>')).toBeLessThan(
+      html.indexOf('Setze dich aufrecht hin.'),
+    )
   })
 
-  it('shows a back action and the main exercise actions for open exercises', () => {
+  it('shows a quieter back action and the main exercise actions for open exercises', () => {
     const html = renderDetail()
 
-    expect(html).toContain('Zurück')
+    expect(html).toContain('← Zurück')
     expect(html).toContain('Timer starten')
     expect(html).toContain('Als erledigt markieren')
-    expect(html).toContain('Andere Empfehlung')
+    expect(html).toContain('Passt gerade nicht? Andere Empfehlung wählen')
+  })
+
+  it('separates a final practice hint from the numbered steps', () => {
+    const html = renderDetail({
+      section: {
+        ...section,
+        instructionSteps: [
+          'Stelle dich stabil an den höhenverstellbaren Schreibtisch.',
+          'Verteile dein Gewicht gleichmäßig auf beide Füße.',
+          'Wechsle ruhig auf den linken Fuß.',
+          'Arbeite danach nur weiter im Stand, wenn die Haltung angenehm bleibt.',
+        ],
+        setup: 'Höhenverstellbarer Schreibtisch',
+        timeLabel: 'Mittagswechsel',
+      },
+    })
+
+    expect(html).toContain('Mittagswechsel')
+    expect(html).toContain('Am Stehtisch')
+    expect(html).toContain('Hinweis')
+    expect(html).toContain(
+      'Arbeite danach nur weiter im Stand, wenn die Haltung angenehm bleibt.',
+    )
+    expect(html).not.toContain('>4</span>')
   })
 
   it('shows reset only once the timer has run', () => {
@@ -120,11 +160,10 @@ describe('ExerciseDetailView', () => {
   it('can render the same replacement reasons from the detail view', () => {
     const html = renderDetail({ initialReplaceDialogOpen: true })
 
-    expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
-    expect(html).toContain('Arbeitssituation')
-    expect(html).toContain('Zeit')
-    expect(html).toContain('Umgebung')
-    expect(html).toContain('Energie und Körper')
+    expect(html).toContain('Was passt gerade nicht?')
+    expect(html).not.toContain('Arbeitssituation')
+    expect(html).not.toContain('Umgebung')
+    expect(html).not.toContain('Energie und Körper')
     for (const reason of replacementReasonOptions) {
       expect(html).toContain(reason.label)
     }
@@ -139,14 +178,14 @@ describe('ExerciseDetailView', () => {
 
     expect(html).toContain('Andere Empfehlung')
     expect(html).toContain('Heute schon gewechselt')
-    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+    expect(html).not.toContain('Was passt gerade nicht?')
   })
 
   it('shows completed state without removing the detail content', () => {
     const html = renderDetail({ completed: true })
 
     expect(html).toContain('Erledigt')
-    expect(html).toContain('Diese Übung ist erledigt.')
+    expect(html).toContain('Diese Übung hast du heute erledigt.')
     expect(html).toContain('Schulterkreisen')
     expect(html).toContain('So geht')
   })
@@ -163,9 +202,59 @@ describe('ExerciseDetailView', () => {
     expect(html).not.toContain('Fortsetzen')
     expect(html).not.toContain('Als erledigt markieren')
     expect(html).not.toContain('Andere Empfehlung')
-    expect(html).not.toContain('Warum möchtest du diese Empfehlung wechseln?')
+    expect(html).not.toContain('Was passt gerade nicht?')
     expect(html).not.toContain('Zurücksetzen')
     expect(html).toContain('Zurück')
+  })
+
+  it('keeps the back action interactive', async () => {
+    const onBack = vi.fn()
+    await renderInteractiveDetail({ onBack })
+
+    await clickButtonContaining('Zurück')
+
+    expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts the timer from the primary action', async () => {
+    await renderInteractiveDetail()
+
+    await clickButtonContaining('Timer starten')
+
+    expect(document.body.textContent).toContain('Pause')
+    expect(document.body.textContent).not.toContain('Timer starten')
+  })
+
+  it('can still complete the exercise without the timer', async () => {
+    const onComplete = vi.fn()
+    await renderInteractiveDetail({ onComplete })
+
+    await clickButtonContaining('Als erledigt markieren')
+
+    expect(onComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens replacement reasons for open exercises', async () => {
+    await renderInteractiveDetail()
+
+    await clickButtonContaining('Andere Empfehlung')
+
+    expect(document.body.textContent).toContain('Was passt gerade nicht?')
+  })
+
+  it('keeps blocked replacement attempts on the existing limit path', async () => {
+    const onReplaceBlocked = vi.fn()
+    await renderInteractiveDetail({
+      canReplace: false,
+      onReplaceBlocked,
+      replacementLimitNotice: <p>Heute schon gewechselt</p>,
+    })
+
+    await clickButtonContaining('Andere Empfehlung')
+
+    expect(onReplaceBlocked).toHaveBeenCalledTimes(1)
+    expect(document.body.textContent).toContain('Heute schon gewechselt')
+    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 })
 
@@ -180,4 +269,35 @@ function renderDetail(props = {}) {
       {...props}
     />,
   )
+}
+
+async function renderInteractiveDetail(props = {}) {
+  const container = document.createElement('div')
+  const root = createRoot(container)
+  document.body.append(container)
+
+  await act(async () => {
+    root.render(
+      <ExerciseDetailView
+        completed={false}
+        onBack={() => {}}
+        onComplete={() => {}}
+        onReplace={() => {}}
+        section={section}
+        {...props}
+      />,
+    )
+  })
+
+  return { container, root }
+}
+
+async function clickButtonContaining(label) {
+  const button = [...document.querySelectorAll('button')].find((element) =>
+    element.textContent.includes(label),
+  )
+
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import ReplacementReasonPicker from './ReplacementReasonPicker.jsx'
 
 const movementTypeLabels = {
@@ -21,16 +20,16 @@ function DailyScheduleCard({
   compact = false,
   completed,
   featured = false,
-  initialReplaceDialogOpen = false,
+  isReplacementOpen = false,
+  onCloseReplacement = () => {},
   onReplaceBlocked = () => {},
   onComplete,
   onOpenDetails,
   onReplace = () => {},
+  onToggleReplacement = () => {},
+  paused = false,
   section,
 }) {
-  const [replaceDialogOpen, setReplaceDialogOpen] = useState(
-    initialReplaceDialogOpen && canReplace,
-  )
   const movementLabel =
     movementTypeLabels[section.movementType] ?? section.movementType
 
@@ -50,12 +49,12 @@ function DailyScheduleCard({
     }
 
     if (!canReplace) {
-      setReplaceDialogOpen(false)
+      onCloseReplacement()
       onReplaceBlocked()
       return
     }
 
-    setReplaceDialogOpen(true)
+    onToggleReplacement()
   }
 
   function submitReplacement(reason) {
@@ -64,7 +63,7 @@ function DailyScheduleCard({
     }
 
     onReplace(reason)
-    setReplaceDialogOpen(false)
+    onCloseReplacement()
   }
 
   const isCompactOpen = compact && !featured
@@ -76,7 +75,7 @@ function DailyScheduleCard({
     <article
       className={`relative rounded-lg border shadow-sm transition ${
         isCompactOpen ? 'p-3' : 'p-4 sm:p-5'
-      } ${completed ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10' : openClass}`}
+      } ${paused && !completed ? 'border-slate-200 bg-slate-50 opacity-75 dark:border-white/10 dark:bg-white/[0.03]' : completed ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10' : openClass}`}
     >
       <div
         className={`flex flex-col gap-3 ${
@@ -129,43 +128,47 @@ function DailyScheduleCard({
         )}
       </div>
 
-      <div className={`flex flex-wrap gap-2 ${isCompactOpen ? 'mt-3 sm:mt-0 sm:justify-end' : 'mt-4'}`}>
-        <button
-          type="button"
-          onClick={onOpenDetails}
-          className={`rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] ${
-            featured ? 'min-h-11 px-5 py-3' : 'min-h-8 px-3 py-1.5'
-          }`}
-        >
-          {isCompactOpen ? 'Öffnen' : actionLabel}
-        </button>
-        {!completed && (
+      {!paused && (
+        <div className={`flex flex-wrap gap-2 ${isCompactOpen ? 'mt-3 sm:mt-0 sm:justify-end' : 'mt-4'}`}>
           <button
             type="button"
-            aria-label="Andere Empfehlung wählen"
-            title="Andere Empfehlung wählen"
-            onClick={openReplacementDialog}
-            className={`${isCompactOpen ? 'min-h-8 w-8 text-base' : 'min-h-10 w-10 text-lg'} flex items-center justify-center rounded-full border border-slate-200 font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300`}
+            onClick={onOpenDetails}
+            className={`rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] ${
+              featured ? 'min-h-11 px-5 py-3' : 'min-h-8 px-3 py-1.5'
+            }`}
           >
-            ↻
+            {isCompactOpen ? 'Öffnen' : actionLabel}
           </button>
-        )}
-        <button
-          type="button"
-          onClick={onComplete}
-          disabled={completed}
-          className={`rounded-full border border-slate-200 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300 ${
-            isCompactOpen ? 'min-h-8 px-3 py-1.5' : 'min-h-10 px-4 py-2'
-          }`}
-        >
-          {completed ? 'Erledigt' : 'Erledigt'}
-        </button>
-      </div>
+          {!completed && (
+            <button
+              type="button"
+              aria-label="Empfehlung wechseln"
+              title="Empfehlung wechseln"
+              onClick={openReplacementDialog}
+              className={`${isCompactOpen ? 'min-h-8 w-8' : 'min-h-10 w-10'} flex items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-white/10 dark:text-slate-300`}
+            >
+              <span aria-hidden="true" className="text-lg leading-none">
+                ⟳
+              </span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onComplete}
+            disabled={completed}
+            className={`rounded-full border border-slate-200 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300 ${
+              isCompactOpen ? 'min-h-8 px-3 py-1.5' : 'min-h-10 px-4 py-2'
+            }`}
+          >
+            {completed ? 'Erledigt' : 'Erledigt'}
+          </button>
+        </div>
+      )}
 
-      {!completed && canReplace && replaceDialogOpen && (
+      {!paused && !completed && canReplace && isReplacementOpen && (
         <ReplacementReasonPicker
           idPrefix={`${section.id}-card`}
-          onCancel={() => setReplaceDialogOpen(false)}
+          onCancel={onCloseReplacement}
           onSelectReason={submitReplacement}
         />
       )}

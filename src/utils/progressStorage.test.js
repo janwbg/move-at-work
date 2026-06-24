@@ -13,6 +13,7 @@ import {
   recordCompletion,
   routineSettingsStorageKey,
   saveRoutineSettings,
+  setActiveDay,
   setPauseDay,
 } from './progressStorage.js'
 
@@ -163,6 +164,55 @@ describe('progressStorage helpers', () => {
     }
 
     expect(calculateProgressSummary(progress, new Date(2026, 4, 11)).streak).toBe(2)
+  })
+
+  it('treats an inactive routine day as today pause without changing historical calendar neutrality', () => {
+    const date = new Date(2026, 4, 10)
+    const routineSettings = { activeWeekdays: [1, 2, 3, 4, 5] }
+    const summary = calculateProgressSummary(
+      { completedByDate: {} },
+      date,
+      routineSettings,
+    )
+    const calendarDays = getRoutineCalendarDays({
+      date,
+      progress: { completedByDate: {} },
+      routineSettings,
+    })
+
+    expect(summary.todayStatus).toMatchObject({
+      id: 'pause',
+      label: 'Pausentag',
+      neutral: true,
+    })
+    expect(calendarDays.at(-1).status).toMatchObject({
+      id: 'neutral',
+      label: 'Neutraler Tag',
+      neutral: true,
+    })
+  })
+
+  it('can activate one inactive routine day without changing routine settings', () => {
+    const saturday = new Date(2026, 4, 10)
+    const routineSettings = { activeWeekdays: [1, 2, 3, 4, 5] }
+    const progress = recordCompletion(
+      setActiveDay({ completedByDate: {} }, saturday, true),
+      'saturday-reset',
+      saturday,
+    )
+    const summary = calculateProgressSummary(progress, saturday, routineSettings)
+
+    expect(summary.completedToday).toBe(1)
+    expect(summary.completedThisWeek).toBe(1)
+    expect(summary.routineWeek).toEqual({
+      completedDays: 1,
+      plannedDays: 6,
+    })
+    expect(summary.todayStatus).toMatchObject({
+      id: 'held',
+      label: 'Routine gehalten',
+    })
+    expect(routineSettings).toEqual({ activeWeekdays: [1, 2, 3, 4, 5] })
   })
 
   it('supports a custom Wednesday to Sunday routine', () => {

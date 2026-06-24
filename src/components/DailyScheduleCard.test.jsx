@@ -67,22 +67,22 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('Offen')
   })
 
-  it('shows a discreet replacement button next to the open action', () => {
+  it('shows a discreet replacement icon button next to the open action', () => {
     const html = renderCard()
 
     expect(html).toContain('Übung öffnen')
-    expect(html).toContain('aria-label="Andere Empfehlung wählen"')
-    expect(html).toContain('↻')
+    expect(html).toContain('aria-label="Empfehlung wechseln"')
+    expect(html).toContain('⟳')
     expect(html.indexOf('Übung öffnen')).toBeLessThan(
-      html.indexOf('Andere Empfehlung wählen'),
+      html.indexOf('Empfehlung wechseln'),
     )
   })
 
   it('does not offer replacement for completed recommendations', () => {
     const html = renderCard({ completed: true })
 
-    expect(html).not.toContain('aria-label="Andere Empfehlung wählen"')
-    expect(html).not.toContain('↻')
+    expect(html).not.toContain('aria-label="Empfehlung wechseln"')
+    expect(html).not.toContain('⟳')
   })
 
   it('renders later open exercises as compact overview rows', () => {
@@ -92,7 +92,7 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Morgens')
     expect(html).toContain('2 Minuten · Mobilisieren')
     expect(html).toContain('Öffnen')
-    expect(html).toContain('aria-label="Andere Empfehlung wählen"')
+    expect(html).toContain('aria-label="Empfehlung wechseln"')
     expect(html).toContain('Erledigt')
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
@@ -108,32 +108,33 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Erledigt')
     expect(html).not.toContain('>Übung öffnen<')
     expect(html).not.toContain('Als erledigt markieren')
-    expect(html).not.toContain('aria-label="Andere Empfehlung wählen"')
-    expect(html).not.toContain('↻')
+    expect(html).not.toContain('aria-label="Empfehlung wechseln"')
+    expect(html).not.toContain('⟳')
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
 
-  it('can show grouped replacement reasons on the card', () => {
-    const html = renderCard({ initialReplaceDialogOpen: true })
+  it('can show compact replacement reasons on the card', () => {
+    const html = renderCard({ isReplacementOpen: true })
 
-    expect(html).toContain('Warum möchtest du diese Empfehlung wechseln?')
-    expect(html).toContain('Arbeitssituation')
-    expect(html).toContain('Zeit')
-    expect(html).toContain('Umgebung')
-    expect(html).toContain('Energie und Körper')
-    expect(html).toContain('Bin im Meeting')
-    expect(html).toContain('Habe wenig Zeit')
-    expect(html).toContain('Lieber gehen')
+    expect(html).toContain('Was passt gerade nicht?')
+    expect(html).toContain('Keine Zeit')
+    expect(html).toContain('Lieber kürzer')
+    expect(html).toContain('Zu sichtbar')
+    expect(html).toContain('Passt nicht zum Setup')
+    expect(html).not.toContain('Arbeitssituation')
+    expect(html).not.toContain('Umgebung')
+    expect(html).not.toContain('Energie und Körper')
+    expect(html).not.toContain('Bin im Meeting')
   })
 
   it('does not open replacement reasons when replacements are blocked', () => {
     const html = renderCard({
       canReplace: false,
-      initialReplaceDialogOpen: true,
+      isReplacementOpen: true,
     })
 
-    expect(html).toContain('Andere Empfehlung')
-    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+    expect(html).toContain('Empfehlung wechseln')
+    expect(html).not.toContain('Was passt gerade nicht?')
   })
 })
 
@@ -141,8 +142,10 @@ function renderCard(props = {}) {
   return renderToStaticMarkup(
     <DailyScheduleCard
       completed={false}
+      onCloseReplacement={() => {}}
       onComplete={() => {}}
       onOpenDetails={() => {}}
+      onToggleReplacement={() => {}}
       section={section}
       stepNumber={1}
       {...props}

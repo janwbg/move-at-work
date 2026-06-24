@@ -263,9 +263,11 @@ export function ProgressRing({
         <p className={`${valueClass} font-extrabold text-slate-950 dark:text-white`}>
           {safeTotal > 0 ? `${safeCompleted}/${safeTotal}` : '0/0'}
         </p>
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-          {isCompleteDay ? 'Kompletter Tag' : getRingStatusLabel(statusId, percentage)}
-        </p>
+        {!(compact && isCompleteDay) && (
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            {isCompleteDay ? 'Kompletter Tag' : getRingStatusLabel(statusId, percentage)}
+          </p>
+        )}
       </div>
     </div>
   )

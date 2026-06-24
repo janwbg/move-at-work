@@ -26,6 +26,8 @@ function ExerciseDetailView({
   const instructionSteps = Array.isArray(section.instructionSteps)
     ? section.instructionSteps.filter(Boolean)
     : []
+  const { actionSteps, hint } = splitInstructionContent(instructionSteps)
+  const metaItems = [section.timeLabel, formatSetupMeta(section.setup)].filter(Boolean)
   const shouldShowReset =
     !completed && (timerState !== 'idle' || remainingSeconds !== durationSeconds)
   const timerActionLabel = getTimerActionLabel(timerState)
@@ -96,63 +98,81 @@ function ExerciseDetailView({
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#f7f8fb] px-4 py-5 text-slate-950 dark:bg-[#121212] dark:text-white sm:px-6">
       <section className="mx-auto max-w-3xl">
-        <div className="mb-5 flex items-center gap-3">
+        <div className="mb-4">
           <button
             type="button"
             onClick={onBack}
-            className="min-h-10 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+            className="inline-flex min-h-9 items-center rounded-full px-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
-            Zurück
+            ← Zurück
           </button>
-          <p className="min-w-0 truncate text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-            {section.timeLabel}
-          </p>
         </div>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 sm:p-7">
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
           <header>
+            {metaItems.length > 0 && (
+              <p className="text-sm font-bold leading-6 text-[#2563eb] dark:text-blue-200">
+                {metaItems.join(' · ')}
+              </p>
+            )}
             <h1 className="text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
               {section.title}
             </h1>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <DetailBadge>{section.duration}</DetailBadge>
-              {section.setup && <DetailBadge>{section.setup}</DetailBadge>}
-              {completed && <DetailBadge tone="success">Erledigt</DetailBadge>}
-            </div>
+            {completed && (
+              <div className="mt-3">
+                <DetailBadge tone="success">Erledigt</DetailBadge>
+              </div>
+            )}
             {section.reason && (
-              <p className="mt-4 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
                 {section.reason}
               </p>
             )}
             {completed && (
               <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-100">
-                Diese Übung ist erledigt.
+                Diese Übung hast du heute erledigt.
               </p>
             )}
           </header>
 
-          {instructionSteps.length > 0 && (
+          {actionSteps.length > 0 && (
             <section className="mt-6">
               <h2 className="text-lg font-extrabold tracking-normal text-slate-950 dark:text-white">
                 So geht&apos;s
               </h2>
-              <ol className="mt-3 space-y-3 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                {instructionSteps.map((step) => (
-                  <li className="pl-1" key={step}>
-                    {step}
+              <ol className="mt-3 space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {actionSteps.map((step, index) => (
+                  <li className="grid grid-cols-[1.75rem_1fr] gap-3" key={step}>
+                    <span
+                      aria-hidden="true"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-extrabold text-slate-600 dark:bg-white/10 dark:text-slate-200"
+                    >
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
                   </li>
                 ))}
               </ol>
+              {hint && (
+                <div className="mt-4 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
+                  <p className="text-xs font-extrabold uppercase tracking-normal text-slate-500 dark:text-slate-400">
+                    Hinweis
+                  </p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+                    {hint}
+                  </p>
+                </div>
+              )}
             </section>
           )}
 
-          <section className="mt-6 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
                   Timer
                 </p>
-                <p className="mt-1 font-mono text-3xl font-extrabold text-slate-950 dark:text-white">
+                <p className="mt-1 font-mono text-2xl font-extrabold text-slate-950 dark:text-white sm:text-3xl">
                   {timerState === 'finished' ? 'Beendet' : formatSeconds(remainingSeconds)}
                 </p>
               </div>
@@ -164,7 +184,7 @@ function ExerciseDetailView({
                       <button
                         type="button"
                         onClick={handleTimerAction}
-                        className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+                        className="min-h-10 rounded-full bg-[#2563eb] px-5 py-2 text-sm font-bold text-white shadow-sm shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
                       >
                         {timerActionLabel}
                       </button>
@@ -172,7 +192,7 @@ function ExerciseDetailView({
                     <button
                       type="button"
                       onClick={onComplete}
-                      className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                      className="min-h-10 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
                     >
                       Als erledigt markieren
                     </button>
@@ -182,7 +202,7 @@ function ExerciseDetailView({
                   <button
                     type="button"
                     onClick={resetTimer}
-                    className="min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
+                    className="min-h-10 rounded-full border border-slate-200 px-5 py-2 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 dark:border-white/10 dark:text-slate-300"
                   >
                     Zurücksetzen
                   </button>
@@ -192,13 +212,13 @@ function ExerciseDetailView({
           </section>
 
           {!completed && (
-            <section className="mt-5">
+            <section className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
               <button
                 type="button"
                 onClick={openReplacementDialog}
-                className="min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+                className="text-sm font-bold text-slate-600 transition hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563eb] dark:text-slate-300"
               >
-                Andere Empfehlung
+                Passt gerade nicht? Andere Empfehlung wählen
               </button>
 
               {replacementLimitNotice}
@@ -216,6 +236,72 @@ function ExerciseDetailView({
       </section>
     </div>
   )
+}
+
+function splitInstructionContent(instructionSteps) {
+  if (instructionSteps.length === 0) {
+    return { actionSteps: [], hint: null }
+  }
+
+  const lastStep = instructionSteps[instructionSteps.length - 1]
+
+  if (!isPracticeHint(lastStep)) {
+    return { actionSteps: instructionSteps, hint: null }
+  }
+
+  return {
+    actionSteps: instructionSteps.slice(0, -1),
+    hint: lastStep,
+  }
+}
+
+function isPracticeHint(step) {
+  const normalizedStep = step.trim().toLowerCase()
+
+  if (/^(hinweis:|achte darauf|arbeite danach|pausiere|stoppe)/.test(normalizedStep)) {
+    return true
+  }
+
+  return (
+    normalizedStep.includes('wenn') &&
+    /(angenehm|unangenehm|komfortabel|sicher|schmerz)/.test(normalizedStep)
+  )
+}
+
+function formatSetupMeta(setup) {
+  if (!setup) {
+    return ''
+  }
+
+  const normalizedSetup = setup.toLowerCase()
+
+  if (
+    normalizedSetup.includes('höhenverstell') ||
+    normalizedSetup.includes('stehtisch')
+  ) {
+    return 'Am Stehtisch'
+  }
+
+  if (
+    normalizedSetup.includes('kein besonderes equipment') ||
+    normalizedSetup.includes('kein spezielles equipment')
+  ) {
+    return 'Ohne Equipment'
+  }
+
+  if (normalizedSetup.includes('platz')) {
+    return 'Mit etwas Platz'
+  }
+
+  if (normalizedSetup.includes('flur')) {
+    return 'Kurzer Weg'
+  }
+
+  if (normalizedSetup.includes('treppe')) {
+    return 'Treppe verfügbar'
+  }
+
+  return setup
 }
 
 function DetailBadge({ children, tone = 'neutral' }) {

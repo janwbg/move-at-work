@@ -1,12 +1,21 @@
+// @vitest-environment happy-dom
+
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createRecommendationFeedbackContext,
   preserveCompletedSections,
   shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
 import ResultScreen, { SuccessDialog } from './ResultScreen.jsx'
-import { markCompleteDayCelebration } from '../utils/progressStorage.js'
+import {
+  markCompleteDayCelebration,
+  routineSettingsStorageKey,
+} from '../utils/progressStorage.js'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const summary = {
   completedToday: 1,
@@ -14,121 +23,75 @@ const summary = {
   streak: 1,
 }
 
+beforeEach(() => {
+  window.localStorage.clear()
+})
+
+afterEach(() => {
+  document.body.innerHTML = ''
+  window.localStorage.clear()
+})
+
 describe('SuccessDialog', () => {
-  it('shows the recommendation feedback question', () => {
-    const html = renderToStaticMarkup(
-      <SuccessDialog
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
+  it('shows a positive completion moment with exercise name and compact progress', () => {
+    const html = renderSuccessDialog()
 
-    expect(html).toContain('Hat diese Empfehlung gerade gepasst?')
-    expect(html).toContain('Ja, hat gepasst')
-    expect(html).toContain('Eher nicht')
+    expect(html).toContain('Stark gemacht!')
+    expect(html).toContain('Schulter-Reset ist erledigt.')
+    expect(html).toContain('Du hast heute 1 von 5 Übungen geschafft.')
+    expect(html).toContain('1/5')
+    expect(html).toContain('Heute')
+    expect(html).toContain('🚀 1')
+    expect(html).toContain('Arbeitsstreak')
+    expect(html).toContain('Jede kurze Bewegung zählt.')
   })
 
-  it('shows the optional benefit check after completion', () => {
-    const html = renderToStaticMarkup(
-      <SuccessDialog
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
+  it('does not render feedback elements in the success dialog', () => {
+    const html = renderSuccessDialog()
 
-    expect(html).toContain('Reset erledigt.')
-    expect(html).toContain('Wie fühlst du dich jetzt?')
-    expect(html).toContain('Wacher')
-    expect(html).toContain('Entspannter')
-    expect(html).toContain('Fokussierter')
-    expect(html).toContain('Lockerer')
-    expect(html).toContain('Kein Unterschied')
-  })
-
-  it('can mark an initial benefit answer as selected', () => {
-    const html = renderToStaticMarkup(
-      <SuccessDialog
-        initialEffect="more-focused"
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
-
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Fokussierter<\/button>/)
+    expect(html).not.toContain('Wie fühlst du dich jetzt?')
+    expect(html).not.toContain('Hat diese Empfehlung gerade gepasst?')
+    expect(html).not.toContain('War die Empfehlung hilfreich?')
+    expect(html).not.toContain('Feedback geben')
+    expect(html).not.toContain('Ja, hat gepasst')
+    expect(html).not.toContain('Eher nicht')
   })
 
   it('shows the complete-day success variant for 5 of 5', () => {
-    const html = renderToStaticMarkup(
-      <SuccessDialog
-        isCompleteDaySuccess
-        onClose={() => {}}
-        summary={{
-          ...summary,
-          completedToday: 5,
-        }}
-        title="Tagesabschluss"
-        totalToday={5}
-      />,
-    )
+    const html = renderSuccessDialog({
+      isCompleteDaySuccess: true,
+      summary: {
+        ...summary,
+        completedToday: 5,
+        streak: 3,
+      },
+      title: 'Tagesabschluss',
+    })
 
-    expect(html).toContain('Kompletter Tag geschafft.')
+    expect(html).toContain('Kompletter Tag geschafft!')
     expect(html).toContain('Du hast heute alle 5 Impulse abgeschlossen.')
-    expect(html).not.toContain('Tagesabschluss ist abgehakt')
+    expect(html).toContain('5/5')
+    expect(html).toContain('🚀 3')
+    expect(html).toContain('Starker Arbeitstag. Deine Routine wächst.')
+    expect(html).not.toContain('Tagesabschluss ist erledigt.')
   })
 
-  it('shows a secondary practice test feedback link', () => {
-    const html = renderToStaticMarkup(
-      <SuccessDialog
-        feedbackUrl="https://example.com/feedback"
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
+  it('keeps the return action interactive', async () => {
+    const onClose = vi.fn()
+    await renderInteractiveSuccessDialog({ onClose })
 
-    expect(html).toContain('War die Empfehlung hilfreich?')
-    expect(html).toContain(
-      'Dein Feedback hilft dabei, die Empfehlungen verständlicher, passender und alltagstauglicher zu machen.',
-    )
-    expect(html).toContain('Feedback geben')
-    expect(html).toContain('href="https://example.com/feedback"')
-    expect(html).toContain('target="_blank"')
-    expect(html).toContain('rel="noreferrer"')
-    expect(html.indexOf('Feedback geben')).toBeLessThan(
-      html.lastIndexOf('type="button"'),
-    )
+    await clickButtonContaining('Zurück zum Tagesplan')
+
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('shows optional reasons only after not-fit feedback is selected', () => {
-    const neutralHtml = renderToStaticMarkup(
-      <SuccessDialog
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
-    const notFitHtml = renderToStaticMarkup(
-      <SuccessDialog
-        initialFeedback="not-fit"
-        onClose={() => {}}
-        summary={summary}
-        title="Schulter-Reset"
-        totalToday={5}
-      />,
-    )
+  it('can call the progress action from the secondary button', async () => {
+    const onOpenProgress = vi.fn()
+    await renderInteractiveSuccessDialog({ onOpenProgress })
 
-    expect(neutralHtml).not.toContain('Zu auffällig')
-    expect(notFitHtml).toContain('Zu auffällig')
-    expect(notFitHtml).toContain('Keine Zeit')
-    expect(notFitHtml).toContain('Setup hat nicht gepasst')
+    await clickButtonContaining('Fortschritt ansehen')
+
+    expect(onOpenProgress).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -202,6 +165,65 @@ describe('ResultScreen daily workday context helpers', () => {
     expect(html).toContain('Plus wird vorbereitet')
   })
 
+  it('navigates from the success dialog to the progress screen', async () => {
+    await renderInteractiveResultScreen()
+
+    await clickButtonContaining('Erledigt')
+
+    expect(document.body.textContent).toContain('Stark gemacht!')
+
+    await clickButtonContaining('Fortschritt ansehen')
+
+    expect(document.body.textContent).toContain('Routine-Kalender')
+    expect(document.body.textContent).toContain('Heute erledigt')
+    expect(document.body.textContent).not.toContain('Stark gemacht!')
+  })
+
+  it('keeps today and progress counts aligned after switching workplace', async () => {
+    await renderInteractiveResultScreen({
+      answers: createCompleteAnswers({
+        workplaces: ['office', 'homeoffice'],
+      }),
+    })
+
+    await clickButtonContaining('Erledigt')
+    await clickButtonContaining('Zurück zum Tagesplan')
+
+    expect(document.body.textContent).toContain('1/5')
+
+    await clickButtonContaining('Homeoffice')
+    await clickButtonContaining('Fortschritt')
+
+    expect(document.body.textContent).toContain('1 von 5 Microbreaks erledigt')
+    expect(document.body.textContent).toContain('Routine gehalten.')
+  })
+
+  it('respects inactive routine weekdays as pause days until today is activated', async () => {
+    const today = new Date()
+    const inactiveTodaySettings = {
+      activeWeekdays: getWeekdaysExcept(today.getDay()),
+    }
+    window.localStorage.setItem(
+      routineSettingsStorageKey,
+      JSON.stringify(inactiveTodaySettings),
+    )
+
+    await renderInteractiveResultScreen()
+
+    expect(document.body.textContent).toContain('Pausentag')
+    expect(document.body.textContent).toContain('Heute aktivieren')
+    expect(document.body.textContent).not.toContain('Jetzt passend')
+
+    await clickButtonContaining('Heute aktivieren')
+
+    expect(document.body.textContent).toContain('Move-at-work-Tag')
+    expect(document.body.textContent).toContain('Heute pausieren')
+    expect(document.body.textContent).toContain('Jetzt passend')
+    expect(JSON.parse(window.localStorage.getItem(routineSettingsStorageKey))).toEqual(
+      inactiveTodaySettings,
+    )
+  })
+
   it('detects the first 5 of 5 completion for the complete-day success', () => {
     const date = new Date(2026, 5, 24)
 
@@ -230,6 +252,68 @@ describe('ResultScreen daily workday context helpers', () => {
   })
 })
 
+function renderSuccessDialog(props = {}) {
+  return renderToStaticMarkup(
+    <SuccessDialog
+      onClose={() => {}}
+      summary={summary}
+      title="Schulter-Reset"
+      totalToday={5}
+      {...props}
+    />,
+  )
+}
+
+async function renderInteractiveSuccessDialog(props = {}) {
+  const container = document.createElement('div')
+  const root = createRoot(container)
+  document.body.append(container)
+
+  await act(async () => {
+    root.render(
+      <SuccessDialog
+        onClose={() => {}}
+        onOpenProgress={() => {}}
+        summary={summary}
+        title="Schulter-Reset"
+        totalToday={5}
+        {...props}
+      />,
+    )
+  })
+
+  return { container, root }
+}
+
+async function renderInteractiveResultScreen(props = {}) {
+  const container = document.createElement('div')
+  const root = createRoot(container)
+  document.body.append(container)
+
+  await act(async () => {
+    root.render(
+      <ResultScreen
+        answers={createCompleteAnswers()}
+        onChangeAnswers={() => {}}
+        onRestartOnboarding={() => {}}
+        {...props}
+      />,
+    )
+  })
+
+  return { container, root }
+}
+
+async function clickButtonContaining(label) {
+  const button = [...document.querySelectorAll('button')].find((element) =>
+    element.textContent.includes(label),
+  )
+
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
 function createCompleteAnswers(overrides = {}) {
   return {
     currentWorkplace: 'office',
@@ -257,4 +341,8 @@ function createPlan(ids) {
     rhythm: '',
     summary: '',
   }
+}
+
+function getWeekdaysExcept(excludedWeekday) {
+  return [0, 1, 2, 3, 4, 5, 6].filter((weekday) => weekday !== excludedWeekday)
 }

@@ -206,7 +206,14 @@ describe('TodayScreen', () => {
     expect(html).toContain('Mittwoch, 17. Juni')
     expect(html).toContain('Pausentag')
     expect(html).toContain('Heute aktivieren')
+    expect(html).toContain('Heute ist Pausentag.')
+    expect(html).toContain(
+      'Du kannst den Tag aktivieren, wenn du trotzdem Bewegungsimpulse machen möchtest.',
+    )
     expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Jetzt passend')
+    expect(html).not.toContain('Übung starten')
+    expect(html).not.toContain('Empfehlung wechseln')
   })
 
   it.each([
@@ -231,6 +238,29 @@ describe('TodayScreen', () => {
     expect(html).toContain(ringText)
     expect(html).not.toContain('Heute erledigt')
     expect(html).not.toContain('Arbeitsstreak')
+  })
+
+  it('keeps the completed compact header ring readable without the long status label', () => {
+    const completedIds = [
+      'section-1',
+      'section-2',
+      'section-3',
+      'section-4',
+      'section-5',
+    ]
+    const html = renderTodayScreen({
+      completedIds,
+      plan: createPlan(5),
+      progressSummary: {
+        completedToday: completedIds.length,
+        completedThisWeek: completedIds.length,
+        streak: 1,
+      },
+    })
+
+    expect(html).toContain('5/5')
+    expect(html).not.toContain('Kompletter Tag')
+    expect(html).toContain('Alles erledigt für heute.')
   })
 
   it('shows the compact rocket streak safely', () => {
@@ -353,8 +383,8 @@ describe('TodayScreen', () => {
 
     expect(html).not.toContain('Weitere passende')
     expect(html).not.toContain('Zusätzlicher Impuls')
-    expect(countOccurrences(html, 'Öffnen')).toBe(4)
-    expect(countOccurrences(html, 'Übung starten')).toBe(1)
+    expect(countOccurrences(html, 'Öffnen')).toBe(5)
+    expect(html).not.toContain('Übung starten')
   })
 
   it('keeps five recommendations visible for Free users', () => {
@@ -364,8 +394,8 @@ describe('TodayScreen', () => {
     })
 
     expect(html).toContain('0/5')
-    expect(countOccurrences(html, 'Öffnen')).toBe(4)
-    expect(countOccurrences(html, 'Übung starten')).toBe(1)
+    expect(countOccurrences(html, 'Öffnen')).toBe(5)
+    expect(html).not.toContain('Übung starten')
   })
 
   it('shows the prepared Plus hint after a blocked Free replacement attempt', () => {
@@ -380,7 +410,7 @@ describe('TodayScreen', () => {
       'In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.',
     )
     expect(html).toContain('Plus ansehen')
-    expect(html).not.toContain('Warum möchtest du diese Empfehlung wechseln?')
+    expect(html).not.toContain('Was passt gerade nicht?')
   })
 
   it('renders one chronological list and highlights the active exercise inside it', () => {
@@ -389,7 +419,8 @@ describe('TodayScreen', () => {
     expect(html).not.toContain('Als Nächstes')
     expect(html).not.toContain('Später heute')
     expect(html).toContain('Jetzt passend')
-    expect(html).toContain('Übung starten')
+    expect(html).toContain('Öffnen')
+    expect(html).not.toContain('Übung starten')
     expect(html.indexOf('Schulter-Reset')).toBeLessThan(html.indexOf('Atem-Reset'))
   })
 
@@ -497,7 +528,7 @@ describe('TodayScreen', () => {
 
     await clickButtonContaining('Schulter-Reset')
 
-    expect(document.body.textContent).toContain('Diese Übung ist erledigt.')
+    expect(document.body.textContent).toContain('Diese Übung hast du heute erledigt.')
     expect(document.body.textContent).toContain('So geht')
     expect(document.body.textContent).not.toContain('Timer starten')
     expect(document.body.textContent).not.toContain('Andere Empfehlung')
@@ -550,6 +581,125 @@ describe('TodayScreen', () => {
     })
 
     expect(onWorkdayTypeChange).toHaveBeenCalledWith('study-day')
+  })
+
+  it('opens only one compact replacement menu at a time', async () => {
+    await renderInteractiveTodayScreen()
+    const [firstButton, secondButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+
+    expect(getReplacementDialogs()).toHaveLength(1)
+    expect(getReplacementDialogs()[0].getAttribute('aria-labelledby')).toContain(
+      'morning-reset-card-replace-title',
+    )
+    expect(document.body.textContent).toContain('Was passt gerade nicht?')
+    expect(document.body.textContent).toContain('Keine Zeit')
+    expect(document.body.textContent).toContain('Lieber kürzer')
+    expect(document.body.textContent).toContain('Zu sichtbar')
+    expect(document.body.textContent).toContain('Kein Platz')
+    expect(document.body.textContent).toContain('Zu anstrengend')
+    expect(document.body.textContent).toContain('Lieber ruhiger')
+    expect(document.body.textContent).toContain('Lieber aktiver')
+    expect(document.body.textContent).toContain('Passt nicht zum Setup')
+    expect(document.body.textContent).not.toContain('Arbeitssituation')
+    expect(document.body.textContent).not.toContain('Umgebung')
+    expect(document.body.textContent).not.toContain('Energie und Körper')
+
+    await clickElement(secondButton)
+
+    expect(getReplacementDialogs()).toHaveLength(1)
+    expect(getReplacementDialogs()[0].getAttribute('aria-labelledby')).toContain(
+      'breathing-reset-card-replace-title',
+    )
+  })
+
+  it('closes the replacement menu when the same icon button is clicked again', async () => {
+    await renderInteractiveTodayScreen()
+    const [firstButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+    await clickElement(firstButton)
+
+    expect(getReplacementDialogs()).toHaveLength(0)
+    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
+  })
+
+  it('closes replacement menus when opening and returning from exercise details', async () => {
+    await renderInteractiveTodayScreen()
+    const [firstButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+    await clickButtonContaining('Öffnen')
+
+    expect(document.body.textContent).toContain('So geht')
+    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
+
+    await clickButtonContaining('Zurück')
+
+    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
+  })
+
+  it('closes the replacement menu via cancel and after a successful replacement', async () => {
+    const onReplaceRecommendation = vi.fn()
+    await renderInteractiveTodayScreen({ onReplaceRecommendation })
+    const [firstButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+    await clickButtonContaining('Abbrechen')
+
+    expect(getReplacementDialogs()).toHaveLength(0)
+
+    await clickElement(firstButton)
+    await clickButtonContaining('Keine Zeit')
+
+    expect(onReplaceRecommendation).toHaveBeenCalledWith(0, 'no-time')
+    expect(getReplacementDialogs()).toHaveLength(0)
+  })
+
+  it('closes the replacement menu when workplace or workday changes', async () => {
+    const onWorkplaceChange = vi.fn()
+    const onWorkdayTypeChange = vi.fn()
+    await renderInteractiveTodayScreen({
+      onWorkplaceChange,
+      onWorkdayTypeChange,
+      workplaces: ['office', 'homeoffice'],
+    })
+    const [firstButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+    await clickButtonContaining('Homeoffice')
+
+    expect(onWorkplaceChange).toHaveBeenCalledWith('homeoffice')
+    expect(getReplacementDialogs()).toHaveLength(0)
+
+    await clickElement(firstButton)
+
+    const select = document.querySelector(
+      'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+    )
+    await act(async () => {
+      select.value = 'study-day'
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+
+    expect(onWorkdayTypeChange).toHaveBeenCalledWith('study-day')
+    expect(getReplacementDialogs()).toHaveLength(0)
+  })
+
+  it('keeps replacement blocked by the Free limit without opening the menu', async () => {
+    const onReplacementBlocked = vi.fn()
+    await renderInteractiveTodayScreen({
+      canReplaceRecommendation: false,
+      onReplacementBlocked,
+    })
+    const [firstButton] = getReplacementButtons()
+
+    await clickElement(firstButton)
+
+    expect(onReplacementBlocked).toHaveBeenCalledTimes(1)
+    expect(document.body.textContent).toContain('Heute schon gewechselt')
+    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 
   it('shows the reminder banner compactly for a due open slot', () => {
@@ -892,9 +1042,21 @@ async function clickButtonContaining(label) {
     element.textContent.includes(label),
   )
 
+  await clickElement(button)
+}
+
+async function clickElement(element) {
   await act(async () => {
-    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
+}
+
+function getReplacementButtons() {
+  return [...document.querySelectorAll('button[aria-label="Empfehlung wechseln"]')]
+}
+
+function getReplacementDialogs() {
+  return [...document.querySelectorAll('[role="dialog"]')]
 }
 
 function withDueReminder(props = {}) {
