@@ -7,7 +7,7 @@ import {
   getReminderCopy,
 } from './reminderBannerHelpers.js'
 import { maybeShowDueReminderNotification } from './reminderNotificationHelpers.js'
-import { FEEDBACK_URL } from '../data/feedback.js'
+import { getActiveScheduleIndex } from './todayScheduleHelpers.js'
 import { workplaceOptions } from '../data/profileOptions.js'
 import { getDueReminder } from '../utils/reminderScheduler.js'
 import {
@@ -27,13 +27,37 @@ const todayWorkdayOptions = [
   { id: 'tight-schedule', label: 'Wenig Zeit' },
 ]
 
+const weekdayLabels = [
+  'Sonntag',
+  'Montag',
+  'Dienstag',
+  'Mittwoch',
+  'Donnerstag',
+  'Freitag',
+  'Samstag',
+]
+
+const monthLabels = [
+  'Januar',
+  'Februar',
+  'März',
+  'April',
+  'Mai',
+  'Juni',
+  'Juli',
+  'August',
+  'September',
+  'Oktober',
+  'November',
+  'Dezember',
+]
+
 function TodayScreen({
   activeWorkdayType = 'mixed-day',
   activeWorkplace,
   canReplaceRecommendation = true,
   completedIds,
   currentDate,
-  feedbackUrl = FEEDBACK_URL,
   initialDetailIndex = null,
   initialReplacementLimitNoticeVisible = false,
   initialReminderSettings,
@@ -65,14 +89,19 @@ function TodayScreen({
     () => initialReminderState ?? loadDailyReminderState(now),
   )
   const shownSystemNotificationKeysRef = useRef(new Set())
-  const openSections = plan.dailySchedule.filter(
-    (section) => !completedIds.includes(section.id),
-  )
+  const scheduleEntries = plan.dailySchedule.map((section, index) => ({
+    index,
+    section,
+  }))
   const completedSections = plan.dailySchedule.filter((section) =>
     completedIds.includes(section.id),
   )
-  const openCount = openSections.length
   const completedCount = completedSections.length
+  const activeScheduleIndex = getActiveScheduleIndex({
+    completedIds,
+    now,
+    sections: plan.dailySchedule,
+  })
   const canSwitchWorkplace = workplaces?.length > 1
   const selectedDetailSection =
     selectedDetailIndex === null ? null : plan.dailySchedule[selectedDetailIndex]
@@ -87,6 +116,7 @@ function TodayScreen({
     setReminderState(nextState)
     saveDailyReminderState(nextState, now)
   }, [now])
+  const activeWorkplaceLabel = getWorkplaceLabel(activeWorkplace)
 
   useEffect(() => {
     if (currentDate) {
@@ -192,75 +222,66 @@ function TodayScreen({
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <section className="rounded-2xl bg-[#2563eb] p-6 text-white shadow-xl shadow-[#2563eb]/20 sm:p-8">
-        <p className="text-sm font-bold uppercase tracking-normal text-blue-100">
-          Heute
-        </p>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-normal sm:text-4xl">
-          Dein Tagesplan für mehr Bewegung.
-        </h1>
-        <p className="mt-4 max-w-2xl leading-7 text-blue-50">
-          {openCount === 0
-            ? 'Alles erledigt für heute. Stark gemacht.'
-            : 'Kleine Bewegungsimpulse helfen dir, lange Sitzphasen bewusster zu unterbrechen.'}
-        </p>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-[1.4fr_1fr]">
-        <TodayProgressCard
-          completedToday={completedCount}
-          totalToday={plan.dailySchedule.length}
-        />
-        <StreakCard streak={progressSummary?.streak ?? 0} />
-      </section>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
+    <div className="mx-auto max-w-4xl space-y-3">
+      <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-            {isPauseDay
-              ? 'Heute ist Pausentag. Deine Routine bleibt erhalten.'
-              : 'Heute zählt normal für deine Arbeits-/Lernroutine.'}
-          </p>
           <button
             type="button"
             aria-pressed={isPauseDay}
             onClick={handlePauseDayToggle}
-            className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
-              isPauseDay
-                ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-            }`}
+            className="group rounded-lg text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563eb]"
           >
-            Heute Pausentag
+            <p className="text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
+              {formatTodayDate(now)}
+            </p>
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+              <span>{isPauseDay ? 'Pausentag' : 'Move-at-work-Tag'}</span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
+                ·
+              </span>
+              <span className="font-bold text-[#1d4ed8] group-hover:text-[#2563eb] dark:text-blue-200">
+                {isPauseDay ? 'Heute aktivieren' : 'Heute pausieren'}
+              </span>
+            </p>
           </button>
+
+          <div className="flex items-center gap-4 sm:justify-end">
+            <ProgressRing
+              compact
+              completedToday={completedCount}
+              totalToday={plan.dailySchedule.length}
+            />
+            <CompactStreak streak={progressSummary?.streak ?? 0} />
+          </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
-        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-5">
+        <div className="mb-4 flex flex-col gap-3">
           <div>
-            <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-              Tagesplan
-            </p>
             <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-              Deine Empfehlungen
+              Dein individueller Tagesplan
             </h2>
-            {canSwitchWorkplace && (
-              <WorkplaceSwitcher
-                activeWorkplace={activeWorkplace}
-                onWorkplaceChange={onWorkplaceChange}
-                workplaces={workplaces}
-              />
-            )}
-            <WorkdayTypeSwitcher
+          </div>
+
+          <div className="grid gap-3 border-y border-slate-200 py-3 dark:border-white/10 md:grid-cols-[1fr_auto] md:items-center">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+                Du arbeitest heute im {activeWorkplaceLabel}
+              </p>
+              {canSwitchWorkplace && (
+                <WorkplaceSwitcher
+                  activeWorkplace={activeWorkplace}
+                  onWorkplaceChange={onWorkplaceChange}
+                  workplaces={workplaces}
+                />
+              )}
+            </div>
+            <WorkdayTypeSelect
               activeWorkdayType={activeWorkdayType}
               onWorkdayTypeChange={onWorkdayTypeChange}
             />
           </div>
-          <p className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
-            {openCount} offen · {completedSections.length} erledigt
-          </p>
         </div>
 
         {replacementMessage && (
@@ -273,53 +294,51 @@ function TodayScreen({
           <ReplacementLimitNotice onOpenUpgrade={onOpenUpgrade} />
         )}
 
-        {dueReminder && (
-          <ReminderBanner
-            activeWorkdayType={activeWorkdayType}
-            activeWorkplace={activeWorkplace}
-            onAction={handleReminderAction}
-            reminder={dueReminder}
-          />
-        )}
-
-        <div className="grid gap-4">
-          {plan.dailySchedule.map((section, index) => (
-            <DailyScheduleCard
-              canReplace={canReplaceRecommendation}
-              completed={completedIds.includes(section.id)}
-              key={section.id}
-              onComplete={() => completeFromSchedule(section)}
-              onOpenDetails={() => setSelectedDetailIndex(index)}
-              onReplace={(reason) => replaceRecommendation(index, reason)}
-              onReplaceBlocked={handleReplacementBlocked}
-              section={section}
-              stepNumber={index + 1}
+        <div className="space-y-3">
+          {dueReminder && (
+            <ReminderBanner
+              activeWorkdayType={activeWorkdayType}
+              activeWorkplace={activeWorkplace}
+              onAction={handleReminderAction}
+              reminder={dueReminder}
             />
-          ))}
+          )}
+
+          {activeScheduleIndex === null && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+              <p className="text-lg font-extrabold text-emerald-900 dark:text-emerald-100">
+                Alles erledigt für heute.
+              </p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800 dark:text-emerald-100">
+                Dein Tagesplan ist abgeschlossen. Deine Routine bleibt sauber
+                dokumentiert.
+              </p>
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            {scheduleEntries.map(({ index, section }) => {
+              const completed = completedIds.includes(section.id)
+              const active = !completed && index === activeScheduleIndex
+
+              return (
+                <DailyScheduleCard
+                  actionLabel={active ? 'Übung starten' : 'Übung öffnen'}
+                  canReplace={canReplaceRecommendation}
+                  compact={!active || completed}
+                  completed={completed}
+                  featured={active}
+                  key={section.id}
+                  onComplete={() => completeFromSchedule(section)}
+                  onOpenDetails={() => setSelectedDetailIndex(index)}
+                  onReplace={(reason) => replaceRecommendation(index, reason)}
+                  onReplaceBlocked={handleReplacementBlocked}
+                  section={section}
+                />
+              )
+            })}
+          </div>
         </div>
-      </section>
-
-      <p className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm leading-6 text-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 sm:p-5">
-        Hinweis: Move at work ersetzt keine medizinische Beratung. Führe
-        Bewegungen nur aus, wenn sie sich für dich sicher und angenehm anfühlen.
-        Bei Schmerzen, Verletzungen oder gesundheitlichen Einschränkungen brich
-        die Übung ab oder frage medizinisches Fachpersonal.
-      </p>
-
-      <section className="rounded-2xl border border-dashed border-[#2563eb]/30 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10 sm:p-5">
-        <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-          Du testest gerade eine frühe Version von Move at work. Dein Feedback
-          hilft dabei, die Empfehlungen verständlicher, passender und
-          alltagstauglicher zu machen.
-        </p>
-        <a
-          href={feedbackUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
-        >
-          Feedback geben
-        </a>
       </section>
 
       {selectedDetailSection && (
@@ -341,6 +360,31 @@ function TodayScreen({
       )}
     </div>
   )
+}
+
+function CompactStreak({ streak }) {
+  const safeStreak = Math.max(streak, 0)
+
+  return (
+    <div className="rounded-lg bg-slate-50 px-3 py-2 text-center dark:bg-white/5">
+      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+        Streak
+      </p>
+      <p className="mt-1 text-lg font-extrabold text-slate-950 dark:text-white">
+        🚀 {safeStreak}
+      </p>
+    </div>
+  )
+}
+
+function formatTodayDate(date) {
+  return `${weekdayLabels[date.getDay()]}, ${date.getDate()}. ${
+    monthLabels[date.getMonth()]
+  }`
+}
+
+function getWorkplaceLabel(workplaceId) {
+  return workplaceOptions.find((workplace) => workplace.id === workplaceId)?.label ?? 'Büro'
 }
 
 function ReplacementLimitNotice({ onOpenUpgrade }) {
@@ -376,10 +420,10 @@ function ReminderBanner({
   })
 
   return (
-    <aside className="mb-4 rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/10 p-4 dark:bg-[#2563eb]/15">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <aside className="rounded-lg border border-[#2563eb]/15 bg-[#2563eb]/5 p-3 dark:bg-[#2563eb]/10">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-base font-extrabold text-slate-950 dark:text-white">
+          <p className="text-sm font-extrabold text-slate-950 dark:text-white">
             {copy.title}
           </p>
           <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-200">
@@ -391,12 +435,12 @@ function ReminderBanner({
             </p>
           )}
         </div>
-        <p className="w-fit rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
+        <p className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
           {reminder.slotLabel}
         </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <ReminderActionButton
           primary
           onClick={() => onAction('open')}
@@ -423,7 +467,7 @@ function ReminderBanner({
 function ReminderActionButton({ children, onClick, primary = false }) {
   return (
     <button
-      className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
+      className={`min-h-9 rounded-full px-3 py-2 text-sm font-bold transition ${
         primary
           ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15 hover:bg-[#1d4ed8]'
           : 'bg-white text-slate-700 hover:text-[#2563eb] dark:bg-white/10 dark:text-slate-200'
@@ -436,122 +480,55 @@ function ReminderActionButton({ children, onClick, primary = false }) {
   )
 }
 
-function WorkdayTypeSwitcher({ activeWorkdayType, onWorkdayTypeChange }) {
+function WorkdayTypeSelect({ activeWorkdayType, onWorkdayTypeChange }) {
   return (
-    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        Heute eher
-      </p>
-      <div
-        aria-label="Arbeits- oder Lerntag heute auswählen"
-        className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
-        role="group"
+    <label className="flex flex-col gap-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+      Art des heutigen Arbeitstags
+      <select
+        aria-label="Art des heutigen Arbeitstags auswählen"
+        className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:border-white/10 dark:bg-[#1f1f1f] dark:text-white"
+        onChange={(event) => onWorkdayTypeChange(event.target.value)}
+        value={activeWorkdayType}
       >
-        {todayWorkdayOptions.map((workdayType) => {
-          const isActive = activeWorkdayType === workdayType.id
-
-          return (
-            <button
-              key={workdayType.id}
-              type="button"
-              aria-pressed={isActive}
-              onClick={() => onWorkdayTypeChange(workdayType.id)}
-              className={`min-h-9 shrink-0 rounded-full px-3 py-2 text-sm font-bold transition ${
-                isActive
-                  ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-              }`}
-            >
-              {workdayType.label}
-            </button>
-          )
-        })}
-      </div>
-    </div>
+        {todayWorkdayOptions.map((workdayType) => (
+          <option key={workdayType.id} value={workdayType.id}>
+            {workdayType.label}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 
 function WorkplaceSwitcher({ activeWorkplace, onWorkplaceChange, workplaces }) {
   return (
-    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        Arbeitsort heute
-      </p>
-      <div
-        aria-label="Arbeitsort heute auswählen"
-        className="flex flex-wrap gap-2"
-        role="group"
-      >
-        {workplaceOptions
-          .filter((workplace) => workplaces.includes(workplace.id))
-          .map((workplace) => {
-            const isActive = activeWorkplace === workplace.id
+    <div
+      aria-label="Arbeitsort heute auswählen"
+      className="flex w-fit overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5 dark:border-white/10 dark:bg-white/5"
+      role="group"
+    >
+      {workplaceOptions
+        .filter((workplace) => workplaces.includes(workplace.id))
+        .map((workplace) => {
+          const isActive = activeWorkplace === workplace.id
 
-            return (
-              <button
-                key={workplace.id}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => onWorkplaceChange(workplace.id)}
-                className={`min-h-9 rounded-full px-3 py-2 text-sm font-bold transition ${
-                  isActive
-                    ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
-                }`}
-              >
-                {workplace.label}
-              </button>
-            )
-          })}
-      </div>
+          return (
+            <button
+              key={workplace.id}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => onWorkplaceChange(workplace.id)}
+              className={`min-h-8 px-3 py-1.5 text-sm font-bold transition ${
+                isActive
+                  ? 'rounded-md bg-[#2563eb] text-white shadow-sm shadow-[#2563eb]/15'
+                  : 'text-slate-600 hover:text-[#2563eb] dark:text-slate-300'
+              }`}
+            >
+              {workplace.label}
+            </button>
+          )
+        })}
     </div>
-  )
-}
-
-function TodayProgressCard({ completedToday, totalToday }) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex items-center gap-4">
-        <ProgressRing
-          compact
-          completedToday={completedToday}
-          totalToday={totalToday}
-        />
-        <div>
-          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
-            Heute erledigt
-          </p>
-          <p className="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
-            {completedToday} von {totalToday}
-          </p>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function StreakCard({ streak }) {
-  const safeStreak = Math.max(streak, 0)
-
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2563eb]/10 text-xl"
-        >
-          🚀
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            Arbeitsstreak
-          </p>
-          <p className="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
-            {safeStreak} {safeStreak === 1 ? 'Arbeitstag' : 'Arbeitstage'}
-          </p>
-        </div>
-      </div>
-    </article>
   )
 }
 

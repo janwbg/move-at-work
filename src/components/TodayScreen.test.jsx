@@ -1,13 +1,20 @@
+// @vitest-environment happy-dom
+
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import TodayScreen from './TodayScreen.jsx'
+import { getActiveScheduleIndex } from './todayScheduleHelpers.js'
 import {
   applyReminderBannerAction,
   getReminderCopy,
 } from './reminderBannerHelpers.js'
 import { maybeShowDueReminderNotification } from './reminderNotificationHelpers.js'
-import { createDailyReminderState } from '../utils/reminderStorage.js'
 import { getDueReminder } from '../utils/reminderScheduler.js'
+import { createDailyReminderState } from '../utils/reminderStorage.js'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const baseSections = [
   {
@@ -71,11 +78,98 @@ function createPlan(total) {
   }
 }
 
+function createTimedPlan() {
+  return {
+    ...plan,
+    dailySchedule: createTimedSections(),
+  }
+}
+
+function createTimedSections() {
+  return [
+    createTimedSection({
+      id: 'start-reset',
+      movementType: 'mini_reset',
+      reason: 'Startgrund',
+      slotId: 'start',
+      slotLabel: 'Start in den Arbeitstag',
+      startTime: '08:00',
+      title: 'Start-Reset',
+    }),
+    createTimedSection({
+      id: 'morning-reset',
+      movementType: 'mobilize',
+      reason: 'Vormittagsgrund',
+      slotId: 'morning',
+      slotLabel: 'Vormittag',
+      startTime: '09:30',
+      title: 'Vormittag-Reset',
+    }),
+    createTimedSection({
+      id: 'lunch-reset',
+      movementType: 'stand',
+      reason: 'Mittagsgrund',
+      slotId: 'lunch_transition',
+      slotLabel: 'Mittagswechsel',
+      startTime: '12:00',
+      title: 'Mittags-Reset',
+    }),
+    createTimedSection({
+      id: 'afternoon-reset',
+      movementType: 'sit_reset',
+      reason: 'Nachmittagsgrund',
+      slotId: 'afternoon',
+      slotLabel: 'Nachmittag',
+      startTime: '14:00',
+      title: 'Nachmittag-Reset',
+    }),
+    createTimedSection({
+      id: 'wrap-up-reset',
+      movementType: 'breathing',
+      reason: 'Abschlussgrund',
+      slotId: 'wrap_up',
+      slotLabel: 'Tagesabschluss',
+      startTime: '16:15',
+      title: 'Abschluss-Reset',
+    }),
+  ]
+}
+
+function createTimedSection({
+  id,
+  movementType,
+  reason,
+  slotId,
+  slotLabel,
+  startTime,
+  title,
+}) {
+  return {
+    description: `${title} Beschreibung.`,
+    duration: '2 Minuten',
+    id,
+    instructionSteps: ['Ruhig starten.'],
+    intensity: 'Leicht',
+    movementType,
+    reason,
+    setup: 'Kein besonderes Equipment',
+    slotId,
+    slotLabel,
+    slotWindowMeta: {
+      startTime,
+      endTime: '17:00',
+    },
+    timeLabel: slotLabel,
+    title,
+  }
+}
+
 function renderTodayScreen(props = {}) {
   return renderToStaticMarkup(
     <TodayScreen
       activeWorkplace="office"
       completedIds={[]}
+      currentDate={new Date(2026, 5, 24, 9, 30)}
       feedbackUrl="https://example.com"
       onComplete={() => {}}
       onReplaceRecommendation={() => {}}
@@ -90,61 +184,166 @@ function renderTodayScreen(props = {}) {
 }
 
 describe('TodayScreen', () => {
-  it('does not render the removed next recommendation and phase sections', () => {
-    const html = renderTodayScreen()
-
-    expect(html).not.toContain('Als Nächstes')
-    expect(html).not.toContain('Passt gerade nicht?')
-    expect(html).not.toContain('Was passt gerade?')
-    expect(html).not.toContain('Zwischen zwei Aufgaben')
+  afterEach(() => {
+    document.body.innerHTML = ''
   })
 
-  it('removes the duplicate open impulse text from the blue hero card', () => {
+  it('shows weekday, date and active day status in the compact header', () => {
     const html = renderTodayScreen()
 
-    expect(html).not.toContain('Impulsen sind noch offen')
-    expect(countOccurrences(html, 'offen')).toBe(1)
+    expect(html).toContain('Mittwoch, 24. Juni')
+    expect(html).toContain('Move-at-work-Tag')
+    expect(html).toContain('Heute pausieren')
   })
 
-  it('keeps the daily schedule visible', () => {
-    const html = renderTodayScreen()
-
-    expect(html).toContain('Tagesplan')
-    expect(html).toContain('Deine Empfehlungen')
-    expect(html).toContain('Schulter-Reset')
-    expect(html).toContain('Atem-Reset')
-  })
-
-  it('shows the finalized medical notice unobtrusively', () => {
-    const html = renderTodayScreen()
-
-    expect(html).toContain(
-      'Hinweis: Move at work ersetzt keine medizinische Beratung.',
+  it('shows pause day status and hides due reminders', () => {
+    const html = renderTodayScreen(
+      withDueReminder({
+        isPauseDay: true,
+      }),
     )
-    expect(html).toContain(
-      'Führe Bewegungen nur aus, wenn sie sich für dich sicher und angenehm anfühlen.',
-    )
-    expect(html).toContain(
-      'Bei Schmerzen, Verletzungen oder gesundheitlichen Einschränkungen brich die Übung ab oder frage medizinisches Fachpersonal.',
-    )
-    expect(html).toContain('text-sm leading-6 text-slate-500')
+
+    expect(html).toContain('Mittwoch, 17. Juni')
+    expect(html).toContain('Pausentag')
+    expect(html).toContain('Heute aktivieren')
+    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
-  it('keeps the existing practice test feedback hint after the daily schedule', () => {
+  it.each([
+    [[], '0/5'],
+    [['section-1', 'section-2'], '2/5'],
+    [
+      ['section-1', 'section-2', 'section-3', 'section-4', 'section-5'],
+      '5/5',
+    ],
+  ])('shows compact header progress for %s', (completedIds, ringText) => {
+    const html = renderTodayScreen({
+      completedIds,
+      plan: createPlan(5),
+      progressSummary: {
+        completedToday: completedIds.length,
+        completedThisWeek: completedIds.length,
+        streak: completedIds.length ? 1 : 0,
+      },
+    })
+
+    expect(html).toContain('<svg')
+    expect(html).toContain(ringText)
+    expect(html).not.toContain('Heute erledigt')
+    expect(html).not.toContain('Arbeitsstreak')
+  })
+
+  it('shows the compact rocket streak safely', () => {
+    const html = renderTodayScreen({
+      progressSummary: { completedToday: 0, completedThisWeek: 0, streak: 3 },
+    })
+    const emptyHtml = renderTodayScreen({
+      progressSummary: undefined,
+    })
+
+    expect(html).toContain('🚀 3')
+    expect(emptyHtml).toContain('🚀 0')
+  })
+
+  it('removes the old hero, medical notice and feedback box from Today', () => {
     const html = renderTodayScreen({
       feedbackUrl: 'https://example.com/feedback',
     })
 
-    expect(html).toContain(
-      'Du testest gerade eine frühe Version von Move at work. Dein Feedback hilft dabei, die Empfehlungen verständlicher, passender und alltagstauglicher zu machen.',
+    expect(html).not.toContain('Dein Tagesplan für mehr Bewegung.')
+    expect(html).not.toContain(
+      'Hinweis: Move at work ersetzt keine medizinische Beratung.',
     )
-    expect(html).toContain('Feedback geben')
-    expect(html).toContain('href="https://example.com/feedback"')
-    expect(html).toContain('target="_blank"')
-    expect(html).toContain('rel="noreferrer"')
-    expect(html.indexOf('Deine Empfehlungen')).toBeLessThan(
-      html.indexOf('Du testest gerade eine frühe Version'),
+    expect(html).not.toContain('medizinisches Fachpersonal')
+    expect(html).not.toContain('Du testest gerade eine frühe Version')
+    expect(html).not.toContain('Feedback geben')
+    expect(html).not.toContain('href="https://example.com/feedback"')
+  })
+
+  it('keeps the daily schedule focused on the individual plan', () => {
+    const html = renderTodayScreen()
+
+    expect(html).toContain('Dein individueller Tagesplan')
+    expect(html).toContain('Du arbeitest heute im Büro')
+    expect(html).toContain('Art des heutigen Arbeitstags')
+    expect(html).toContain('Schulter-Reset')
+    expect(html).toContain('Atem-Reset')
+  })
+
+  it('uses slot labels instead of prominent number circles for orientation', () => {
+    const html = renderTodayScreen({
+      plan: createTimedPlan(),
+    })
+
+    expect(html).toContain('Start in den Arbeitstag')
+    expect(html).toContain('Vormittag')
+    expect(html).toContain('Mittagswechsel')
+    expect(html).toContain('Nachmittag')
+    expect(html).toContain('Tagesabschluss')
+    expect(html).not.toContain('>1</span>')
+    expect(html).not.toContain('>2</span>')
+    expect(html).not.toContain('>3</span>')
+    expect(html).not.toContain('>4</span>')
+    expect(html).not.toContain('>5</span>')
+  })
+
+  it('highlights the latest open slot whose start time has been reached', () => {
+    expect(
+      getActiveScheduleIndex({
+        completedIds: [],
+        now: new Date(2026, 5, 24, 12, 15),
+        sections: createTimedSections(),
+      }),
+    ).toBe(2)
+  })
+
+  it('highlights the day wrap-up when the late window has been reached', () => {
+    expect(
+      getActiveScheduleIndex({
+        completedIds: [],
+        now: new Date(2026, 5, 24, 17, 30),
+        sections: createTimedSections(),
+      }),
+    ).toBe(4)
+  })
+
+  it('highlights the next coming open slot when none is due yet', () => {
+    expect(
+      getActiveScheduleIndex({
+        completedIds: ['start-reset'],
+        now: new Date(2026, 5, 24, 8, 50),
+        sections: createTimedSections(),
+      }),
+    ).toBe(1)
+  })
+
+  it('keeps earlier open slots visible but highlights the later due slot', () => {
+    const html = renderTodayScreen({
+      currentDate: new Date(2026, 5, 24, 12, 15),
+      plan: createTimedPlan(),
+    })
+
+    expect(html).toContain('Start-Reset')
+    expect(html).toContain('Vormittag-Reset')
+    expect(html.indexOf('Mittagswechsel')).toBeLessThan(
+      html.indexOf('Jetzt passend'),
     )
+    expect(html.indexOf('Jetzt passend')).toBeLessThan(
+      html.indexOf('Mittags-Reset'),
+    )
+    expect(html).not.toContain('Startgrund')
+    expect(html).not.toContain('Vormittagsgrund')
+    expect(html).toContain('Mittagsgrund')
+  })
+
+  it('skips completed slots when calculating the active exercise', () => {
+    expect(
+      getActiveScheduleIndex({
+        completedIds: ['start-reset', 'morning-reset', 'lunch-reset'],
+        now: new Date(2026, 5, 24, 13, 0),
+        sections: createTimedSections(),
+      }),
+    ).toBe(3)
   })
 
   it('does not render additional matching exercises outside the daily schedule', () => {
@@ -154,7 +353,8 @@ describe('TodayScreen', () => {
 
     expect(html).not.toContain('Weitere passende')
     expect(html).not.toContain('Zusätzlicher Impuls')
-    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
+    expect(countOccurrences(html, 'Öffnen')).toBe(4)
+    expect(countOccurrences(html, 'Übung starten')).toBe(1)
   })
 
   it('keeps five recommendations visible for Free users', () => {
@@ -163,8 +363,9 @@ describe('TodayScreen', () => {
       plan: createPlan(5),
     })
 
-    expect(html).toContain('0 von 5')
-    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
+    expect(html).toContain('0/5')
+    expect(countOccurrences(html, 'Öffnen')).toBe(4)
+    expect(countOccurrences(html, 'Übung starten')).toBe(1)
   })
 
   it('shows the prepared Plus hint after a blocked Free replacement attempt', () => {
@@ -179,71 +380,54 @@ describe('TodayScreen', () => {
       'In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.',
     )
     expect(html).toContain('Plus ansehen')
-    expect(html).not.toContain('Warum mÃ¶chtest du diese Empfehlung wechseln?')
+    expect(html).not.toContain('Warum möchtest du diese Empfehlung wechseln?')
   })
 
-  it('shows completed recommendations as completed while other cards remain open internally', () => {
+  it('renders one chronological list and highlights the active exercise inside it', () => {
+    const html = renderTodayScreen()
+
+    expect(html).not.toContain('Als Nächstes')
+    expect(html).not.toContain('Später heute')
+    expect(html).toContain('Jetzt passend')
+    expect(html).toContain('Übung starten')
+    expect(html.indexOf('Schulter-Reset')).toBeLessThan(html.indexOf('Atem-Reset'))
+  })
+
+  it('shows later open exercises as compact rows without long reasons', () => {
+    const html = renderTodayScreen()
+
+    expect(html).toContain('Atem-Reset')
+    expect(html).toContain('2 Minuten · Atmen')
+    expect(html).toContain('Öffnen')
+    expect(html).not.toContain('Ruhiger Fokusimpuls.')
+  })
+
+  it('shows completed recommendations quietly while open cards remain usable', () => {
     const html = renderTodayScreen({
       completedIds: ['morning-reset'],
       progressSummary: { completedToday: 1, completedThisWeek: 1, streak: 1 },
     })
 
-    expect(html).toContain('1 offen')
-    expect(html).toContain('1 erledigt')
-    expect(html).toContain('✓ Erledigt')
+    expect(html).toContain('aria-label="Erledigte Übung öffnen: Schulter-Reset"')
+    expect(html).toContain('Erledigt')
+    expect(html).toContain('Schulter-Reset')
+    expect(html).toContain('Atem-Reset')
+    expect(html).not.toContain('>Übung öffnen<')
+    expect(html).not.toContain('Als erledigt markieren')
     expect(html).not.toContain('Offen')
   })
 
-  it.each([
-    [[], '0/5', '0 von 5'],
-    [['section-1', 'section-2'], '2/5', '2 von 5'],
-    [
-      ['section-1', 'section-2', 'section-3', 'section-4', 'section-5'],
-      '5/5',
-      '5 von 5',
-    ],
-  ])('shows the Today progress ring for %s', (completedIds, ringText, valueText) => {
+  it('shows the completed-day variant when no exercise is open', () => {
     const html = renderTodayScreen({
-      completedIds,
-      plan: createPlan(5),
-      progressSummary: {
-        completedToday: completedIds.length,
-        completedThisWeek: completedIds.length,
-        streak: completedIds.length ? 1 : 0,
-      },
+      completedIds: ['morning-reset', 'breathing-reset'],
+      progressSummary: { completedToday: 2, completedThisWeek: 2, streak: 1 },
     })
 
-    expect(html).toContain('<svg')
-    expect(html).toContain('Heute erledigt')
-    expect(html).toContain(ringText)
-    expect(html).toContain(valueText)
+    expect(html).toContain('Alles erledigt für heute.')
+    expect(html).not.toContain('offen ·')
   })
 
-  it('shows a compact work streak card safely', () => {
-    const html = renderTodayScreen({
-      progressSummary: { completedToday: 0, completedThisWeek: 0, streak: 3 },
-    })
-    const emptyHtml = renderTodayScreen({
-      progressSummary: undefined,
-    })
-
-    expect(html).toContain('🚀')
-    expect(html).toContain('Arbeitsstreak')
-    expect(html).toContain('3 Arbeitstage')
-    expect(emptyHtml).toContain('0 Arbeitstage')
-  })
-
-  it('removes the separate workplace card and helper copy', () => {
-    const html = renderTodayScreen({
-      workplaces: ['office', 'homeoffice'],
-    })
-
-    expect(html).not.toContain('Arbeitsort heute:')
-    expect(html).not.toContain('Diese Auswahl gilt nur für den heutigen Plan.')
-    expect(countOccurrences(html, 'Arbeitsort heute')).toBe(2)
-  })
-
-  it('shows the workplace switch inside the daily schedule header when both workplaces are active', () => {
+  it('shows the workplace switch inside the daily schedule context', () => {
     const html = renderTodayScreen({
       workplaces: ['office', 'homeoffice'],
     })
@@ -251,47 +435,9 @@ describe('TodayScreen', () => {
     expect(html).toContain('aria-label="Arbeitsort heute auswählen"')
     expect(html).toContain('Büro</button>')
     expect(html).toContain('Homeoffice</button>')
-    expect(html.indexOf('Deine Empfehlungen')).toBeLessThan(
-      html.indexOf('Arbeitsort heute'),
+    expect(html.indexOf('Dein individueller Tagesplan')).toBeLessThan(
+      html.indexOf('Arbeitsort heute auswählen'),
     )
-    expect(html.indexOf('Arbeitsort heute')).toBeLessThan(
-      html.indexOf('2 offen · 0 erledigt'),
-    )
-  })
-
-  it('shows the current work or study day switch in the daily schedule header', () => {
-    const html = renderTodayScreen({
-      activeWorkdayType: 'study-day',
-    })
-
-    expect(html).toContain('Heute eher')
-    expect(html).toContain('aria-label="Arbeits- oder Lerntag heute auswählen"')
-    expect(html).toContain('Fokusarbeit</button>')
-    expect(html).toContain('Meetings</button>')
-    expect(html).toContain('Gemischt</button>')
-    expect(html).toContain('Lernen</button>')
-    expect(html).toContain('Wenig Zeit</button>')
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Lernen<\/button>/)
-  })
-
-  it('shows a subtle pause day option', () => {
-    const html = renderTodayScreen()
-
-    expect(html).toContain('Heute zählt normal für deine Arbeits-/Lernroutine.')
-    expect(html).toContain('Heute Pausentag')
-    expect(html).toMatch(/aria-pressed="false"[^>]*>Heute Pausentag<\/button>/)
-  })
-
-  it('shows pause day status and hides due reminders', () => {
-    const html = renderTodayScreen(
-      withDueReminder({
-        isPauseDay: true,
-      }),
-    )
-
-    expect(html).toContain('Heute ist Pausentag. Deine Routine bleibt erhalten.')
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Heute Pausentag<\/button>/)
-    expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
   it('marks the active workplace semantically', () => {
@@ -304,7 +450,6 @@ describe('TodayScreen', () => {
       workplaces: ['office', 'homeoffice'],
     })
 
-    expect(officeHtml).toContain('aria-pressed="true"')
     expect(officeHtml).toMatch(/aria-pressed="true"[^>]*>Büro<\/button>/)
     expect(officeHtml).toMatch(/aria-pressed="false"[^>]*>Homeoffice<\/button>/)
     expect(homeofficeHtml).toMatch(/aria-pressed="false"[^>]*>Büro<\/button>/)
@@ -320,12 +465,19 @@ describe('TodayScreen', () => {
     expect(html).not.toContain('Homeoffice</button>')
   })
 
-  it('keeps the daily schedule summary visible', () => {
+  it('shows the current work or study day as a real dropdown', () => {
     const html = renderTodayScreen({
-      completedIds: ['morning-reset'],
+      activeWorkdayType: 'study-day',
     })
 
-    expect(html).toContain('1 offen · 1 erledigt')
+    expect(html).toContain('Art des heutigen Arbeitstags')
+    expect(html).toContain('aria-label="Art des heutigen Arbeitstags auswählen"')
+    expect(html).toContain('<select')
+    expect(html).toContain('<option value="focus-heavy">Fokusarbeit</option>')
+    expect(html).toContain('<option value="meeting-heavy">Meetings</option>')
+    expect(html).toContain('<option value="mixed-day">Gemischt</option>')
+    expect(html).toContain('<option value="study-day" selected="">Lernen</option>')
+    expect(html).toContain('<option value="tight-schedule">Wenig Zeit</option>')
   })
 
   it('can render the exercise detail view for a selected schedule item', () => {
@@ -336,12 +488,82 @@ describe('TodayScreen', () => {
     expect(html).toContain('Aufrecht sitzen.')
     expect(html).toContain('Zurück')
   })
-  it('shows the reminder banner for a due open slot', () => {
+
+  it('keeps a completed exercise openable from the compact row', async () => {
+    await renderInteractiveTodayScreen({
+      completedIds: ['morning-reset'],
+      progressSummary: { completedToday: 1, completedThisWeek: 1, streak: 1 },
+    })
+
+    await clickButtonContaining('Schulter-Reset')
+
+    expect(document.body.textContent).toContain('Diese Übung ist erledigt.')
+    expect(document.body.textContent).toContain('So geht')
+    expect(document.body.textContent).not.toContain('Timer starten')
+    expect(document.body.textContent).not.toContain('Andere Empfehlung')
+    expect(document.body.textContent).not.toContain('Als erledigt markieren')
+  })
+
+  it('pauses only today through the compact header action', async () => {
+    const onPauseDayChange = vi.fn()
+    await renderInteractiveTodayScreen({ onPauseDayChange })
+
+    await clickButtonContaining('Heute pausieren')
+
+    expect(onPauseDayChange).toHaveBeenCalledWith(true)
+  })
+
+  it('reactivates only today through the compact header action', async () => {
+    const onPauseDayChange = vi.fn()
+    await renderInteractiveTodayScreen({
+      isPauseDay: true,
+      onPauseDayChange,
+    })
+
+    await clickButtonContaining('Heute aktivieren')
+
+    expect(onPauseDayChange).toHaveBeenCalledWith(false)
+  })
+
+  it('keeps the workplace switch interactive for the current day plan', async () => {
+    const onWorkplaceChange = vi.fn()
+    await renderInteractiveTodayScreen({
+      onWorkplaceChange,
+      workplaces: ['office', 'homeoffice'],
+    })
+
+    await clickButtonContaining('Homeoffice')
+
+    expect(onWorkplaceChange).toHaveBeenCalledWith('homeoffice')
+  })
+
+  it('keeps the workday dropdown interactive for the current day context', async () => {
+    const onWorkdayTypeChange = vi.fn()
+    await renderInteractiveTodayScreen({ onWorkdayTypeChange })
+    const select = document.querySelector(
+      'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+    )
+
+    await act(async () => {
+      select.value = 'study-day'
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+
+    expect(onWorkdayTypeChange).toHaveBeenCalledWith('study-day')
+  })
+
+  it('shows the reminder banner compactly for a due open slot', () => {
     const html = renderTodayScreen(withDueReminder())
 
     expect(html).toContain('Kleiner Wechselmoment?')
     expect(html).toContain(
       'Dein Vormittagsimpuls ist noch offen, wenn es gerade reinpasst.',
+    )
+    expect(html.indexOf('Als Nächstes')).toBeLessThan(
+      html.indexOf('Kleiner Wechselmoment?'),
+    )
+    expect(html.indexOf('Kleiner Wechselmoment?')).toBeLessThan(
+      html.indexOf('Schulter-Reset'),
     )
     expect(html).toContain('Übung öffnen')
     expect(html).toContain('15 Min. später')
@@ -637,6 +859,42 @@ describe('TodayScreen', () => {
 
 function countOccurrences(value, search) {
   return value.split(search).length - 1
+}
+
+async function renderInteractiveTodayScreen(props = {}) {
+  const container = document.createElement('div')
+  const root = createRoot(container)
+  document.body.append(container)
+
+  await act(async () => {
+    root.render(
+      <TodayScreen
+        activeWorkplace="office"
+        completedIds={[]}
+        currentDate={new Date(2026, 5, 24, 9, 30)}
+        onComplete={() => {}}
+        onReplaceRecommendation={() => {}}
+        onWorkplaceChange={() => {}}
+        onWorkdayTypeChange={() => {}}
+        plan={plan}
+        progressSummary={{ completedToday: 0, completedThisWeek: 0, streak: 0 }}
+        workplaces={['office']}
+        {...props}
+      />,
+    )
+  })
+
+  return { container, root }
+}
+
+async function clickButtonContaining(label) {
+  const button = [...document.querySelectorAll('button')].find((element) =>
+    element.textContent.includes(label),
+  )
+
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
 }
 
 function withDueReminder(props = {}) {

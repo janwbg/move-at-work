@@ -223,8 +223,8 @@ export function ProgressRing({
   const isCompleteDay = statusId === 'complete'
   const circumference = 2 * Math.PI * 44
   const strokeOffset = circumference * (1 - progress)
-  const sizeClass = compact ? 'h-28 w-28' : 'h-36 w-36'
-  const valueClass = compact ? 'text-xl' : 'text-2xl'
+  const sizeClass = compact ? 'h-20 w-20' : 'h-36 w-36'
+  const valueClass = compact ? 'text-lg' : 'text-2xl'
 
   return (
     <div

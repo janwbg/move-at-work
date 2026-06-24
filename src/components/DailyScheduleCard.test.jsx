@@ -85,6 +85,34 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('↻')
   })
 
+  it('renders later open exercises as compact overview rows', () => {
+    const html = renderCard({ compact: true })
+
+    expect(html).toContain('Schulterkreisen')
+    expect(html).toContain('Morgens')
+    expect(html).toContain('2 Minuten · Mobilisieren')
+    expect(html).toContain('Öffnen')
+    expect(html).toContain('aria-label="Andere Empfehlung wählen"')
+    expect(html).toContain('Erledigt')
+    expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
+  })
+
+  it('renders completed compact rows as one accessible opener without active actions', () => {
+    const html = renderCard({ compact: true, completed: true })
+
+    expect(html).toContain(
+      'aria-label="Erledigte Übung öffnen: Schulterkreisen"',
+    )
+    expect(html).toContain('Schulterkreisen')
+    expect(html).toContain('Morgens · 2 Minuten · Mobilisieren')
+    expect(html).toContain('Erledigt')
+    expect(html).not.toContain('>Übung öffnen<')
+    expect(html).not.toContain('Als erledigt markieren')
+    expect(html).not.toContain('aria-label="Andere Empfehlung wählen"')
+    expect(html).not.toContain('↻')
+    expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
+  })
+
   it('can show grouped replacement reasons on the card', () => {
     const html = renderCard({ initialReplaceDialogOpen: true })
 

@@ -72,6 +72,7 @@ function App() {
     const storedAnswers = getStoredAnswers()
     return hasCompletedOnboarding(storedAnswers) ? 'result' : 'start'
   })
+  const [resultActiveTab, setResultActiveTab] = useState('today')
   const [answers, setAnswers] = useState(() => getStoredAnswers() ?? createDefaultAnswers())
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') {
@@ -94,15 +95,25 @@ function App() {
     window.localStorage.setItem(storageKey, JSON.stringify(answers))
   }, [answers])
 
+  const hideHeader = step === 'result' && resultActiveTab === 'today'
+
   return (
     <main className="min-h-svh bg-[#f7f8fb] text-slate-950 transition-colors dark:bg-[#121212] dark:text-white">
       <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-        <AppHeader
-          isDark={isDark}
-          onToggleTheme={() => setIsDark((current) => !current)}
-        />
+        {!hideHeader && (
+          <AppHeader
+            isDark={isDark}
+            onToggleTheme={() => setIsDark((current) => !current)}
+          />
+        )}
 
-        <div className="flex flex-1 items-center justify-center py-8 sm:py-12">
+        <div
+          className={`flex flex-1 justify-center ${
+            hideHeader
+              ? 'items-start pb-8 pt-0 sm:pb-12'
+              : 'items-center py-8 sm:py-12'
+          }`}
+        >
           {step === 'start' && (
             <StartScreen onStart={() => setStep('onboarding')} />
           )}
@@ -118,6 +129,7 @@ function App() {
           {step === 'result' && (
             <ResultScreen
               answers={answers}
+              onActiveTabChange={setResultActiveTab}
               onChangeAnswers={setAnswers}
               onRestartOnboarding={() => setStep('onboarding')}
             />

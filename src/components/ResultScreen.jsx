@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import BottomNavigation from './BottomNavigation.jsx'
 import ProgressScreen from './ProgressScreen.jsx'
 import {
@@ -54,6 +54,7 @@ const feedbackReasons = [
 function ResultScreen({
   answers,
   initialActiveTab = 'today',
+  onActiveTabChange = () => {},
   onChangeAnswers,
   onRestartOnboarding,
 }) {
@@ -118,6 +119,11 @@ function ResultScreen({
     () => summarizeRecommendationFeedback(recommendationFeedback),
     [recommendationFeedback],
   )
+
+  useEffect(() => {
+    onActiveTabChange(activeTab)
+  }, [activeTab, onActiveTabChange])
+
   function handleWorkplaceChange(workplace) {
     setSelectedWorkplace(workplace)
     setWorkplaceWasChanged(true)
@@ -264,7 +270,7 @@ function ResultScreen({
   }
 
   return (
-    <section className="w-full max-w-6xl pb-24">
+    <section className="w-full max-w-6xl self-start pb-24">
       {activeTab === 'today' && (
         <TodayScreen
           completedIds={completedIds}

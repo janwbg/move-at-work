@@ -133,7 +133,7 @@ describe('SuccessDialog', () => {
 })
 
 describe('ResultScreen daily workday context helpers', () => {
-  it('initializes the Today workday switch from the profile value', () => {
+  it('initializes the Today workday dropdown from the profile value', () => {
     const html = renderToStaticMarkup(
       <ResultScreen
         answers={createCompleteAnswers({ situation: 'meeting-heavy' })}
@@ -142,8 +142,9 @@ describe('ResultScreen daily workday context helpers', () => {
       />,
     )
 
-    expect(html).toContain('Heute eher')
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Meetings<\/button>/)
+    expect(html).toContain('Art des heutigen Arbeitstags')
+    expect(html).toContain('<option value="meeting-heavy" selected="">Meetings</option>')
+    expect(html).toContain('self-start')
   })
 
   it('preserves completed recommendations and lets open slots refresh', () => {

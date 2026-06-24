@@ -130,6 +130,30 @@ describe('progressStorage helpers', () => {
     })
   })
 
+  it('pauses and reactivates only the selected local date', () => {
+    const firstDate = new Date(2026, 4, 13)
+    const secondDate = new Date(2026, 4, 14)
+    const pausedProgress = setPauseDay(
+      setPauseDay({ completedByDate: {} }, firstDate, true),
+      secondDate,
+      true,
+    )
+    const reactivatedProgress = setPauseDay(pausedProgress, firstDate, false)
+
+    expect(getRoutineDayStatus({ date: firstDate, progress: pausedProgress }).id).toBe(
+      'pause',
+    )
+    expect(getRoutineDayStatus({ date: secondDate, progress: pausedProgress }).id).toBe(
+      'pause',
+    )
+    expect(
+      getRoutineDayStatus({ date: firstDate, progress: reactivatedProgress }).id,
+    ).toBe('missed')
+    expect(
+      getRoutineDayStatus({ date: secondDate, progress: reactivatedProgress }).id,
+    ).toBe('pause')
+  })
+
   it('keeps weekends neutral when they are not active', () => {
     const progress = {
       completedByDate: {
