@@ -320,6 +320,36 @@ describe('ResultScreen daily workday context helpers', () => {
     )
   })
 
+  it('resets the daily workday context after a date change while open', async () => {
+    vi.useFakeTimers()
+
+    try {
+      vi.setSystemTime(new Date(2026, 5, 17, 23, 59))
+      window.localStorage.setItem(
+        'move-at-work-daily-context',
+        JSON.stringify({
+          date: '2026-06-17',
+          currentWorkdayType: 'focus-heavy',
+        }),
+      )
+
+      await renderInteractiveResultScreen({
+        answers: createCompleteAnswers({ situation: 'mixed-day' }),
+      })
+
+      expect(getWorkdaySelect().value).toBe('focus-heavy')
+
+      vi.setSystemTime(new Date(2026, 5, 18, 0, 0))
+      await act(async () => {
+        vi.advanceTimersByTime(60 * 1000)
+      })
+
+      expect(getWorkdaySelect().value).toBe('mixed-day')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('detects the first 5 of 5 completion for the complete-day success', () => {
     const date = new Date(2026, 5, 24)
 
@@ -453,6 +483,12 @@ async function changeSelect(select, value) {
 
 function countOccurrences(value, search) {
   return value.split(search).length - 1
+}
+
+function getWorkdaySelect() {
+  return document.querySelector(
+    'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+  )
 }
 
 function createCompleteAnswers(overrides = {}) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DailyScheduleCard from './DailyScheduleCard.jsx'
 import ExerciseDetailView from './ExerciseDetailView.jsx'
 import { ProgressRing } from './ProgressSummary.jsx'
@@ -14,6 +14,7 @@ import {
   loadDailyReminderState,
   loadReminderSettings,
   markExerciseCompleted,
+  normalizeDailyReminderState,
   pauseRemindersForDay,
   resumeRemindersForDay,
   saveDailyReminderState,
@@ -89,6 +90,10 @@ function TodayScreen({
   const [reminderState, setReminderState] = useState(
     () => initialReminderState ?? loadDailyReminderState(now),
   )
+  const currentReminderState = useMemo(
+    () => normalizeDailyReminderState(reminderState, now),
+    [now, reminderState],
+  )
   const shownSystemNotificationKeysRef = useRef(new Set())
   const scheduleEntries = plan.dailySchedule.map((section, index) => ({
     index,
@@ -113,7 +118,9 @@ function TodayScreen({
     now,
     plan,
     settings: reminderSettings,
-    state: isPauseDay ? pauseRemindersForDay(reminderState, now) : reminderState,
+    state: isPauseDay
+      ? pauseRemindersForDay(currentReminderState, now)
+      : currentReminderState,
   })
   const updateReminderState = useCallback((nextState) => {
     setReminderState(nextState)
@@ -149,7 +156,9 @@ function TodayScreen({
       dueReminder,
       now,
       settings: reminderSettings,
-      state: isPauseDay ? pauseRemindersForDay(reminderState, now) : reminderState,
+      state: isPauseDay
+        ? pauseRemindersForDay(currentReminderState, now)
+        : currentReminderState,
     })
 
     if (nextReminderState) {
@@ -167,7 +176,7 @@ function TodayScreen({
     dueReminder,
     now,
     reminderSettings,
-    reminderState,
+    currentReminderState,
     isPauseDay,
     updateReminderState,
   ])
@@ -175,13 +184,13 @@ function TodayScreen({
   function completeFromDetail(section) {
     setOpenReplacementSlotId(null)
     setSelectedDetailIndex(null)
-    updateReminderState(markExerciseCompleted(reminderState, now))
+    updateReminderState(markExerciseCompleted(currentReminderState, now))
     onComplete(section)
   }
 
   function completeFromSchedule(section) {
     setOpenReplacementSlotId(null)
-    updateReminderState(markExerciseCompleted(reminderState, now))
+    updateReminderState(markExerciseCompleted(currentReminderState, now))
     onComplete(section)
   }
 
@@ -224,7 +233,7 @@ function TodayScreen({
       now,
       reminder: dueReminder,
       settings: reminderSettings,
-      state: reminderState,
+      state: currentReminderState,
     })
 
     if (!result) {
@@ -245,8 +254,8 @@ function TodayScreen({
     setOpenReplacementSlotId(null)
     updateReminderState(
       nextPauseState
-        ? pauseRemindersForDay(reminderState, now)
-        : resumeRemindersForDay(reminderState, now),
+        ? pauseRemindersForDay(currentReminderState, now)
+        : resumeRemindersForDay(currentReminderState, now),
     )
     onPauseDayChange(nextPauseState)
   }

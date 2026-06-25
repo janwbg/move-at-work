@@ -73,7 +73,11 @@ function ResultScreen({
   const [routineSettings, setRoutineSettings] = useState(() =>
     loadRoutineSettings(),
   )
-  const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
+  const [planDate, setPlanDate] = useState(() => new Date())
+  const completedIds = useMemo(
+    () => getCompletedIdsForDate(progress, planDate),
+    [planDate, progress],
+  )
   const [completedSectionSnapshots, setCompletedSectionSnapshots] = useState(
     () => loadCompletedSectionSnapshots(),
   )
@@ -87,7 +91,6 @@ function ResultScreen({
   const [successState, setSuccessState] = useState(null)
   const [planOverride, setPlanOverride] = useState(null)
   const [replacementMessage, setReplacementMessage] = useState(null)
-  const [planDate, setPlanDate] = useState(() => new Date())
   const activeWorkplace =
     workplaceWasChanged && normalizedAnswers.workplaces.includes(selectedWorkplace)
       ? selectedWorkplace
@@ -129,8 +132,8 @@ function ResultScreen({
     usage: replacementUsage,
   })
   const progressSummary = useMemo(
-    () => calculateProgressSummary(progress, new Date(), routineSettings),
-    [progress, routineSettings],
+    () => calculateProgressSummary(progress, planDate, routineSettings),
+    [planDate, progress, routineSettings],
   )
   const planCompletedToday = useMemo(
     () => getPlanCompletedCount({ completedIds, plan }),
@@ -139,13 +142,13 @@ function ResultScreen({
   const todayStatus = useMemo(
     () =>
       getRoutineDayStatus({
-        date: new Date(),
+        date: planDate,
         progress,
-        referenceDate: new Date(),
+        referenceDate: planDate,
         routineSettings,
         treatInactiveAsPause: true,
       }),
-    [progress, routineSettings],
+    [planDate, progress, routineSettings],
   )
   const displayProgressSummary = useMemo(
     () => ({
@@ -171,11 +174,17 @@ function ResultScreen({
 
       if (getLocalDateKey(nextDate) !== getLocalDateKey(planDate)) {
         setPlanDate(nextDate)
+        setSelectedWorkdayType(
+          loadDailyContext(nextDate)?.currentWorkdayType ??
+            normalizedAnswers.situation,
+        )
+        setPlanOverride(null)
+        setReplacementMessage(null)
       }
     }, 60 * 1000)
 
     return () => window.clearInterval(interval)
-  }, [planDate])
+  }, [normalizedAnswers.situation, planDate])
 
   useEffect(() => {
     recordVisiblePlanHistory(plan, planDate)

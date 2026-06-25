@@ -120,6 +120,7 @@ export function createDailyReminderState(date = new Date()) {
     skippedSlots: [],
     skipCounts: {},
     lastReminderShownAt: {},
+    reminderShownCount: 0,
   }
 }
 
@@ -129,6 +130,8 @@ export function normalizeDailyReminderState(state, date = new Date()) {
   if (!state || state.date !== dateKey || typeof state !== 'object') {
     return createDailyReminderState(date)
   }
+
+  const lastReminderShownAt = normalizeSlotDateMap(state.lastReminderShownAt)
 
   return {
     date: dateKey,
@@ -143,7 +146,11 @@ export function normalizeDailyReminderState(state, date = new Date()) {
     pausedForDay: state.pausedForDay === true,
     skippedSlots: normalizeSlotList(state.skippedSlots),
     skipCounts: normalizeSlotCountMap(state.skipCounts),
-    lastReminderShownAt: normalizeSlotDateMap(state.lastReminderShownAt),
+    lastReminderShownAt,
+    reminderShownCount: normalizeReminderShownCount(
+      state.reminderShownCount,
+      lastReminderShownAt,
+    ),
   }
 }
 
@@ -245,6 +252,7 @@ export function markReminderShown(state, slotId, now = new Date()) {
       ...normalizedState.lastReminderShownAt,
       [slotId]: now.toISOString(),
     },
+    reminderShownCount: normalizedState.reminderShownCount + 1,
   }
 }
 
@@ -299,6 +307,17 @@ function normalizeSlotCountMap(value) {
           count > 0,
       ),
   )
+}
+
+function normalizeReminderShownCount(value, lastReminderShownAt) {
+  const count = Number(value)
+  const fallbackCount = Object.keys(lastReminderShownAt).length
+
+  if (Number.isInteger(count) && count >= 0) {
+    return Math.max(count, fallbackCount)
+  }
+
+  return fallbackCount
 }
 
 function normalizeSlotList(value) {

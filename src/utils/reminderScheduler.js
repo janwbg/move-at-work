@@ -7,7 +7,6 @@ import {
   reminderWindowIds,
 } from './reminderStorage.js'
 
-const reminderWindowOrder = ['morning', 'lunch_transition', 'afternoon', 'wrap_up']
 const reminderModeRules = {
   gentle: {
     completionCooldownMinutes: 90,
@@ -151,36 +150,6 @@ export function isWithinSlotWindow(section, now = new Date()) {
   return now >= windowStart && now <= windowEnd
 }
 
-export function getLaterTodaySnoozeUntil({
-  currentSlotId,
-  now = new Date(),
-  settings,
-} = {}) {
-  const normalizedSettings = normalizeReminderSettings(
-    settings ?? getDefaultReminderSettings(),
-  )
-  const currentIndex = reminderWindowOrder.indexOf(currentSlotId)
-
-  if (currentIndex === -1) {
-    return null
-  }
-
-  const laterSlotId = reminderWindowOrder
-    .slice(currentIndex + 1)
-    .find((slotId) => normalizedSettings.enabledWindows.includes(slotId))
-  const laterWindow = defaultDaySlotWindows.find(
-    (slotWindow) => slotWindow.slotId === laterSlotId,
-  )
-
-  if (!laterWindow?.slotWindowMeta?.startTime) {
-    return null
-  }
-
-  const laterStart = buildLocalTime(now, laterWindow.slotWindowMeta.startTime)
-
-  return laterStart > now ? laterStart.toISOString() : null
-}
-
 export function isQuietNow(settings, now = new Date()) {
   const quietUntil = parseDate(settings?.quietUntil)
 
@@ -197,7 +166,7 @@ export function isReminderFatiguedForDay(
   const totalSnoozes = sumCounts(normalizedState.snoozeCounts)
   const totalSkips = sumCounts(normalizedState.skipCounts)
   const totalInteractions = totalSnoozes + totalSkips
-  const shownCount = Object.keys(normalizedState.lastReminderShownAt).length
+  const shownCount = normalizedState.reminderShownCount + totalInteractions
 
   if (normalizedState.pausedForDay) {
     return true

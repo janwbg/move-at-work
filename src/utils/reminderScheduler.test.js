@@ -115,6 +115,87 @@ describe('reminderScheduler', () => {
     ).toBe('afternoon')
   })
 
+  it.each([
+    ['gentle', 1],
+    ['normal', 2],
+    ['active', 4],
+  ])('stops after the %s daily reminder limit', (mode, dailyReminderLimit) => {
+    expect(
+      getReminderAt(9, 45, {
+        settings: {
+          enabled: true,
+          mode,
+          enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
+          quietUntil: null,
+        },
+        state: {
+          ...createDailyReminderState(dateAt(9, 45)),
+          lastReminderShownAt: {
+            morning: dateAt(7, 0).toISOString(),
+          },
+          reminderShownCount: dailyReminderLimit,
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('counts repeated reminders for the same slot toward the normal daily limit', () => {
+    expect(
+      getReminderAt(10, 20, {
+        state: {
+          ...createDailyReminderState(dateAt(10, 20)),
+          lastReminderShownAt: {
+            morning: dateAt(9, 45).toISOString(),
+          },
+          reminderShownCount: 1,
+        },
+      })?.slotId,
+    ).toBe('morning')
+
+    expect(
+      getReminderAt(10, 20, {
+        state: {
+          ...createDailyReminderState(dateAt(10, 20)),
+          lastReminderShownAt: {
+            morning: dateAt(9, 45).toISOString(),
+          },
+          reminderShownCount: 2,
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('counts snoozed reminder contacts toward the normal daily limit', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          lastInteractionAt: dateAt(10, 0).toISOString(),
+          snoozeCounts: {
+            morning: 2,
+          },
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('counts skipped reminder contacts toward the normal daily limit', () => {
+    expect(
+      getReminderAt(14, 30, {
+        completedIds: ['morning-id'],
+        state: {
+          ...createDailyReminderState(dateAt(14, 30)),
+          lastInteractionAt: dateAt(10, 0).toISOString(),
+          skipCounts: {
+            morning: 1,
+          },
+          reminderShownCount: 1,
+        },
+      }),
+    ).toBeNull()
+  })
+
   it('uses longer cool downs in gentle mode and shorter cool downs in active mode', () => {
     const recentlyShownState = {
       ...createDailyReminderState(dateAt(10, 20)),

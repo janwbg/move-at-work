@@ -783,7 +783,7 @@ describe('TodayScreen', () => {
     expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
-  it('skips the reminder slot for today', () => {
+  it('pauses reminders for today without creating a slot skip', () => {
     const actionResult = applyReminderBannerAction({
       action: 'skip-today',
       now: morningNow(),
@@ -795,12 +795,13 @@ describe('TodayScreen', () => {
       withDueReminder({ initialReminderState: actionResult.state }),
     )
 
-    expect(actionResult.state.skippedSlots).toContain('morning')
+    expect(actionResult.state.skippedSlots).not.toContain('morning')
+    expect(actionResult.state.skipCounts.morning).toBeUndefined()
     expect(actionResult.state.pausedForDay).toBe(true)
     expect(html).not.toContain('Kleiner Wechselmoment?')
   })
 
-  it('moves the reminder to a later enabled window today', () => {
+  it('skips the current morning slot so a later open slot can remind today', () => {
     const actionResult = applyReminderBannerAction({
       action: 'later-today',
       now: morningNow(),
@@ -808,10 +809,72 @@ describe('TodayScreen', () => {
       settings: enabledReminderSettings(),
       state: createDailyReminderState(morningNow()),
     })
+    const laterReminder = getDueReminder({
+      completedIds: [],
+      now: new Date(2026, 5, 17, 14, 30),
+      plan,
+      settings: enabledReminderSettings(),
+      state: actionResult.state,
+    })
 
-    expect(actionResult.state.snoozedSlots.morning).toBe(
-      new Date(2026, 5, 17, 14, 0).toISOString(),
-    )
+    expect(actionResult.state.skippedSlots).toContain('morning')
+    expect(actionResult.state.skipCounts.morning).toBe(1)
+    expect(actionResult.state.snoozedSlots.morning).toBeUndefined()
+    expect(laterReminder?.slotId).toBe('afternoon')
+  })
+
+  it('skips the afternoon slot so the wrap-up can remind later in active mode', () => {
+    const afternoonNow = new Date(2026, 5, 17, 14, 30)
+    const actionResult = applyReminderBannerAction({
+      action: 'later-today',
+      now: afternoonNow,
+      reminder: {
+        index: 3,
+        section: createTimedSections()[3],
+        slotId: 'afternoon',
+        slotLabel: 'Nachmittag',
+      },
+      settings: activeReminderSettings(),
+      state: createDailyReminderState(afternoonNow),
+    })
+    const laterReminder = getDueReminder({
+      completedIds: ['start-reset', 'morning-reset', 'lunch-reset'],
+      now: new Date(2026, 5, 17, 16, 30),
+      plan: createTimedPlan(),
+      settings: activeReminderSettings(),
+      state: actionResult.state,
+    })
+
+    expect(actionResult.state.skippedSlots).toContain('afternoon')
+    expect(actionResult.state.snoozedSlots.afternoon).toBeUndefined()
+    expect(laterReminder?.slotId).toBe('wrap_up')
+  })
+
+  it('skips the final slot for today without scheduling a stale reminder', () => {
+    const wrapUpNow = new Date(2026, 5, 17, 16, 30)
+    const actionResult = applyReminderBannerAction({
+      action: 'later-today',
+      now: wrapUpNow,
+      reminder: {
+        index: 4,
+        section: createTimedSections()[4],
+        slotId: 'wrap_up',
+        slotLabel: 'Tagesabschluss',
+      },
+      settings: activeReminderSettings(),
+      state: createDailyReminderState(wrapUpNow),
+    })
+    const laterReminder = getDueReminder({
+      completedIds: ['start-reset', 'morning-reset', 'lunch-reset', 'afternoon-reset'],
+      now: wrapUpNow,
+      plan: createTimedPlan(),
+      settings: activeReminderSettings(),
+      state: actionResult.state,
+    })
+
+    expect(actionResult.state.skippedSlots).toContain('wrap_up')
+    expect(actionResult.state.snoozedSlots.wrap_up).toBeUndefined()
+    expect(laterReminder).toBeNull()
   })
 
   it('does not show reminders for completed slots', () => {
@@ -1083,6 +1146,16 @@ function enabledSystemReminderSettings() {
   return {
     ...enabledReminderSettings(),
     systemNotificationsEnabled: true,
+  }
+}
+
+function activeReminderSettings() {
+  return {
+    enabled: true,
+    mode: 'active',
+    enabledWindows: ['morning', 'lunch_transition', 'afternoon', 'wrap_up'],
+    quietUntil: null,
+    systemNotificationsEnabled: false,
   }
 }
 

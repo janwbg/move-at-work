@@ -1,10 +1,8 @@
-import { getLaterTodaySnoozeUntil } from '../utils/reminderScheduler.js'
 import {
   markReminderShown,
   pauseRemindersForDay,
   skipReminderSlot,
   snoozeReminderState,
-  snoozeReminderStateUntil,
 } from '../utils/reminderStorage.js'
 
 export function getReminderCopy({
@@ -74,7 +72,6 @@ export function applyReminderBannerAction({
   action,
   now = new Date(),
   reminder,
-  settings,
   state,
 }) {
   if (!reminder) {
@@ -101,25 +98,14 @@ export function applyReminderBannerAction({
   }
 
   if (action === 'later-today') {
-    const snoozedUntil = getLaterTodaySnoozeUntil({
-      currentSlotId: reminder.slotId,
-      now,
-      settings,
-    })
-
     return {
-      state: snoozedUntil
-        ? snoozeReminderStateUntil(state, reminder.slotId, snoozedUntil, now)
-        : skipReminderSlot(state, reminder.slotId, now),
+      state: skipReminderSlot(state, reminder.slotId, now),
     }
   }
 
   if (action === 'skip-today') {
     return {
-      state: pauseRemindersForDay(
-        skipReminderSlot(state, reminder.slotId, now),
-        now,
-      ),
+      state: pauseRemindersForDay(state, now),
     }
   }
 

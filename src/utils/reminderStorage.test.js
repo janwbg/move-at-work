@@ -5,6 +5,8 @@ import {
   getQuietUntilForPreset,
   loadDailyReminderState,
   loadReminderSettings,
+  markReminderShown,
+  normalizeDailyReminderState,
   normalizeReminderSettings,
   reminderModeWindowDefaults,
   reminderSettingsStorageKey,
@@ -133,6 +135,7 @@ describe('reminderStorage helpers', () => {
         lastReminderShownAt: {
           morning: '2026-06-17T09:45:00.000Z',
         },
+        reminderShownCount: 4,
       },
       date,
     )
@@ -155,7 +158,42 @@ describe('reminderStorage helpers', () => {
       lastReminderShownAt: {
         morning: '2026-06-17T09:45:00.000Z',
       },
+      reminderShownCount: 4,
     })
+  })
+
+  it('counts repeated reminder showings for the daily reminder limit', () => {
+    const date = new Date(2026, 5, 17, 9, 45)
+    const firstState = markReminderShown(createDailyReminderState(date), 'morning', date)
+    const secondState = markReminderShown(
+      firstState,
+      'morning',
+      new Date(2026, 5, 17, 10, 20),
+    )
+
+    expect(secondState.lastReminderShownAt.morning).toBe(
+      new Date(2026, 5, 17, 10, 20).toISOString(),
+    )
+    expect(secondState.reminderShownCount).toBe(2)
+  })
+
+  it('migrates old daily reminder state without a shown count', () => {
+    const date = new Date(2026, 5, 17, 9, 45)
+    const oldState = {
+      date: '2026-06-17',
+      lastReminderShownAt: {
+        morning: date.toISOString(),
+        afternoon: new Date(2026, 5, 17, 14, 30).toISOString(),
+      },
+    }
+
+    expect(normalizeDailyReminderState(oldState, date).reminderShownCount).toBe(2)
+    expect(
+      normalizeDailyReminderState(
+        { ...oldState, reminderShownCount: 1 },
+        date,
+      ).reminderShownCount,
+    ).toBe(2)
   })
 
   it('does not carry an old daily state into a new date', () => {
