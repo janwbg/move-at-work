@@ -369,6 +369,25 @@ describe('progressStorage helpers', () => {
     })
   })
 
+  it('does not turn today into a pause day after routine changes when progress exists', () => {
+    const today = new Date(2026, 4, 13)
+    const summary = calculateProgressSummary(
+      {
+        completedByDate: {
+          '2026-05-13': ['done-1', 'done-2'],
+        },
+      },
+      today,
+      { activeWeekdays: [6, 0] },
+    )
+
+    expect(summary.todayStatus).toMatchObject({
+      id: 'held',
+      completedCount: 2,
+      label: 'Routine gehalten',
+    })
+  })
+
   it('keeps today complete when five completed exercises exist despite a pause day', () => {
     const today = new Date(2026, 4, 13)
     const progress = setPauseDay(

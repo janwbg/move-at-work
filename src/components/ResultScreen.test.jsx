@@ -1,12 +1,14 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createRecommendationFeedbackContext,
   preserveCompletedSections,
+  preserveCompletedSectionsFromSnapshots,
+  recordCompletedSectionSnapshot,
   shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
 import ResultScreen, { SuccessDialog } from './ResultScreen.jsx'
@@ -125,6 +127,28 @@ describe('ResultScreen daily workday context helpers', () => {
     ])
   })
 
+  it('preserves completed recommendations from stored snapshots after remounts', () => {
+    const currentPlan = createPlan(['done-1', 'done-2', 'open-3'])
+    const nextPlan = createPlan(['new-1', 'new-2', 'new-3'])
+    const snapshots = currentPlan.dailySchedule
+      .slice(0, 2)
+      .reduce(
+        (currentSnapshots, section, index) =>
+          recordCompletedSectionSnapshot(currentSnapshots, { index, section }),
+        [],
+      )
+    const mergedPlan = preserveCompletedSectionsFromSnapshots(nextPlan, [
+      'done-1',
+      'done-2',
+    ], snapshots)
+
+    expect(mergedPlan.dailySchedule.map((section) => section.id)).toEqual([
+      'done-1',
+      'done-2',
+      'new-3',
+    ])
+  })
+
   it('stores the currently selected workday type in feedback context', () => {
     expect(
       createRecommendationFeedbackContext({
@@ -197,6 +221,53 @@ describe('ResultScreen daily workday context helpers', () => {
     expect(document.body.textContent).toContain('1/5')
     expect(document.body.textContent).toContain('Routine gestartet')
     expect(document.body.textContent).not.toContain('Microbreaks')
+  })
+
+  it('keeps completed today slots after profile settings change', async () => {
+    await renderStatefulResultScreen({
+      answers: createCompleteAnswers({
+        workplaces: ['office', 'homeoffice'],
+        workplaceSetups: {
+          office: ['no-equipment'],
+          homeoffice: ['walking-pad'],
+        },
+      }),
+    })
+
+    await clickCompletionButton()
+    await clickButtonContaining('Zurück zum Tagesplan')
+    await clickCompletionButton()
+    await clickButtonContaining('Zurück zum Tagesplan')
+
+    expect(document.body.textContent).toContain('2/5')
+
+    await clickButtonContaining('Einstellungen')
+    await clickButtonContaining('Bearbeiten')
+
+    const [, intensitySelect] = document.querySelectorAll('select')
+    await changeSelect(intensitySelect, 'active')
+
+    await clickButtonContaining('Heute')
+
+    expect(document.body.textContent).toContain('2/5')
+    expect(countOccurrences(document.body.textContent, 'Erledigt')).toBeGreaterThanOrEqual(2)
+  })
+
+  it('keeps completed today slots while navigating settings details', async () => {
+    await renderStatefulResultScreen()
+
+    await clickCompletionButton()
+    await clickButtonContaining('Zurück zum Tagesplan')
+
+    expect(document.body.textContent).toContain('1/5')
+
+    await clickButtonContaining('Einstellungen')
+    await clickButtonContaining('Bearbeiten')
+    await clickButtonContaining('Zurück')
+    await clickButtonContaining('Heute')
+
+    expect(document.body.textContent).toContain('1/5')
+    expect(document.body.textContent).toContain('Erledigt')
   })
 
   it('respects inactive routine weekdays as pause days until today is activated', async () => {
@@ -305,6 +376,30 @@ async function renderInteractiveResultScreen(props = {}) {
   return { container, root }
 }
 
+async function renderStatefulResultScreen({ answers = createCompleteAnswers() } = {}) {
+  function ResultHarness() {
+    const [currentAnswers, setCurrentAnswers] = useState(answers)
+
+    return (
+      <ResultScreen
+        answers={currentAnswers}
+        onChangeAnswers={setCurrentAnswers}
+        onRestartOnboarding={() => {}}
+      />
+    )
+  }
+
+  const container = document.createElement('div')
+  const root = createRoot(container)
+  document.body.append(container)
+
+  await act(async () => {
+    root.render(<ResultHarness />)
+  })
+
+  return { container, root }
+}
+
 async function clickButtonContaining(label) {
   const button = [...document.querySelectorAll('button')].find((element) =>
     element.textContent.includes(label),
@@ -313,6 +408,27 @@ async function clickButtonContaining(label) {
   await act(async () => {
     button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
+}
+
+async function clickCompletionButton() {
+  const button = [...document.querySelectorAll('button')].find(
+    (element) => element.textContent.trim() === 'Erledigt' && !element.disabled,
+  )
+
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
+async function changeSelect(select, value) {
+  await act(async () => {
+    select.value = value
+    select.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+
+function countOccurrences(value, search) {
+  return value.split(search).length - 1
 }
 
 function createCompleteAnswers(overrides = {}) {

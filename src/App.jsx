@@ -96,7 +96,7 @@ function App() {
   }, [answers])
 
   const hideHeader =
-    step === 'result' && ['today', 'progress'].includes(resultActiveTab)
+    step === 'result' && ['today', 'progress', 'settings'].includes(resultActiveTab)
 
   return (
     <main className="min-h-svh bg-[#f7f8fb] text-slate-950 transition-colors dark:bg-[#121212] dark:text-white">
@@ -130,9 +130,11 @@ function App() {
           {step === 'result' && (
             <ResultScreen
               answers={answers}
+              isDark={isDark}
               onActiveTabChange={setResultActiveTab}
               onChangeAnswers={setAnswers}
               onRestartOnboarding={() => setStep('onboarding')}
+              onToggleTheme={() => setIsDark((current) => !current)}
             />
           )}
         </div>

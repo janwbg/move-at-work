@@ -110,7 +110,7 @@ function ReminderSettings({
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
@@ -220,11 +220,16 @@ function SystemNotificationSettings({
 }) {
   if (!notificationSupported || notificationPermission === 'unsupported') {
     return (
-      <section className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
-        <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-          System-Benachrichtigungen
-        </p>
-        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <section className="mt-5 rounded-lg bg-slate-50 px-4 py-3 dark:bg-white/5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+            System-Benachrichtigungen
+          </p>
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            nicht verfügbar
+          </p>
+        </div>
+        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
           Dein Browser unterstützt System-Benachrichtigungen hier nicht.
         </p>
       </section>
@@ -232,13 +237,13 @@ function SystemNotificationSettings({
   }
 
   return (
-    <section className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="mt-5 rounded-lg bg-slate-50 px-4 py-3 dark:bg-white/5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-extrabold text-slate-900 dark:text-white">
             System-Benachrichtigungen
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
             Erhalte Hinweise auch dann, wenn Move at work im Hintergrund geöffnet
             ist.
           </p>
@@ -258,7 +263,7 @@ function SystemNotificationSettings({
       </div>
 
       {notificationPermission === 'default' && (
-        <div className="mt-3">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             className="min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8]"
             onClick={onPermissionRequest}
@@ -273,8 +278,8 @@ function SystemNotificationSettings({
       )}
 
       {notificationPermission === 'granted' && (
-        <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-200">
-          System-Benachrichtigungen sind aktiviert.
+        <p className="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+          System-Benachrichtigungen sind {systemNotificationsEnabled ? 'aktiviert.' : 'aus.'}
         </p>
       )}
 

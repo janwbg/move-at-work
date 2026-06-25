@@ -76,6 +76,35 @@ describe('App auth fallback', () => {
     expect(document.body.textContent).not.toContain('Dunkel')
     expect(document.body.textContent).not.toContain('Hell')
   })
+
+  it('hides the global header on Settings and uses the in-settings theme switch', async () => {
+    window.localStorage.setItem(
+      'move-at-work-onboarding',
+      JSON.stringify(createCompleteAnswers()),
+    )
+
+    await act(async () => {
+      createRoot(document.body.appendChild(document.createElement('div'))).render(
+        <AuthProvider client={null}>
+          <App />
+        </AuthProvider>,
+      )
+    })
+
+    await clickButtonContaining('Einstellungen')
+
+    expect(document.body.textContent).toContain(
+      'Passe Profil, Routine und Erinnerungen an deinen Alltag an.',
+    )
+    expect(document.body.textContent).not.toContain('Bewegungsimpulse')
+    expect(document.body.textContent).toContain('Darstellung: Hell')
+    expect(document.body.textContent).toContain('Zu Dunkel wechseln')
+
+    await clickButtonContaining('Zu Dunkel wechseln')
+
+    expect(document.body.textContent).toContain('Darstellung: Dunkel')
+    expect(document.body.textContent).toContain('Zu Hell wechseln')
+  })
 })
 
 function createCompleteAnswers() {

@@ -3,7 +3,11 @@ import BottomNavigation from './BottomNavigation.jsx'
 import ProgressScreen from './ProgressScreen.jsx'
 import {
   createRecommendationFeedbackContext,
+  loadCompletedSectionSnapshots,
   preserveCompletedSections,
+  preserveCompletedSectionsFromSnapshots,
+  recordCompletedSectionSnapshot,
+  saveCompletedSectionSnapshots,
   shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
 import SettingsScreen from './SettingsScreen.jsx'
@@ -46,9 +50,11 @@ import {
 function ResultScreen({
   answers,
   initialActiveTab = 'today',
+  isDark = false,
   onActiveTabChange = () => {},
   onChangeAnswers,
   onRestartOnboarding,
+  onToggleTheme = () => {},
 }) {
   const normalizedAnswers = useMemo(() => normalizeProfileAnswers(answers), [answers])
   const [activeTab, setActiveTab] = useState(initialActiveTab)
@@ -64,6 +70,10 @@ function ResultScreen({
   const [progress, setProgress] = useState(() => loadProgress())
   const [routineSettings, setRoutineSettings] = useState(() =>
     loadRoutineSettings(),
+  )
+  const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
+  const [completedSectionSnapshots, setCompletedSectionSnapshots] = useState(
+    () => loadCompletedSectionSnapshots(),
   )
   const [premiumStatus] = useState(() => loadPremiumStatus())
   const [replacementUsage, setReplacementUsage] = useState(() =>
@@ -89,20 +99,31 @@ function ResultScreen({
       }),
     [activeWorkPhase, activeWorkdayType, activeWorkplace, normalizedAnswers],
   )
+  const basePlanWithCompletedSections = useMemo(
+    () =>
+      preserveCompletedSectionsFromSnapshots(
+        basePlan,
+        completedIds,
+        completedSectionSnapshots,
+      ),
+    [basePlan, completedIds, completedSectionSnapshots],
+  )
   const planContextKey = createPlanContextKey({
     activeWorkPhase,
     activeWorkdayType,
     activeWorkplace,
     normalizedAnswers,
   })
-  const plan = planOverride?.contextKey === planContextKey ? planOverride.plan : basePlan
+  const plan =
+    planOverride?.contextKey === planContextKey
+      ? planOverride.plan
+      : basePlanWithCompletedSections
   const currentReplacementMessage =
     replacementMessage?.contextKey === planContextKey ? replacementMessage.message : ''
   const canReplaceRecommendation = canUseReplacement({
     premiumStatus,
     usage: replacementUsage,
   })
-  const completedIds = useMemo(() => getCompletedIdsForDate(progress), [progress])
   const progressSummary = useMemo(
     () => calculateProgressSummary(progress, new Date(), routineSettings),
     [progress, routineSettings],
@@ -203,6 +224,51 @@ function ResultScreen({
     })
   }
 
+  function handleProfileAnswersChange(nextAnswersOrUpdater) {
+    const nextAnswers = normalizeProfileAnswers(
+      typeof nextAnswersOrUpdater === 'function'
+        ? nextAnswersOrUpdater(normalizedAnswers)
+        : nextAnswersOrUpdater,
+    )
+    const selectedWorkplaceStillAvailable =
+      nextAnswers.workplaces.includes(selectedWorkplace)
+    const nextWorkplaceWasChanged =
+      workplaceWasChanged && selectedWorkplaceStillAvailable
+    const nextActiveWorkplace = nextWorkplaceWasChanged
+      ? selectedWorkplace
+      : nextAnswers.defaultWorkplace
+    const nextPlan = generatePlan({
+      ...nextAnswers,
+      currentPhase: activeWorkPhase,
+      currentWorkplace: nextActiveWorkplace,
+      currentWorkdayType: activeWorkdayType,
+    })
+    const nextContextKey = createPlanContextKey({
+      activeWorkPhase,
+      activeWorkdayType,
+      activeWorkplace: nextActiveWorkplace,
+      normalizedAnswers: nextAnswers,
+    })
+
+    if (!nextWorkplaceWasChanged) {
+      setSelectedWorkplace(nextAnswers.defaultWorkplace)
+      setWorkplaceWasChanged(false)
+    }
+
+    setReplacementMessage(null)
+
+    if (completedIds.length) {
+      setPlanOverride({
+        contextKey: nextContextKey,
+        plan: preserveCompletedSections(plan, nextPlan, completedIds),
+      })
+    } else {
+      setPlanOverride(null)
+    }
+
+    onChangeAnswers(nextAnswers)
+  }
+
   function handleReplaceRecommendation(indexToReplace, reason) {
     const originalSection = plan.dailySchedule[indexToReplace]
     const result = replaceRecommendationInPlan({
@@ -254,6 +320,16 @@ function ResultScreen({
     }
 
     const completionDate = new Date()
+    const completedSectionIndex = plan.dailySchedule.findIndex(
+      (currentSection) => currentSection.id === section.id,
+    )
+    const nextCompletedSectionSnapshots = recordCompletedSectionSnapshot(
+      completedSectionSnapshots,
+      {
+        index: completedSectionIndex,
+        section,
+      },
+    )
     const nextProgress = recordCompletion(progress, exerciseId, completionDate)
     const nextSummary = calculateProgressSummary(
       nextProgress,
@@ -270,6 +346,8 @@ function ResultScreen({
       ? markCompleteDayCelebration(nextProgress, completionDate)
       : nextProgress
 
+    setCompletedSectionSnapshots(nextCompletedSectionSnapshots)
+    saveCompletedSectionSnapshots(nextCompletedSectionSnapshots, completionDate)
     setProgress(progressToSave)
     saveProgress(progressToSave)
     setSuccessState({
@@ -341,10 +419,12 @@ function ResultScreen({
         <SettingsScreen
           answers={normalizedAnswers}
           feedbackUrl={FEEDBACK_URL}
-          onChangeAnswers={onChangeAnswers}
+          isDark={isDark}
+          onChangeAnswers={handleProfileAnswersChange}
           onOpenUpgrade={handleOpenUpgrade}
           onRoutineSettingsChange={handleRoutineSettingsChange}
           onRestartOnboarding={onRestartOnboarding}
+          onToggleTheme={onToggleTheme}
           routineSettings={routineSettings}
         />
       )}
