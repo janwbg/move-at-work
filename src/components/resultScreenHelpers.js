@@ -2,6 +2,7 @@ import {
   getLocalDateKey,
   hasCompleteDayCelebration,
 } from '../utils/progressStorage.js'
+import { recordRecommendationHistory } from '../utils/recommendationHistoryStorage.js'
 
 export const completedSectionSnapshotsStorageKey =
   'move-at-work-completed-section-snapshots'
@@ -88,6 +89,18 @@ export function preserveCompletedSectionsFromSnapshots(
       return preservedSection ?? section
     }),
   }
+}
+
+export function recordVisiblePlanHistory(plan, date = new Date()) {
+  const ruleIds = (Array.isArray(plan?.dailySchedule) ? plan.dailySchedule : [])
+    .map((section) => section.ruleId ?? section.id)
+    .filter((ruleId) => typeof ruleId === 'string' && ruleId)
+
+  if (!ruleIds.length) {
+    return []
+  }
+
+  return recordRecommendationHistory(ruleIds, date)
 }
 
 export function loadCompletedSectionSnapshots(date = new Date()) {

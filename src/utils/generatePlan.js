@@ -11,10 +11,13 @@ import {
   workdayOptions,
   workPhaseOptions,
 } from '../data/profileOptions.js'
+import { loadRecommendationFeedback } from './recommendationFeedbackStorage.js'
+import { loadRecommendationHistory } from './recommendationHistoryStorage.js'
 
 const minimumRecommendations = 3
 const maximumRecommendations = 5
 const miniResetMovementType = 'mini_reset'
+const recommendationFeedbackWindowDays = 60
 const concreteSmallEquipmentIds = [
   'resistance_band',
   'balance_cushion',
@@ -79,7 +82,8 @@ export const defaultDaySlotWindows = [
   },
 ]
 
-const daySlots = [
+// Legacy extended-slot definitions are kept out of the active five-slot plan path.
+export const legacyExtendedDaySlots = [
   ...defaultDaySlotWindows,
   {
     slotId: 'late_morning',
@@ -140,7 +144,6 @@ const phaseMovementTypeScores = {
 const goalMovementTypeScores = {
   'back-neck': { mobilize: 28, sit_reset: 22, stretch: 22 },
   focus: { breathing: 18, eyes: 24, mini_reset: 22, mobilize: 14, sit_reset: 18 },
-  habit: { mobilize: 12, sit_reset: 12, stand: 14, walk: 14 },
   'more-energy': { activate: 24, stand: 12, walk: 26, walking_meeting: 18 },
   'sit-less': { sit_reset: 18, stand: 26, walk: 24, walking_meeting: 16 },
 }
@@ -225,12 +228,6 @@ const relaxedIntensities = {
   gentle: ['gentle', 'balanced'],
 }
 
-const slotRolesByLength = {
-  5: ['start', 'focus', 'movement', 'relief', 'closing'],
-  6: ['start', 'focus', 'movement', 'relief', 'movement', 'closing'],
-  7: ['start', 'focus', 'movement', 'relief', 'movement', 'focus', 'closing'],
-}
-
 export function generatePlan(answers) {
   const context = normalizeContext(answers)
   const recommendationCount = getRecommendationCount(context)
@@ -261,6 +258,7 @@ export function replaceRecommendationInPlan({
   currentWorkplace,
   currentPhase,
   currentWorkdayType,
+  currentDate,
   reason = '',
 }) {
   const currentSchedule = Array.isArray(plan?.dailySchedule)
@@ -282,6 +280,7 @@ export function replaceRecommendationInPlan({
     currentPhase,
     currentWorkplace,
     currentWorkdayType,
+    currentDate,
   })
   const replacement = pickReplacementRecommendation({
     context,
@@ -323,6 +322,7 @@ export function replaceRecommendationInPlan({
 
 function normalizeContext(answers) {
   const profile = normalizeProfileAnswers(answers)
+  const currentDate = normalizeDate(answers?.currentDate ?? answers?.date)
   const currentWorkdayType = isValidWorkdayType(answers?.currentWorkdayType)
     ? answers.currentWorkdayType
     : profile.situation
@@ -340,6 +340,10 @@ function normalizeContext(answers) {
     situation: currentWorkdayType,
     currentPhase,
     currentWorkplace,
+    currentDate,
+    currentDateKey: formatDateKey(currentDate),
+    recommendationFeedback: loadRecommendationFeedback(),
+    recommendationHistory: loadRecommendationHistory(currentDate),
     setup,
   }
 }
@@ -469,7 +473,9 @@ function scoreReplacementRecommendation(
   reason,
 ) {
   return (
-    scoreRecommendation(recommendation, context, schedule, slotRole) +
+    scoreRecommendation(recommendation, context, schedule, slotRole, slotDefinition, {
+      replacementReason: reason,
+    }) +
     getSlotSpecificReplacementScore(recommendation, slotDefinition, reason) +
     getReplacementReasonScore(recommendation, reason, originalSection, context) +
     getReplacementDiversityScore(recommendation, originalSection)
@@ -525,7 +531,14 @@ function sortRecommendations(recommendations, context) {
   )
 }
 
-function scoreRecommendation(recommendation, context, schedule = [], slotRole = '') {
+function scoreRecommendation(
+  recommendation,
+  context,
+  schedule = [],
+  slotRole = '',
+  slotDefinition = null,
+  options = {},
+) {
   let score = recommendation.priority
 
   if (recommendation.suitableGoals.includes(context.goal)) {
@@ -615,6 +628,14 @@ function scoreRecommendation(recommendation, context, schedule = [], slotRole = 
   score += getBodyAreaDiversityScore(recommendation, schedule)
 
   score -= schedulePenalty(recommendation, schedule)
+  score -= getRecommendationHistoryPenalty(recommendation, context)
+  score -= getRecommendationFeedbackPenalty(
+    recommendation,
+    context,
+    slotRole,
+    slotDefinition,
+    options,
+  )
 
   return score
 }
@@ -698,6 +719,129 @@ function schedulePenalty(recommendation, schedule) {
   return penalty
 }
 
+function getRecommendationHistoryPenalty(recommendation, context) {
+  const history = Array.isArray(context.recommendationHistory)
+    ? context.recommendationHistory
+    : []
+
+  return history.reduce((total, entry) => {
+    if (
+      entry.date === context.currentDateKey ||
+      !entry.ruleIds?.includes(recommendation.id)
+    ) {
+      return total
+    }
+
+    const ageInDays = getDateDistanceInDays(entry.date, context.currentDateKey)
+
+    if (ageInDays <= 0 || ageInDays > 14) {
+      return total
+    }
+
+    return total + Math.max(8, 52 - ageInDays * 4)
+  }, 0)
+}
+
+function getRecommendationFeedbackPenalty(
+  recommendation,
+  context,
+  slotRole,
+  slotDefinition,
+  { replacementReason = '' } = {},
+) {
+  const feedbackEntries = Array.isArray(context.recommendationFeedback)
+    ? context.recommendationFeedback
+    : []
+  const penalty = feedbackEntries.reduce(
+    (total, feedbackEntry) =>
+      total +
+      getSingleRecommendationFeedbackPenalty(recommendation, context, {
+        feedbackEntry,
+        replacementReason,
+        slotDefinition,
+        slotRole,
+      }),
+    0,
+  )
+
+  return Math.min(48, penalty)
+}
+
+function getSingleRecommendationFeedbackPenalty(
+  recommendation,
+  context,
+  { feedbackEntry, replacementReason, slotDefinition, slotRole },
+) {
+  if (
+    feedbackEntry?.feedback !== 'not-fit' ||
+    feedbackEntry.recommendationId !== recommendation.id
+  ) {
+    return 0
+  }
+
+  const ageInDays = getDateDistanceInDays(feedbackEntry.date, context.currentDateKey)
+
+  if (ageInDays < 0 || ageInDays > recommendationFeedbackWindowDays) {
+    return 0
+  }
+
+  const entryWorkplace = feedbackEntry.currentWorkplace ?? feedbackEntry.workplace
+  const entryPhase = feedbackEntry.currentPhase ?? feedbackEntry.phase
+  const entrySlotRole = getSlotRoleFromSlotId(feedbackEntry.slotId)
+  const entryReason = feedbackEntry.replacementReason ?? feedbackEntry.reason ?? ''
+  let contextMatchScore = 0
+  let additionalContextMatches = 0
+
+  if (entryWorkplace) {
+    if (entryWorkplace !== context.currentWorkplace) {
+      return 0
+    }
+
+    contextMatchScore += 10
+  }
+
+  if (feedbackEntry.workdayType && feedbackEntry.workdayType === context.situation) {
+    contextMatchScore += 8
+    additionalContextMatches += 1
+  }
+
+  if (entryPhase && entryPhase === context.currentPhase) {
+    contextMatchScore += 6
+    additionalContextMatches += 1
+  }
+
+  if (feedbackEntry.slotId && feedbackEntry.slotId === slotDefinition?.slotId) {
+    contextMatchScore += 8
+    additionalContextMatches += 1
+  } else if (entrySlotRole && entrySlotRole === slotRole) {
+    contextMatchScore += 5
+    additionalContextMatches += 1
+  }
+
+  if (entryReason && replacementReason && entryReason === replacementReason) {
+    contextMatchScore += 8
+    additionalContextMatches += 1
+  }
+
+  if (
+    entryReason === 'too-visible' &&
+    context.currentWorkplace === 'office' &&
+    ['focus', 'meeting'].includes(context.currentPhase)
+  ) {
+    contextMatchScore += 6
+    additionalContextMatches += 1
+  }
+
+  if (additionalContextMatches < 1 || contextMatchScore < 10) {
+    return 0
+  }
+
+  const recencyMultiplier = ageInDays <= 14 ? 1 : 0.6
+  const replacementSignal = feedbackEntry.action === 'replaced' ? 4 : 0
+
+  return Math.round(Math.min(36, 8 + contextMatchScore + replacementSignal) * recencyMultiplier)
+}
+
 function buildDailySchedule(sortedRecommendations, context) {
   const scheduleLength = getScheduleLength(context)
   const slotDefinitions = getSlotDefinitions(scheduleLength)
@@ -765,8 +909,8 @@ function pickNextRecommendation(
 ) {
   const sorted = [...candidates].sort(
     (first, second) =>
-      scoreRecommendation(second, context, currentSchedule, slotRole) -
-      scoreRecommendation(first, context, currentSchedule, slotRole),
+      scoreRecommendation(second, context, currentSchedule, slotRole, slotDefinition) -
+      scoreRecommendation(first, context, currentSchedule, slotRole, slotDefinition),
   )
 
   return sorted.find((candidate) => {
@@ -857,8 +1001,8 @@ function pickValueGuardReplacement({
     .filter((candidate) => canFollow(candidate, nextSection))
     .sort(
       (first, second) =>
-        scoreRecommendation(second, context, scheduleContext, slotRole) -
-        scoreRecommendation(first, context, scheduleContext, slotRole),
+        scoreRecommendation(second, context, scheduleContext, slotRole, slotDefinition) -
+        scoreRecommendation(first, context, scheduleContext, slotRole, slotDefinition),
     )[0]
 }
 
@@ -947,33 +1091,15 @@ function getScheduleLength() {
 }
 
 function getSlotRole(scheduleLength, index) {
-  const slotRoles = slotRolesByLength[scheduleLength] ?? slotRolesByLength[5]
-  return slotRoles[index] ?? 'movement'
+  return getSlotDefinitions(scheduleLength)[index]?.slotRole ?? 'movement'
 }
 
 function getSlotDefinitions(scheduleLength) {
-  if (scheduleLength === 5) {
-    return defaultDaySlotWindows
-  }
-
-  if (scheduleLength === 6) {
-    return [
-      daySlots[0],
-      daySlots[1],
-      daySlots[5],
-      daySlots[2],
-      daySlots[6],
-      daySlots[4],
-    ]
-  }
-
-  return daySlots
+  return scheduleLength === 5 ? defaultDaySlotWindows : defaultDaySlotWindows
 }
 
-function getRecommendationCount(context) {
-  return context.fitnessLevel === 'gentle'
-    ? minimumRecommendations
-    : maximumRecommendations
+function getRecommendationCount() {
+  return maximumRecommendations
 }
 
 function toMovementCardData(recommendation) {
@@ -1834,6 +1960,51 @@ function formatDuration(durationMinutes) {
   }
 
   return `${durationMinutes} ${durationMinutes === 1 ? 'Minute' : 'Minuten'}`
+}
+
+function normalizeDate(value) {
+  const date = value instanceof Date ? value : new Date(value ?? Date.now())
+
+  return Number.isNaN(date.getTime()) ? new Date() : date
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function getDateDistanceInDays(entryDateKey, referenceDateKey) {
+  const entryDate = parseLocalDateKey(entryDateKey)
+  const referenceDate = parseLocalDateKey(referenceDateKey)
+
+  if (!entryDate || !referenceDate) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  return Math.round((referenceDate - entryDate) / 86400000)
+}
+
+function parseLocalDateKey(dateKey) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey ?? '')) {
+    return null
+  }
+
+  const [year, month, day] = dateKey.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+    ? date
+    : null
+}
+
+function getSlotRoleFromSlotId(slotId) {
+  return defaultDaySlotWindows.find((slotDefinition) => slotDefinition.slotId === slotId)
+    ?.slotRole
 }
 
 function preferredIntensity(fitnessLevel) {

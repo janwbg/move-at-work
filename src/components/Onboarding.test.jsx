@@ -233,7 +233,7 @@ describe('Onboarding', () => {
     expect(homeofficeHtml).not.toContain('Schritt 1 von 2')
   })
 
-  it('shows concrete setup options and removes ergonomic onboarding setup', () => {
+  it('shows concrete setup options including ergonomic support', () => {
     const html = renderOnboarding({
       answers: {
         goal: 'sit-less',
@@ -251,7 +251,7 @@ describe('Onboarding', () => {
     expect(html).toContain('Gymnastikball')
     expect(html).toContain('Flur in der Nähe')
     expect(html).not.toContain('Kleines Bewegungsequipment')
-    expect(html).not.toContain('Ergonomische Sitz- oder Stehhilfe')
+    expect(html).toContain('Ergonomische Sitz- oder Stehhilfe')
   })
 
   it('replaces special setup selections directly with no-equipment without a dialog', async () => {

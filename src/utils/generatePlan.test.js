@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   defaultDaySlotWindows,
   generatePlan,
   replaceRecommendationInPlan,
 } from './generatePlan.js'
+import { recordRecommendationFeedback } from './recommendationFeedbackStorage.js'
+import {
+  loadRecommendationHistory,
+  saveRecommendationHistory,
+} from './recommendationHistoryStorage.js'
 
 const unavailableEquipment = [
   'Walking Pad',
@@ -14,6 +19,16 @@ const unavailableEquipment = [
   'Platz für kurze Übungen',
   'Ergonomische Sitz- oder Stehhilfe',
 ]
+
+beforeEach(() => {
+  vi.stubGlobal('window', {
+    localStorage: createLocalStorage(),
+  })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('generatePlan', () => {
   it('returns exactly five daily recommendations for broad and tight profiles', () => {
@@ -962,6 +977,236 @@ describe('generatePlan', () => {
 
     expect(existingRuleIds).not.toContain(result.replacement.ruleId)
   })
+
+  it('uses recent daily history to reduce direct ruleId repetition', () => {
+    const profile = createRotationProfile()
+    const previousDate = new Date(2026, 5, 24)
+    const currentDate = new Date(2026, 5, 25)
+    const previousPlan = generatePlan({ ...profile, currentDate: previousDate })
+    const previousRuleIds = getRuleIds(previousPlan.dailySchedule)
+
+    saveRecommendationHistory(
+      [{ date: '2026-06-24', ruleIds: previousRuleIds }],
+      currentDate,
+    )
+
+    const rotatedPlan = generatePlan({ ...profile, currentDate })
+    const repeatedRuleIds = getRuleIds(rotatedPlan.dailySchedule).filter((ruleId) =>
+      previousRuleIds.includes(ruleId),
+    )
+
+    expect(rotatedPlan.dailySchedule).toHaveLength(5)
+    expect(repeatedRuleIds.length).toBeLessThan(previousRuleIds.length)
+  })
+
+  it('does not write recommendation history directly while generating a plan', () => {
+    const currentDate = new Date(2026, 5, 25)
+
+    generatePlan({ ...createRotationProfile(), currentDate })
+
+    expect(loadRecommendationHistory(currentDate)).toEqual([])
+  })
+
+  it('keeps the daily plan stable within the same date', () => {
+    const profile = createRotationProfile()
+    const currentDate = new Date(2026, 5, 25)
+
+    saveRecommendationHistory(
+      [
+        {
+          date: '2026-06-24',
+          ruleIds: [
+            'seated-posture-reset',
+            'mini-walk-60',
+            'seated-calf-raises',
+          ],
+        },
+      ],
+      currentDate,
+    )
+
+    const firstPlan = generatePlan({ ...profile, currentDate })
+    const secondPlan = generatePlan({ ...profile, currentDate })
+
+    expect(getRuleIds(secondPlan.dailySchedule)).toEqual(
+      getRuleIds(firstPlan.dailySchedule),
+    )
+  })
+
+  it('keeps rotation safe when the available candidate pool is constrained', () => {
+    const profile = createRotationProfile({
+      currentPhase: 'meeting',
+      fitnessLevel: 'gentle',
+      goal: 'focus',
+      situation: 'meeting-heavy',
+    })
+    const currentDate = new Date(2026, 5, 25)
+
+    saveRecommendationHistory(
+      [
+        {
+          date: '2026-06-24',
+          ruleIds: [
+            'meeting-posture-switch',
+            'mini-shoulder-circles-30',
+            'mini-screen-away-40',
+            'mini-neck-60',
+            'box-breathing-focus',
+          ],
+        },
+      ],
+      currentDate,
+    )
+
+    const plan = generatePlan({ ...profile, currentDate })
+
+    expect(plan.dailySchedule).toHaveLength(5)
+    expect(plan.dailySchedule.every((section) => section.reason || section.explanation)).toBe(true)
+  })
+
+  it('uses not-fit replacement feedback as a soft penalty in a similar context', () => {
+    const profile = createReplacementProfile()
+    const currentDate = new Date(2026, 5, 25)
+    const basePlan = generatePlan({ ...profile, currentDate })
+    const replacedSection = basePlan.dailySchedule[0]
+
+    recordRecommendationFeedback(
+      {
+        recommendationId: replacedSection.ruleId,
+        currentWorkplace: 'office',
+        currentPhase: 'meeting',
+        workdayType: 'meeting-heavy',
+        feedback: 'not-fit',
+        reason: 'too-visible',
+        replacementReason: 'too-visible',
+        slotId: replacedSection.slotId,
+        action: 'replaced',
+      },
+      new Date(2026, 5, 24),
+    )
+
+    const adjustedPlan = generatePlan({ ...profile, currentDate })
+
+    expect(adjustedPlan.dailySchedule[0].ruleId).not.toBe(replacedSection.ruleId)
+  })
+
+  it('does not apply not-fit feedback when only the workplace matches', () => {
+    const profile = createReplacementProfile()
+    const currentDate = new Date(2026, 5, 25)
+    const baselineRuleIds = getRuleIds(
+      generatePlan({ ...profile, currentDate }).dailySchedule,
+    )
+
+    recordRecommendationFeedback(
+      {
+        recommendationId: baselineRuleIds[0],
+        currentWorkplace: 'office',
+        feedback: 'not-fit',
+      },
+      new Date(2026, 5, 24),
+    )
+
+    expect(getRuleIds(generatePlan({ ...profile, currentDate }).dailySchedule)).toEqual(
+      baselineRuleIds,
+    )
+  })
+
+  it('applies not-fit feedback when workplace and another context signal match', () => {
+    const profile = createReplacementProfile()
+    const currentDate = new Date(2026, 5, 25)
+    const basePlan = generatePlan({ ...profile, currentDate })
+    const replacedSection = basePlan.dailySchedule[0]
+
+    recordRecommendationFeedback(
+      {
+        recommendationId: replacedSection.ruleId,
+        currentWorkplace: 'office',
+        currentPhase: 'meeting',
+        feedback: 'not-fit',
+        action: 'replaced',
+      },
+      new Date(2026, 5, 24),
+    )
+
+    expect(generatePlan({ ...profile, currentDate }).dailySchedule[0].ruleId).not.toBe(
+      replacedSection.ruleId,
+    )
+  })
+
+  it('does not apply not-fit feedback as a blanket penalty in another context', () => {
+    const profile = createRotationProfile({
+      currentPhase: 'focus',
+      currentWorkplace: 'homeoffice',
+      defaultWorkplace: 'homeoffice',
+      goal: 'focus',
+      situation: 'focus-heavy',
+      workplaces: ['homeoffice'],
+      workplaceSetups: {
+        office: ['no-equipment'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const currentDate = new Date(2026, 5, 25)
+    const baselineRuleIds = getRuleIds(
+      generatePlan({ ...profile, currentDate }).dailySchedule,
+    )
+
+    vi.stubGlobal('window', {
+      localStorage: createLocalStorage(),
+    })
+    recordRecommendationFeedback(
+      {
+        recommendationId: 'mini-posture-60',
+        currentWorkplace: 'office',
+        currentPhase: 'meeting',
+        workdayType: 'meeting-heavy',
+        feedback: 'not-fit',
+        reason: 'too-visible',
+        replacementReason: 'too-visible',
+        slotId: 'start',
+        action: 'replaced',
+      },
+      new Date(2026, 5, 24),
+    )
+
+    expect(getRuleIds(generatePlan({ ...profile, currentDate }).dailySchedule)).toEqual(
+      baselineRuleIds,
+    )
+  })
+
+  it('keeps tight-schedule and study-day plans useful with rotation enabled', () => {
+    const currentDate = new Date(2026, 5, 25)
+    const tightPlan = generatePlan({
+      ...createRotationProfile({
+        currentPhase: 'focus',
+        goal: 'focus',
+        situation: 'tight-schedule',
+      }),
+      currentDate,
+    })
+    const studyPlan = generatePlan({
+      ...createRotationProfile({
+        currentPhase: 'focus',
+        goal: 'focus',
+        situation: 'study-day',
+      }),
+      currentDate,
+    })
+
+    expect(tightPlan.dailySchedule).toHaveLength(5)
+    expect(
+      tightPlan.dailySchedule.filter((section) => section.durationMinutes <= 3)
+        .length,
+    ).toBeGreaterThanOrEqual(3)
+    expect(studyPlan.dailySchedule).toHaveLength(5)
+    expect(
+      studyPlan.dailySchedule.some((section) =>
+        section.bodyArea.some((bodyArea) =>
+          ['eyes', 'neck', 'shoulders'].includes(bodyArea),
+        ),
+      ),
+    ).toBe(true)
+  })
 })
 
 function createReplacementProfile(overrides = {}) {
@@ -979,6 +1224,27 @@ function createReplacementProfile(overrides = {}) {
     },
     ...overrides,
   }
+}
+
+function createRotationProfile(overrides = {}) {
+  return {
+    currentPhase: 'between-tasks',
+    currentWorkplace: 'office',
+    defaultWorkplace: 'office',
+    fitnessLevel: 'balanced',
+    goal: 'sit-less',
+    situation: 'mixed-day',
+    workplaces: ['office'],
+    workplaceSetups: {
+      office: ['no-equipment'],
+      homeoffice: ['no-equipment'],
+    },
+    ...overrides,
+  }
+}
+
+function getRuleIds(schedule) {
+  return schedule.map((section) => section.ruleId)
 }
 
 function hasSetup(plan, setup) {
@@ -1122,4 +1388,13 @@ function isIntense(section) {
 function getLongestDuration(duration) {
   const numbers = duration.match(/\d+/g)?.map(Number) ?? []
   return numbers.length ? Math.max(...numbers) : 0
+}
+
+function createLocalStorage() {
+  const store = new Map()
+
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, String(value)),
+  }
 }

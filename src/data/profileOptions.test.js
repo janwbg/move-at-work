@@ -34,6 +34,7 @@ describe('profileOptions', () => {
       'resistance_band',
       'balance_cushion',
       'exercise_ball',
+      'ergonomic-support',
     ])
     expect(setupOptions.map((option) => option.label)).not.toContain(
       'Treppe oder Flur in der Nähe',
@@ -41,9 +42,16 @@ describe('profileOptions', () => {
     expect(setupOptions.map((option) => option.label)).toContain(
       'Flur in der Nähe',
     )
-    expect(setupOptions.map((option) => option.label)).not.toContain(
+    expect(setupOptions.map((option) => option.label)).toContain(
       'Ergonomische Sitz- oder Stehhilfe',
     )
+    expect(
+      setupOptions.find((option) => option.id === 'ergonomic-support'),
+    ).toMatchObject({
+      icon: '▥',
+      description:
+        'Fuer kurze Sitz-, Steh- und Gewichtswechsel mit vorhandener Unterstuetzung.',
+    })
   })
 
   it('keeps no-equipment exclusive in setup multi-select', () => {
@@ -168,7 +176,7 @@ describe('profileOptions', () => {
       normalizeProfileAnswers({
         setup: ['ergonomic-support'],
       }).setup,
-    ).toEqual(['no-equipment'])
+    ).toEqual(['ergonomic-support'])
   })
 
   it('keeps existing workplace profiles and falls back safely', () => {

@@ -9,6 +9,7 @@ import {
   preserveCompletedSections,
   preserveCompletedSectionsFromSnapshots,
   recordCompletedSectionSnapshot,
+  recordVisiblePlanHistory,
   shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
 import ResultScreen, { SuccessDialog } from './ResultScreen.jsx'
@@ -16,6 +17,7 @@ import {
   markCompleteDayCelebration,
   routineSettingsStorageKey,
 } from '../utils/progressStorage.js'
+import { loadRecommendationHistory } from '../utils/recommendationHistoryStorage.js'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -124,6 +126,28 @@ describe('ResultScreen daily workday context helpers', () => {
       'done-1',
       'new-2',
       'done-3',
+    ])
+  })
+
+  it('records recommendation history only for the final visible plan', () => {
+    const date = new Date(2026, 5, 25)
+    const currentPlan = createPlan(['done-1', 'open-2'], [
+      'completed-rule',
+      'old-open-rule',
+    ])
+    const nextPlan = createPlan(['new-1', 'new-2'], [
+      'temporary-rule',
+      'new-open-rule',
+    ])
+    const finalPlan = preserveCompletedSections(currentPlan, nextPlan, ['done-1'])
+
+    recordVisiblePlanHistory(finalPlan, date)
+
+    expect(loadRecommendationHistory(date)).toEqual([
+      {
+        date: '2026-06-25',
+        ruleIds: ['completed-rule', 'new-open-rule'],
+      },
     ])
   })
 
@@ -447,10 +471,11 @@ function createCompleteAnswers(overrides = {}) {
   }
 }
 
-function createPlan(ids) {
+function createPlan(ids, ruleIds = ids) {
   return {
     dailySchedule: ids.map((id, index) => ({
       id,
+      ruleId: ruleIds[index],
       slotId: `slot-${index + 1}`,
       title: `Empfehlung ${index + 1}`,
     })),

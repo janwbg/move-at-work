@@ -116,6 +116,13 @@ export const setupOptions = [
     icon: '●',
     description: 'Für sanfte Mobilisation und kurze Lockerungsimpulse.',
   },
+  {
+    id: 'ergonomic-support',
+    label: 'Ergonomische Sitz- oder Stehhilfe',
+    icon: '▥',
+    description:
+      'Fuer kurze Sitz-, Steh- und Gewichtswechsel mit vorhandener Unterstuetzung.',
+  },
 ]
 
 export const intensityOptions = [
@@ -256,7 +263,7 @@ const setupAliases = {
   'Treppe oder Flur in der Naehe': ['hallway', 'stairs'],
   'Treppe oder Flur in der Nähe': ['hallway', 'stairs'],
   'Walking Pad': 'walking-pad',
-  'ergonomic-support': [],
+  'ergonomic-support': 'ergonomic-support',
   'small-equipment': [
     'resistance_band',
     'balance_cushion',

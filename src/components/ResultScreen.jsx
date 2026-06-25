@@ -7,6 +7,7 @@ import {
   preserveCompletedSections,
   preserveCompletedSectionsFromSnapshots,
   recordCompletedSectionSnapshot,
+  recordVisiblePlanHistory,
   saveCompletedSectionSnapshots,
   shouldShowCompleteDaySuccess,
 } from './resultScreenHelpers.js'
@@ -25,6 +26,7 @@ import { loadPremiumStatus } from '../utils/premiumStatus.js'
 import {
   calculateProgressSummary,
   getCompletedIdsForDate,
+  getLocalDateKey,
   getRoutineDayStatus,
   isRoutineActiveDay,
   loadProgress,
@@ -85,6 +87,7 @@ function ResultScreen({
   const [successState, setSuccessState] = useState(null)
   const [planOverride, setPlanOverride] = useState(null)
   const [replacementMessage, setReplacementMessage] = useState(null)
+  const [planDate, setPlanDate] = useState(() => new Date())
   const activeWorkplace =
     workplaceWasChanged && normalizedAnswers.workplaces.includes(selectedWorkplace)
       ? selectedWorkplace
@@ -96,8 +99,9 @@ function ResultScreen({
         currentPhase: activeWorkPhase,
         currentWorkplace: activeWorkplace,
         currentWorkdayType: activeWorkdayType,
+        currentDate: planDate,
       }),
-    [activeWorkPhase, activeWorkdayType, activeWorkplace, normalizedAnswers],
+    [activeWorkPhase, activeWorkdayType, activeWorkplace, normalizedAnswers, planDate],
   )
   const basePlanWithCompletedSections = useMemo(
     () =>
@@ -161,6 +165,22 @@ function ResultScreen({
     onActiveTabChange(activeTab)
   }, [activeTab, onActiveTabChange])
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const nextDate = new Date()
+
+      if (getLocalDateKey(nextDate) !== getLocalDateKey(planDate)) {
+        setPlanDate(nextDate)
+      }
+    }, 60 * 1000)
+
+    return () => window.clearInterval(interval)
+  }, [planDate])
+
+  useEffect(() => {
+    recordVisiblePlanHistory(plan, planDate)
+  }, [plan, planDate])
+
   function handleWorkplaceChange(workplace) {
     const nextWorkplace = normalizedAnswers.workplaces.includes(workplace)
       ? workplace
@@ -170,6 +190,7 @@ function ResultScreen({
       currentPhase: activeWorkPhase,
       currentWorkplace: nextWorkplace,
       currentWorkdayType: activeWorkdayType,
+      currentDate: planDate,
     })
     const nextContextKey = createPlanContextKey({
       activeWorkPhase,
@@ -201,6 +222,7 @@ function ResultScreen({
       currentPhase: nextWorkPhase,
       currentWorkplace: activeWorkplace,
       currentWorkdayType: nextWorkdayType,
+      currentDate: planDate,
     })
     const nextContextKey = createPlanContextKey({
       activeWorkPhase: nextWorkPhase,
@@ -242,6 +264,7 @@ function ResultScreen({
       currentPhase: activeWorkPhase,
       currentWorkplace: nextActiveWorkplace,
       currentWorkdayType: activeWorkdayType,
+      currentDate: planDate,
     })
     const nextContextKey = createPlanContextKey({
       activeWorkPhase,
@@ -278,6 +301,7 @@ function ResultScreen({
       currentWorkplace: activeWorkplace,
       currentPhase: activeWorkPhase,
       currentWorkdayType: activeWorkdayType,
+      currentDate: planDate,
       reason,
     })
 
