@@ -167,6 +167,9 @@ describe('ExerciseDetailView', () => {
     for (const reason of replacementReasonOptions) {
       expect(html).toContain(reason.label)
     }
+    expect(html).toContain('Ich habe wenig Zeit')
+    expect(html).not.toContain('Keine Zeit')
+    expect(html).not.toContain('Lieber kürzer')
   })
 
   it('does not open replacement reasons when replacements are blocked', () => {

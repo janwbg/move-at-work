@@ -1,10 +1,9 @@
 export const replacementReasonOptions = [
-  { id: 'no-time', label: 'Keine Zeit' },
-  { id: 'shorter', label: 'Lieber kürzer' },
-  { id: 'too-visible', label: 'Zu sichtbar' },
-  { id: 'no-space', label: 'Kein Platz' },
+  { id: 'no-time', label: 'Ich habe wenig Zeit' },
+  { id: 'too-visible', label: 'Zu auffällig' },
+  { id: 'no-space', label: 'Zu wenig Platz' },
   { id: 'too-hard', label: 'Zu anstrengend' },
   { id: 'calmer', label: 'Lieber ruhiger' },
-  { id: 'walk', label: 'Lieber aktiver' },
-  { id: 'setup-mismatch', label: 'Passt nicht zum Setup' },
+  { id: 'walk', label: 'Mehr Bewegung' },
+  { id: 'setup-mismatch', label: 'Setup passt nicht' },
 ]

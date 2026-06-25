@@ -282,12 +282,13 @@ export function replaceRecommendationInPlan({
     currentWorkdayType,
     currentDate,
   })
+  const replacementReason = normalizeReplacementReason(reason)
   const replacement = pickReplacementRecommendation({
     context,
     currentSchedule,
     indexToReplace,
     originalSection,
-    reason,
+    reason: replacementReason,
   })
 
   if (!replacement) {
@@ -412,25 +413,21 @@ function pickReplacementRecommendation({
         ),
     )
 
-  const candidatePools = [
-    availableCandidates.filter(
-      (recommendation) =>
-        !existingRuleIds.has(recommendation.id) &&
-        recommendation.similarityGroup !== originalSection.similarityGroup,
-    ),
-    availableCandidates.filter(
-      (recommendation) => !existingRuleIds.has(recommendation.id),
-    ),
-    availableCandidates.filter(
-      (recommendation) =>
-        recommendation.similarityGroup !== originalSection.similarityGroup,
-    ),
+  const preferredCandidates = getReasonPreferredReplacementCandidates(
     availableCandidates,
-    availableCandidates.filter(
-      (recommendation) =>
-        !existingRuleIds.has(recommendation.id) &&
-        hasNoSpecialSetup(recommendation.requiredSetup) &&
-        ['gentle', 'balanced'].includes(recommendation.intensity),
+    originalSection,
+    reason,
+  )
+  const candidatePools = [
+    ...buildReplacementCandidatePools(
+      preferredCandidates,
+      existingRuleIds,
+      originalSection,
+    ),
+    ...buildReplacementCandidatePools(
+      availableCandidates,
+      existingRuleIds,
+      originalSection,
     ),
   ]
 
@@ -461,6 +458,80 @@ function pickReplacementRecommendation({
         reason,
       ),
   )[0]
+}
+
+function buildReplacementCandidatePools(candidates, existingRuleIds, originalSection) {
+  return [
+    candidates.filter(
+      (recommendation) =>
+        !existingRuleIds.has(recommendation.id) &&
+        recommendation.similarityGroup !== originalSection.similarityGroup,
+    ),
+    candidates.filter((recommendation) => !existingRuleIds.has(recommendation.id)),
+    candidates.filter(
+      (recommendation) =>
+        recommendation.similarityGroup !== originalSection.similarityGroup,
+    ),
+    candidates,
+    candidates.filter(
+      (recommendation) =>
+        !existingRuleIds.has(recommendation.id) &&
+        hasNoSpecialSetup(recommendation.requiredSetup) &&
+        ['gentle', 'balanced'].includes(recommendation.intensity),
+    ),
+  ]
+}
+
+function getReasonPreferredReplacementCandidates(
+  candidates,
+  originalSection,
+  reason,
+) {
+  if (isTimeReplacementReason(reason)) {
+    const shorterCandidates = candidates.filter((recommendation) =>
+      isMeaningfullyShorterReplacement(recommendation, originalSection),
+    )
+
+    if (shorterCandidates.length) {
+      return shorterCandidates
+    }
+
+    return candidates.filter((recommendation) =>
+      isShorterReplacement(recommendation, originalSection),
+    )
+  }
+
+  if (reason === 'too-visible') {
+    return candidates.filter((recommendation) =>
+      hasLowerVisibility(recommendation, originalSection),
+    )
+  }
+
+  if (reason === 'no-space') {
+    return candidates.filter(isSpaceSavingReplacement)
+  }
+
+  if (reason === 'too-hard') {
+    return candidates.filter((recommendation) =>
+      isEasierReplacement(recommendation, originalSection),
+    )
+  }
+
+  if (reason === 'calmer') {
+    return candidates.filter(isCalmReplacement)
+  }
+
+  if (reason === 'walk') {
+    return candidates.filter(isMovementOrientedReplacement)
+  }
+
+  if (reason === 'setup-mismatch') {
+    return candidates.filter((recommendation) =>
+      hasNoSpecialSetup(recommendation.requiredSetup),
+    )
+  }
+
+  return candidates
 }
 
 function scoreReplacementRecommendation(
@@ -1674,6 +1745,118 @@ function isQuietReset(recommendation) {
   )
 }
 
+function normalizeReplacementReason(reason) {
+  return reason === 'shorter' ? 'no-time' : reason
+}
+
+function isTimeReplacementReason(reason) {
+  return ['no-time', 'shorter'].includes(reason)
+}
+
+function isShorterReplacement(recommendation, originalSection) {
+  return getDurationSeconds(recommendation) < getDurationSeconds(originalSection)
+}
+
+function isMeaningfullyShorterReplacement(recommendation, originalSection) {
+  const recommendationSeconds = getDurationSeconds(recommendation)
+  const originalSeconds = getDurationSeconds(originalSection)
+
+  return (
+    recommendationSeconds < originalSeconds &&
+    (
+      originalSeconds - recommendationSeconds >= 30 ||
+      recommendationSeconds <= originalSeconds * 0.8
+    )
+  )
+}
+
+function getDurationSeconds(recommendation) {
+  return Math.round((recommendation?.durationMinutes ?? 0) * 60)
+}
+
+function hasLowerVisibility(recommendation, originalSection) {
+  return (
+    getVisibilityRank(recommendation.visibilityLevel) <
+    getVisibilityRank(originalSection.visibilityLevel)
+  )
+}
+
+function getVisibilityRank(visibilityLevel) {
+  const ranks = {
+    discreet: 0,
+    normal: 1,
+    visible: 2,
+  }
+
+  return ranks[visibilityLevel] ?? 1
+}
+
+function isSpaceSavingReplacement(recommendation) {
+  return (
+    hasNoSpecialSetup(recommendation.requiredSetup) &&
+    ['sitting', 'standing', 'mixed', 'desk'].includes(recommendation.position) &&
+    !['walk', 'walking_meeting', 'activate'].includes(recommendation.movementType)
+  )
+}
+
+function isEasierReplacement(recommendation, originalSection) {
+  return (
+    getIntensityRank(recommendation.intensity) <
+      getIntensityRankFromSection(originalSection.intensity) ||
+    (
+      recommendation.intensity === 'gentle' &&
+      !['activate', 'walking_meeting'].includes(recommendation.movementType) &&
+      recommendation.position !== 'stairs'
+    )
+  )
+}
+
+function getIntensityRank(intensity) {
+  const ranks = {
+    gentle: 0,
+    balanced: 1,
+    active: 2,
+  }
+
+  return ranks[intensity] ?? 1
+}
+
+function getIntensityRankFromSection(intensity) {
+  const ranks = {
+    Leicht: 0,
+    Mittel: 1,
+    Hoch: 2,
+    gentle: 0,
+    balanced: 1,
+    active: 2,
+  }
+
+  return ranks[intensity] ?? 1
+}
+
+function isCalmReplacement(recommendation) {
+  return (
+    ['breathing', 'sit_reset', 'mobilize', 'stretch', 'mini_reset'].includes(
+      recommendation.movementType,
+    ) &&
+    !['walk', 'walking_meeting', 'activate'].includes(recommendation.movementType) &&
+    !['walking', 'stairs'].includes(recommendation.position) &&
+    recommendation.intensity !== 'active'
+  )
+}
+
+function isMovementOrientedReplacement(recommendation) {
+  return (
+    !isQuietReset(recommendation) &&
+    (
+      ['walk', 'walking_meeting', 'stand', 'activate'].includes(
+        recommendation.movementType,
+      ) ||
+      ['walking', 'standing', 'mixed', 'stairs'].includes(recommendation.position)
+    )
+  )
+}
+
 function getMiniResetContextScore(recommendation, context, schedule, slotRole) {
   let score = 0
 
@@ -1802,9 +1985,10 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.position === 'stairs' ? -70 : 0
     score += recommendation.visibilityLevel === 'visible' ? -45 : 0
     score += isMiniReset(recommendation) ? -90 : 0
+    score += isCalmReplacement(recommendation) ? 80 : -60
   }
 
-  if (['no-time', 'shorter'].includes(reason)) {
+  if (isTimeReplacementReason(reason)) {
     score += recommendation.durationMinutes <= 1 ? 180 : 0
     score += recommendation.durationMinutes === 2 ? 120 : 0
     score += recommendation.durationMinutes === 3 ? 45 : 0
@@ -1813,6 +1997,8 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += hasNoSpecialSetup(recommendation.requiredSetup) ? 45 : -35
     score += recommendation.visibilityLevel === 'discreet' ? 24 : 0
     score += isMiniReset(recommendation) ? 120 : 0
+    score += isMeaningfullyShorterReplacement(recommendation, originalSection) ? 120 : 0
+    score += isShorterReplacement(recommendation, originalSection) ? 80 : -160
   }
 
   if (reason === 'too-visible') {
@@ -1825,6 +2011,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
         ? 30
         : 0
     score += isMiniReset(recommendation) ? 65 : 0
+    score += hasLowerVisibility(recommendation, originalSection) ? 90 : -70
   }
 
   if (reason === 'no-space') {
@@ -1843,6 +2030,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
       ? -55
       : 0
     score += isMiniReset(recommendation) ? 70 : 0
+    score += isSpaceSavingReplacement(recommendation) ? 70 : -45
   }
 
   if (reason === 'too-hard') {
@@ -1851,6 +2039,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.intensity === 'active' ? -120 : 0
     score += recommendation.position === 'stairs' ? -80 : 0
     score += recommendation.movementType === 'activate' ? -55 : 0
+    score += isEasierReplacement(recommendation, originalSection) ? 80 : -45
   }
 
   if (reason === 'setup-mismatch') {
@@ -1904,6 +2093,7 @@ function getReplacementReasonScore(recommendation, reason, originalSection, cont
     score += recommendation.durationMinutes <= 5 ? 26 : -20
     score += isMiniReset(recommendation) && recommendation.position === 'walking' ? 65 : 0
     score += isQuietReset(recommendation) ? -240 : 0
+    score += isMovementOrientedReplacement(recommendation) ? 80 : -80
   }
 
   if (reason === 'not-appealing') {

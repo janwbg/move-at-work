@@ -822,16 +822,48 @@ describe('generatePlan', () => {
   it('prefers short recommendations when there is no time', () => {
     const profile = createReplacementProfile()
     const plan = generatePlan(profile)
+    const originalSection = plan.dailySchedule[1]
     const result = replaceRecommendationInPlan({
       plan,
-      indexToReplace: 2,
+      indexToReplace: 1,
       profile,
       currentWorkplace: 'office',
       currentPhase: 'meeting',
       reason: 'no-time',
     })
 
-    expect(result.replacement.durationMinutes).toBeLessThanOrEqual(2)
+    expect(originalSection.durationMinutes).toBe(2)
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.durationMinutes).toBeLessThan(
+      originalSection.durationMinutes,
+    )
+  })
+
+  it('keeps shorter as a legacy alias for the no-time replacement logic', () => {
+    const profile = createReplacementProfile()
+    const plan = generatePlan(profile)
+    const noTimeResult = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 1,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'no-time',
+    })
+    const shorterResult = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: 1,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'meeting',
+      reason: 'shorter',
+    })
+
+    expect(shorterResult.replaced).toBe(true)
+    expect(shorterResult.replacement.durationMinutes).toBeLessThan(
+      plan.dailySchedule[1].durationMinutes,
+    )
+    expect(shorterResult.replacement.ruleId).toBe(noTimeResult.replacement.ruleId)
   })
 
   it('prefers very short recommendations when there is little time', () => {
@@ -888,6 +920,129 @@ describe('generatePlan', () => {
 
     expect(result.replaced).toBe(true)
     expect(['walk', 'walking_meeting']).toContain(result.replacement.movementType)
+  })
+
+  it('prefers a less visible replacement when the original is too visible', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'phone',
+      goal: 'more-energy',
+      workplaceSetups: {
+        office: ['hallway'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const originalIndex = plan.dailySchedule.findIndex(
+      (section) => section.visibilityLevel === 'normal',
+    )
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: originalIndex,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'too-visible',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(getVisibilityRank(result.replacement.visibilityLevel)).toBeLessThan(
+      getVisibilityRank(plan.dailySchedule[originalIndex].visibilityLevel),
+    )
+  })
+
+  it('prefers a space-saving replacement when there is not enough room', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'phone',
+      goal: 'more-energy',
+      workplaceSetups: {
+        office: ['hallway'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const originalIndex = plan.dailySchedule.findIndex(
+      (section) => section.position === 'walking',
+    )
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: originalIndex,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'no-space',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.setup).toContain('Kein besonderes Equipment')
+    expect(['sitting', 'standing', 'mixed', 'desk']).toContain(
+      result.replacement.position,
+    )
+    expect(['walk', 'walking_meeting', 'activate']).not.toContain(
+      result.replacement.movementType,
+    )
+  })
+
+  it('prefers a gentler replacement when the original is too hard', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'break',
+      fitnessLevel: 'active',
+      goal: 'more-energy',
+      situation: 'mixed-day',
+      workplaceSetups: {
+        office: ['stairs', 'space', 'no-equipment'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const originalIndex = plan.dailySchedule.findIndex(
+      (section) =>
+        section.position === 'stairs' || section.movementType === 'activate',
+    )
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: originalIndex,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'break',
+      reason: 'too-hard',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(result.replacement.intensity).toBe('Leicht')
+    expect(result.replacement.position).not.toBe('stairs')
+    expect(result.replacement.movementType).not.toBe('activate')
+  })
+
+  it('prefers calm replacements and avoids activating walk impulses', () => {
+    const profile = createReplacementProfile({
+      currentPhase: 'phone',
+      goal: 'more-energy',
+      workplaceSetups: {
+        office: ['hallway'],
+        homeoffice: ['no-equipment'],
+      },
+    })
+    const plan = generatePlan(profile)
+    const originalIndex = plan.dailySchedule.findIndex(
+      (section) => section.movementType === 'walk',
+    )
+    const result = replaceRecommendationInPlan({
+      plan,
+      indexToReplace: originalIndex,
+      profile,
+      currentWorkplace: 'office',
+      currentPhase: 'phone',
+      reason: 'calmer',
+    })
+
+    expect(result.replaced).toBe(true)
+    expect(['breathing', 'sit_reset', 'mobilize', 'stretch', 'mini_reset']).toContain(
+      result.replacement.movementType,
+    )
+    expect(['walk', 'walking_meeting', 'activate']).not.toContain(
+      result.replacement.movementType,
+    )
+    expect(result.replacement.position).not.toBe('walking')
   })
 
   it('keeps walking replacements movement-oriented instead of quiet eye or breath resets', () => {
@@ -1245,6 +1400,14 @@ function createRotationProfile(overrides = {}) {
 
 function getRuleIds(schedule) {
   return schedule.map((section) => section.ruleId)
+}
+
+function getVisibilityRank(visibilityLevel) {
+  return {
+    discreet: 0,
+    normal: 1,
+    visible: 2,
+  }[visibilityLevel]
 }
 
 function hasSetup(plan, setup) {
