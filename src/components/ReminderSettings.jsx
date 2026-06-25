@@ -110,10 +110,10 @@ function ReminderSettings({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
             Reminder
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
@@ -130,7 +130,7 @@ function ReminderSettings({
             type="checkbox"
             checked={settings.enabled}
             onChange={(event) => handleToggle(event.target.checked)}
-            className="h-4 w-4 accent-[#2563eb]"
+            className="h-4 w-4 accent-teal-700"
           />
           Erinnerungen aktivieren
         </label>
@@ -149,8 +149,8 @@ function ReminderSettings({
                 aria-pressed={isActive}
                 className={`rounded-lg border px-4 py-3 text-left transition ${
                   isActive
-                    ? 'border-[#2563eb] bg-[#2563eb]/10 text-[#1d4ed8] dark:text-blue-100'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-[#2563eb]/40 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
+                    ? 'border-teal-700 bg-teal-50 text-teal-700 dark:border-teal-300/30 dark:bg-teal-300/10 dark:text-teal-100'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-700/40 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
                 }`}
                 key={mode.id}
                 onClick={() => handleModeChange(mode.id)}
@@ -190,7 +190,7 @@ function ReminderSettings({
           </div>
           {pauseStatus && (
             <button
-              className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+              className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
               onClick={endPause}
               type="button"
             >
@@ -253,7 +253,7 @@ function SystemNotificationSettings({
           <label className="flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm dark:bg-white/10 dark:text-slate-200">
             <input
               checked={systemNotificationsEnabled}
-              className="h-4 w-4 accent-[#2563eb]"
+              className="h-4 w-4 accent-teal-700"
               onChange={(event) => onToggle(event.target.checked)}
               type="checkbox"
             />
@@ -265,7 +265,7 @@ function SystemNotificationSettings({
       {notificationPermission === 'default' && (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
-            className="min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8]"
+            className="min-h-10 rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white shadow-md shadow-teal-700/15 transition hover:bg-teal-800"
             onClick={onPermissionRequest}
             type="button"
           >
@@ -296,7 +296,7 @@ function SystemNotificationSettings({
 function PauseButton({ children, onClick }) {
   return (
     <button
-      className="min-h-10 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:text-[#2563eb] dark:bg-white/10 dark:text-slate-200"
+      className="min-h-10 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:text-teal-700 dark:bg-white/10 dark:text-slate-200"
       onClick={onClick}
       type="button"
     >

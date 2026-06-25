@@ -6,7 +6,7 @@ function MovementPlanCard({ movement }) {
           {movement.title}
         </h3>
         <div className="flex flex-wrap gap-2">
-          <span className="w-fit rounded-full bg-[#2563eb]/10 px-3 py-1 text-sm font-bold text-[#2563eb]">
+          <span className="w-fit rounded-full bg-teal-50 px-3 py-1 text-sm font-bold text-teal-700 dark:bg-teal-300/10 dark:text-teal-200">
             {movement.duration}
           </span>
           <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">

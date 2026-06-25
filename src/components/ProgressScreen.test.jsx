@@ -8,7 +8,7 @@ describe('ProgressScreen', () => {
 
     expect(html).toContain('Fortschritt')
     expect(html).toContain(
-      'Kleine Bewegungsimpulse, die sich über deine Woche summieren.',
+      'Ein ruhiger Blick auf deine Arbeits- und Lernroutine.',
     )
     expect(html).not.toContain('Jede kurze Bewegung')
     expect(html).not.toContain('Dein Fortschritt bleibt lokal')
@@ -54,14 +54,14 @@ describe('ProgressScreen', () => {
     expect(html).not.toContain('Microbreaks')
   })
 
-  it('uses the rocket for the active streak', () => {
+  it('shows the active streak without a gamified icon', () => {
     const html = renderProgressScreen({
       completedToday: 1,
       completedThisWeek: 4,
       streak: 1,
     })
 
-    expect(html).toContain('🚀')
+    expect(html).not.toContain('🚀')
     expect(html).toContain('Aktiver Tag')
   })
 

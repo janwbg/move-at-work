@@ -28,10 +28,10 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
             Bewegungsprofil
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
@@ -40,7 +40,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
           <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
             Passe Ziel, Arbeitsorte und Setups an.
           </p>
-          <p className="mt-2 rounded-lg bg-[#2563eb]/5 p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-[#2563eb]/10 dark:text-slate-200">
+          <p className="mt-2 rounded-lg bg-teal-50 p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-teal-300/10 dark:text-slate-200">
             Änderungen gelten für zukünftige und offene Empfehlungen. Bereits
             erledigte Übungen bleiben erhalten.
           </p>
@@ -49,7 +49,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
           <button
             type="button"
             onClick={onBack}
-            className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+            className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
           >
             Zurück
           </button>
@@ -116,7 +116,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleWorkplace(workplace.id)}
-                        className="h-4 w-4 accent-[#2563eb]"
+                        className="h-4 w-4 accent-teal-700"
                       />
                       Aktiv
                     </label>
@@ -128,7 +128,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
                       <button
                         type="button"
                         onClick={() => onEditSetup(workplace.id)}
-                        className="mt-3 min-h-10 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+                        className="mt-3 min-h-10 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
                       >
                         Setup bearbeiten
                       </button>
@@ -238,10 +238,10 @@ export function SetupSettingsScreen({ onBack, onToggle, setup, workplace }) {
       : `${setup.length} Optionen aktiv`
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+          <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
             Setup
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
@@ -257,7 +257,7 @@ export function SetupSettingsScreen({ onBack, onToggle, setup, workplace }) {
         <button
           type="button"
           onClick={onBack}
-          className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+          className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
         >
           Zurück
         </button>
@@ -275,7 +275,7 @@ export function SetupSettingsScreen({ onBack, onToggle, setup, workplace }) {
                 type="checkbox"
                 checked={setup.includes(setupOption.id)}
                 onChange={() => onToggle(setupOption.id)}
-                className="h-4 w-4 accent-[#2563eb]"
+                className="h-4 w-4 accent-teal-700"
               />
               <span>
                 <span className="block font-bold">{setupOption.label}</span>
@@ -300,7 +300,7 @@ function SelectField({ helper, label, onChange, options, value }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 dark:border-white/10 dark:bg-[#1b1b1b] dark:text-white"
+        className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20 dark:border-white/10 dark:bg-[#17201e] dark:text-white"
       >
         {options.map((option) => (
           <option key={option.id} value={option.id}>

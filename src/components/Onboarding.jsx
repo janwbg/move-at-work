@@ -55,12 +55,12 @@ const landingBenefits = [
   {
     icon: '✓',
     title: 'Keine Planung nötig',
-    text: 'Move at work stellt deinen Tagesplan für dich zusammen.',
+    text: 'Move at work stellt deinen Tagesplan ruhig und passend zusammen.',
   },
   {
-    icon: '✦',
-    title: 'Kleine Pausen, großer Unterschied',
-    text: 'Bewegungsimpulse, die dir helfen, wieder in Schwung zu kommen.',
+    icon: '•',
+    title: 'Ohne Extra-Aufwand',
+    text: 'Kein Workout-Gefühl, kein schlechtes Gewissen, kein großer Umbau.',
   },
 ]
 
@@ -185,7 +185,7 @@ function Onboarding({
 
   return (
     <section
-      className={`w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 sm:p-8 ${
+      className={`w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/50 dark:border-white/10 dark:bg-white/[0.06] dark:shadow-black/20 sm:p-8 ${
         currentStep.kind === 'landing' ? 'max-w-4xl' : 'max-w-3xl'
       }`}
     >
@@ -200,12 +200,12 @@ function Onboarding({
             role="progressbar"
           >
             <div
-              className="h-2 rounded-full bg-[#2563eb] transition-all"
+              className="h-2 rounded-full bg-teal-700 transition-all"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         )}
-        <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+        <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
           {getSelectionLabel(currentStep)}
         </p>
         {currentStep.kind !== 'setup-confirmation' && !isSetupStep(currentStep) && (
@@ -229,7 +229,7 @@ function Onboarding({
               key={benefit.title}
               className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-[#2563eb] shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:shadow-none">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-teal-700 shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:text-teal-200 dark:shadow-none">
                 {benefit.icon}
               </div>
               <h2 className="mt-4 text-base font-extrabold text-slate-950 dark:text-white">
@@ -280,7 +280,7 @@ function Onboarding({
 
       {currentStep.kind === 'setup-confirmation' && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/10 dark:bg-white/5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl text-[#2563eb] shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:shadow-none">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl text-teal-700 shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:text-teal-200 dark:shadow-none">
             ✓
           </div>
           <h1 className="mt-5 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
@@ -335,8 +335,8 @@ function Onboarding({
               onClick={() => toggleRoutineWeekday(weekday.id)}
               className={`min-h-12 rounded-lg border px-3 py-2 text-sm font-extrabold transition ${
                 routineSettings.activeWeekdays.includes(weekday.id)
-                  ? 'border-[#2563eb] bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-[#2563eb]/50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
+                  ? 'border-teal-700 bg-teal-700 text-white shadow-md shadow-teal-700/20'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-teal-700/50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
               }`}
             >
               {weekday.label}
@@ -403,7 +403,7 @@ function Onboarding({
           <button
             type="button"
             onClick={() => setCurrentIndex((index) => Math.max(0, index - 1))}
-            className="min-h-12 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-slate-900 dark:border-white/10 dark:text-slate-400 dark:hover:text-white"
+            className="min-h-12 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-teal-700/40 hover:text-slate-900 dark:border-white/10 dark:text-slate-400 dark:hover:text-white"
           >
             Zurück
           </button>
@@ -413,7 +413,7 @@ function Onboarding({
           type="button"
           disabled={!canContinue}
           onClick={handleNext}
-          className="min-h-12 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5 hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+          className="min-h-12 rounded-full bg-teal-700 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-700/20 transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
         >
           {canContinue ? getNextButtonLabel(currentStep) : 'Bitte auswählen'}
         </button>
@@ -441,7 +441,7 @@ function OnboardingLoading() {
                 key={label}
                 className="animate-pulse rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-200/70 dark:border-white/10 dark:bg-slate-950/40 dark:shadow-none"
               >
-                <p className="text-[11px] font-bold uppercase tracking-normal text-[#2563eb]">
+                <p className="text-[11px] font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
                   {label}
                 </p>
                 <p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
@@ -450,22 +450,22 @@ function OnboardingLoading() {
               </div>
             ))}
           </div>
-          <div className="mx-auto hidden h-10 w-10 items-center justify-center rounded-full bg-[#2563eb] text-sm font-extrabold text-white shadow-lg shadow-[#2563eb]/20 sm:flex">
+          <div className="mx-auto hidden h-10 w-10 items-center justify-center rounded-full bg-teal-700 text-sm font-extrabold text-white shadow-lg shadow-teal-700/20 sm:flex">
             →
           </div>
-          <div className="rounded-xl border border-[#2563eb]/30 bg-white p-3 shadow-sm shadow-[#2563eb]/10 dark:border-[#60a5fa]/30 dark:bg-slate-950/40">
-            <p className="text-[11px] font-bold uppercase tracking-normal text-[#2563eb]">
+          <div className="rounded-xl border border-teal-700/30 bg-white p-3 shadow-sm shadow-teal-700/10 dark:border-teal-300/30 dark:bg-slate-950/40">
+            <p className="text-[11px] font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
               Tagesplan
             </p>
             <div className="mt-3 grid gap-2">
-              <span className="h-2 rounded-full bg-[#2563eb]/80" />
+              <span className="h-2 rounded-full bg-teal-700/80" />
               <span className="h-2 w-4/5 rounded-full bg-slate-300 dark:bg-white/20" />
               <span className="h-2 w-3/5 rounded-full bg-slate-200 dark:bg-white/10" />
             </div>
           </div>
         </div>
       </div>
-      <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+      <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
         Einen Moment
       </p>
       <h1 className="mt-2 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
@@ -488,12 +488,12 @@ function SetupWorkplaceContext({ answers, step }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-xl text-[#2563eb] shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:shadow-none">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-xl text-teal-700 shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:text-teal-200 dark:shadow-none">
           {step.workplace === 'homeoffice' ? '⌂' : '▦'}
         </div>
         <div>
           {setupSteps > 1 && (
-            <p className="text-xs font-extrabold uppercase tracking-normal text-[#2563eb]">
+            <p className="text-xs font-extrabold uppercase tracking-normal text-teal-700 dark:text-teal-300">
               {stepLabel}
             </p>
           )}

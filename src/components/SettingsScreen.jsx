@@ -176,7 +176,7 @@ function SettingsScreen({
           <button
             type="button"
             onClick={onOpenUpgrade}
-            className="mt-4 min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8]"
+            className="mt-4 min-h-11 rounded-full bg-teal-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-700/15 transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
             Plus ansehen
           </button>
@@ -192,7 +192,7 @@ function SettingsScreen({
           Einstellungen
         </h1>
         <p className="max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-          Passe Profil, Routine und Erinnerungen an deinen Alltag an.
+          Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.
         </p>
       </section>
 
@@ -232,14 +232,14 @@ function SettingsScreen({
               <button
                 type="button"
                 onClick={() => setActiveView(settingsViews.account)}
-                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
               >
                 Anmelden oder Konto erstellen
               </button>
               <button
                 type="button"
                 onClick={onOpenUpgrade}
-                className="min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8]"
+                className="min-h-10 rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white shadow-md shadow-teal-700/15 transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
               >
                 Plus ansehen
               </button>
@@ -255,7 +255,7 @@ function SettingsScreen({
               href={feedbackUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+              className="inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
             >
               Feedback geben
             </a>
@@ -264,24 +264,24 @@ function SettingsScreen({
         <SettingsCard
           icon="setup"
           summary={[
+            `Darstellung: ${isDark ? 'Dunkel' : 'Hell'}`,
             'Onboarding neu starten',
             'Fortschritt bleibt erhalten.',
-            `Darstellung: ${isDark ? 'Dunkel' : 'Hell'}`,
           ]}
-          title="App & Einrichtung"
+          title="Darstellung & Einrichtung"
           actions={
             <>
               <button
                 type="button"
                 onClick={handleRestartOnboarding}
-                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
               >
                 Onboarding neu starten
               </button>
               <button
                 type="button"
                 onClick={onToggleTheme}
-                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+                className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
               >
                 {isDark ? 'Zu Hell wechseln' : 'Zu Dunkel wechseln'}
               </button>
@@ -306,7 +306,7 @@ function SettingsCard({
   title,
 }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
       <div className="flex items-start gap-3">
         <IconBadge name={icon} />
         <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ function SettingsCard({
           <button
             type="button"
             onClick={onAction}
-            className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+            className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
           >
             {actionLabel}
           </button>
@@ -354,7 +354,7 @@ function DetailHeader({ description, icon, onBack, title }) {
       <button
         type="button"
         onClick={onBack}
-        className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+        className="min-h-10 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
       >
         Zurück
       </button>
@@ -368,7 +368,7 @@ function RoutineSettingsPanel({
   onRoutineDayToggle,
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
       <DetailHeader
         description="Lege fest, an welchen Tagen Move at work zu deinem Alltag gehört."
         icon="routine"
@@ -393,7 +393,7 @@ function RoutineSettingsPanel({
               aria-pressed={isActive}
               className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
                 isActive
-                  ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15'
+                  ? 'bg-teal-700 text-white shadow-md shadow-teal-700/15'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
               }`}
               key={weekday.id}

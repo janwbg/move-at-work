@@ -81,7 +81,7 @@ function AuthPanel({ auth: providedAuth }) {
           type="button"
           onClick={handleSignOut}
           disabled={auth.isLoading}
-          className="mt-4 min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] disabled:cursor-wait disabled:opacity-70 dark:border-white/10 dark:text-slate-200"
+          className="mt-4 min-h-11 rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 disabled:cursor-wait disabled:opacity-70 dark:border-white/10 dark:text-slate-200"
         >
           {auth.isLoading ? 'Bitte warten ...' : 'Abmelden'}
         </button>
@@ -102,7 +102,7 @@ function AuthPanel({ auth: providedAuth }) {
           onClick={() => switchMode('sign-in')}
           className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
             !isSignUp
-              ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+              ? 'bg-teal-700 text-white shadow-md shadow-teal-700/20'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
           }`}
         >
@@ -114,7 +114,7 @@ function AuthPanel({ auth: providedAuth }) {
           onClick={() => switchMode('sign-up')}
           className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold transition ${
             isSignUp
-              ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/20'
+              ? 'bg-teal-700 text-white shadow-md shadow-teal-700/20'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
           }`}
         >
@@ -130,7 +130,7 @@ function AuthPanel({ auth: providedAuth }) {
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           required
-          className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
+          className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
       </label>
 
@@ -144,13 +144,13 @@ function AuthPanel({ auth: providedAuth }) {
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
             required
             minLength={6}
-            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
           <button
             type="button"
             aria-label={passwordVisibilityLabel}
             onClick={() => setPasswordVisible((current) => !current)}
-            className="min-h-11 shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-200"
+            className="min-h-11 shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:text-slate-200"
           >
             {passwordVisibilityLabel}
           </button>
@@ -167,7 +167,7 @@ function AuthPanel({ auth: providedAuth }) {
             autoComplete="new-password"
             required
             minLength={6}
-            className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-950 outline-none transition focus:border-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </label>
       )}
@@ -187,7 +187,7 @@ function AuthPanel({ auth: providedAuth }) {
       <button
         type="submit"
         disabled={auth.isLoading}
-        className="min-h-11 rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70"
+        className="min-h-11 rounded-full bg-teal-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-700/15 transition hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
       >
         {auth.isLoading
           ? 'Bitte warten ...'

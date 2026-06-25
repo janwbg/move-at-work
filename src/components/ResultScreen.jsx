@@ -581,8 +581,8 @@ export function SuccessDialog({
         <div className="mt-5 grid grid-cols-2 gap-3 text-left">
           <ProgressStatCard label="Heute" value={`${completedToday}/${totalToday}`} />
           <ProgressStatCard
-            label="Arbeitsstreak"
-            value={`🚀 ${Math.max(summary.streak, 0)}`}
+            label="Aktive Serie"
+            value={String(Math.max(summary.streak, 0))}
           />
         </div>
 
@@ -594,14 +594,14 @@ export function SuccessDialog({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 w-full rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+            className="min-h-11 w-full rounded-full bg-teal-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
             Zurück zum Tagesplan
           </button>
           <button
             type="button"
             onClick={onOpenProgress}
-            className="min-h-11 w-full rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-white/10 dark:text-slate-200"
+            className="min-h-11 w-full rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-white/10 dark:text-slate-200"
           >
             Fortschritt ansehen
           </button>

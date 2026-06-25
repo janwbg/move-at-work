@@ -14,7 +14,7 @@ function UpgradeScreen({
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <section className="rounded-2xl bg-[#2563eb] p-6 text-white shadow-xl shadow-[#2563eb]/20 sm:p-8">
+      <section className="rounded-2xl bg-teal-700 p-6 text-white shadow-xl shadow-teal-700/20 sm:p-8">
         {onBack && (
           <button
             type="button"
@@ -24,13 +24,13 @@ function UpgradeScreen({
             Zurück
           </button>
         )}
-        <p className="text-sm font-bold uppercase tracking-normal text-blue-100">
+        <p className="text-sm font-bold uppercase tracking-normal text-teal-100">
           Upgrade
         </p>
         <h1 className="mt-3 text-3xl font-extrabold tracking-normal sm:text-4xl">
           {plan.title}
         </h1>
-        <p className="mt-4 max-w-2xl leading-7 text-blue-50">
+        <p className="mt-4 max-w-2xl leading-7 text-teal-50">
           {plan.tagline}
         </p>
       </section>
@@ -41,7 +41,7 @@ function UpgradeScreen({
             className="rounded-lg border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
             key={price.id}
           >
-            <p className="text-sm font-bold uppercase tracking-normal text-[#2563eb]">
+            <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
               {price.label}
             </p>
             <p className="mt-2 text-2xl font-extrabold text-slate-950 dark:text-white">
@@ -51,7 +51,7 @@ function UpgradeScreen({
         ))}
       </section>
 
-      <p className="rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/5 p-4 text-sm font-semibold leading-6 text-slate-600 dark:bg-[#2563eb]/10 dark:text-slate-200">
+      <p className="rounded-lg border border-teal-700/20 bg-teal-50 p-4 text-sm font-semibold leading-6 text-slate-600 dark:border-teal-300/20 dark:bg-teal-300/10 dark:text-slate-200">
         {plan.earlyAccessNote}
       </p>
 
@@ -105,7 +105,7 @@ function UpgradeScreen({
                   <td className="px-4 py-3 font-bold text-slate-700 dark:text-slate-200">
                     {row.free}
                   </td>
-                  <td className="px-4 py-3 font-bold text-[#1d4ed8] dark:text-blue-100">
+                  <td className="px-4 py-3 font-bold text-teal-700 dark:text-teal-100">
                     {row.plus}
                   </td>
                 </tr>
@@ -131,7 +131,7 @@ function UpgradeScreen({
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-[#2563eb]/20 bg-[#2563eb]/5 p-5 dark:bg-[#2563eb]/10 sm:p-6">
+      <section className="rounded-2xl border border-teal-700/20 bg-teal-50 p-5 dark:border-teal-300/20 dark:bg-teal-300/10 sm:p-6">
         {plusActive ? (
           <p className="text-lg font-extrabold text-slate-950 dark:text-white">
             Plus ist aktiv
@@ -147,7 +147,7 @@ function UpgradeScreen({
             <button
               type="button"
               disabled
-              className="mt-4 min-h-11 cursor-not-allowed rounded-full bg-[#2563eb] px-5 py-3 text-sm font-bold text-white opacity-80"
+              className="mt-4 min-h-11 cursor-not-allowed rounded-full bg-teal-700 px-5 py-3 text-sm font-bold text-white opacity-80"
             >
               Checkout folgt im nächsten Schritt
             </button>

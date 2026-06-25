@@ -25,7 +25,7 @@ describe('Onboarding', () => {
     expect(steps[0]).toMatchObject({
       kind: 'landing',
       question:
-        'Bewegung, die in deinen Tag passt — ohne dass du sie planen musst.',
+        'Kleine Impulse, die in deinen Tag passen.',
     })
     expect(steps[1]).toMatchObject({
       kind: 'goal',
@@ -44,11 +44,11 @@ describe('Onboarding', () => {
     })
 
     expect(html).toContain(
-      'Bewegung, die in deinen Tag passt — ohne dass du sie planen musst.',
+      'Kleine Impulse, die in deinen Tag passen.',
     )
     expect(html).toContain('Passt in deinen Arbeitstag')
     expect(html).toContain('Keine Planung nötig')
-    expect(html).toContain('Kleine Pausen, großer Unterschied')
+    expect(html).toContain('Ohne Extra-Aufwand')
     expect(html).not.toContain('Zurück')
   })
 

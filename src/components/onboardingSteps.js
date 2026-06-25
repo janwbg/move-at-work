@@ -9,10 +9,10 @@ export function getOnboardingSteps(answers) {
     {
       eyebrow: 'Start',
       helper:
-        'Move at work erstellt kurze Bewegungsimpulse für Büro, Homeoffice oder Lernphasen. Ohne Sportkleidung, ohne schlechtes Gewissen und ohne komplizierte Planung.',
+        'Kleine Bewegungsimpulse, passend zu Büro, Homeoffice oder Lernphasen. Ohne Sportkleidung, ohne lange Pause und ohne Druck.',
       kind: 'landing',
       question:
-        'Bewegung, die in deinen Tag passt — ohne dass du sie planen musst.',
+        'Kleine Impulse, die in deinen Tag passen.',
     },
     {
       eyebrow: 'Ziel',

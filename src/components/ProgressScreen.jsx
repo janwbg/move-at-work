@@ -8,7 +8,7 @@ function ProgressScreen({ summary, totalToday }) {
           Fortschritt
         </h1>
         <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-          Kleine Bewegungsimpulse, die sich über deine Woche summieren.
+          Ein ruhiger Blick auf deine Arbeits- und Lernroutine.
         </p>
       </header>
 

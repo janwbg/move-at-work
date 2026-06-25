@@ -68,8 +68,8 @@ function DailyScheduleCard({
 
   const isCompactOpen = compact && !featured
   const openClass = featured
-    ? 'border-[#2563eb]/30 bg-white shadow-md shadow-[#2563eb]/10 dark:border-blue-300/20 dark:bg-white/[0.06]'
-    : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.04]'
+    ? 'border-teal-700/30 bg-white shadow-md shadow-teal-700/10 dark:border-teal-300/20 dark:bg-white/[0.07]'
+    : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05]'
 
   return (
     <article
@@ -86,12 +86,12 @@ function DailyScheduleCard({
           <div className="flex gap-3 sm:gap-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs font-bold uppercase tracking-normal text-[#2563eb]">
+                <p className="text-xs font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
                   {section.timeLabel}
                 </p>
                 {featured && !completed && (
-                  <span className="rounded-full bg-[#2563eb]/10 px-2.5 py-1 text-xs font-extrabold text-[#1d4ed8] dark:bg-blue-300/10 dark:text-blue-100">
-                    Jetzt passend
+                  <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-extrabold text-teal-700 dark:bg-teal-300/10 dark:text-teal-100">
+                    Nächster Impuls
                   </span>
                 )}
               </div>
@@ -133,7 +133,7 @@ function DailyScheduleCard({
           <button
             type="button"
             onClick={onOpenDetails}
-            className={`rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-md shadow-[#2563eb]/15 transition hover:bg-[#1d4ed8] ${
+            className={`rounded-full bg-teal-700 text-sm font-bold text-white shadow-md shadow-teal-700/15 transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${
               featured ? 'min-h-11 px-5 py-3' : 'min-h-8 px-3 py-1.5'
             }`}
           >
@@ -145,7 +145,7 @@ function DailyScheduleCard({
               aria-label="Empfehlung wechseln"
               title="Empfehlung wechseln"
               onClick={openReplacementDialog}
-              className={`${isCompactOpen ? 'min-h-8 w-8' : 'min-h-10 w-10'} flex items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-white/10 dark:text-slate-300`}
+              className={`${isCompactOpen ? 'min-h-8 w-8' : 'min-h-10 w-10'} flex items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-teal-700/40 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-white/10 dark:text-slate-300`}
             >
               <span aria-hidden="true" className="text-lg leading-none">
                 ⟳
@@ -156,7 +156,7 @@ function DailyScheduleCard({
             type="button"
             onClick={onComplete}
             disabled={completed}
-            className={`rounded-full border border-slate-200 text-sm font-bold text-slate-600 transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:border-white/10 dark:text-slate-300 ${
+            className={`rounded-full border border-slate-200 text-sm font-bold text-slate-600 transition hover:border-emerald-500/40 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700 dark:border-white/10 dark:text-slate-300 dark:disabled:border-emerald-400/20 dark:disabled:bg-emerald-400/10 dark:disabled:text-emerald-100 ${
               isCompactOpen ? 'min-h-8 px-3 py-1.5' : 'min-h-10 px-4 py-2'
             }`}
           >
@@ -182,12 +182,12 @@ function CompletedScheduleRow({ movementLabel, onOpenDetails, section }) {
       type="button"
       aria-label={`Erledigte Übung öffnen: ${section.title}`}
       onClick={onOpenDetails}
-      className="group w-full rounded-lg border border-slate-200 bg-slate-50/80 p-3 text-left transition hover:border-[#2563eb]/30 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+      className="group w-full rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-left transition hover:border-teal-700/30 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:hover:bg-white/[0.06]"
     >
       <span className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-extrabold text-slate-600 dark:bg-white/10 dark:text-slate-300"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-extrabold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-100"
         >
           ✓
         </span>
@@ -199,7 +199,7 @@ function CompletedScheduleRow({ movementLabel, onOpenDetails, section }) {
             {section.timeLabel} · {section.duration} · {movementLabel}
           </span>
         </span>
-        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">
+        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-white/10 dark:text-emerald-100">
           Erledigt
         </span>
       </span>

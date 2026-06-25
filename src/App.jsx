@@ -99,7 +99,7 @@ function App() {
     step === 'result' && ['today', 'progress', 'settings'].includes(resultActiveTab)
 
   return (
-    <main className="min-h-svh bg-[#f7f8fb] text-slate-950 transition-colors dark:bg-[#121212] dark:text-white">
+    <main className="min-h-svh bg-[#f5f8f7] text-slate-950 transition-colors dark:bg-[#0f1413] dark:text-white">
       <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         {!hideHeader && (
           <AppHeader

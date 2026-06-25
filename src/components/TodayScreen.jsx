@@ -262,13 +262,13 @@ function TodayScreen({
 
   return (
     <div className="mx-auto max-w-4xl space-y-3">
-      <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
             aria-pressed={isPauseDay}
             onClick={handlePauseDayToggle}
-            className="group rounded-lg text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563eb]"
+            className="group rounded-lg text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
           >
             <p className="text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
               {formatTodayDate(now)}
@@ -278,7 +278,7 @@ function TodayScreen({
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
                 ·
               </span>
-              <span className="font-bold text-[#1d4ed8] group-hover:text-[#2563eb] dark:text-blue-200">
+              <span className="font-bold text-teal-700 group-hover:text-teal-800 dark:text-teal-200">
                 {isPauseDay ? 'Heute aktivieren' : 'Heute pausieren'}
               </span>
             </p>
@@ -295,15 +295,19 @@ function TodayScreen({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-5">
+      <section className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05] sm:p-5">
         <div className="mb-4 flex flex-col gap-3">
           <div>
             <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
               Dein individueller Tagesplan
             </h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+              Der nächste passende Impuls steht oben im Fokus, der Rest bleibt
+              chronologisch und ruhig erreichbar.
+            </p>
           </div>
 
-          <div className="grid gap-3 border-y border-slate-200 py-3 dark:border-white/10 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="grid gap-3 rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04] md:grid-cols-[1fr_auto] md:items-center">
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
                 Du arbeitest heute im {activeWorkplaceLabel}
@@ -354,7 +358,7 @@ function TodayScreen({
               <button
                 type="button"
                 onClick={handlePauseDayToggle}
-                className="mt-3 min-h-10 rounded-full bg-[#2563eb] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1d4ed8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+                className="mt-3 min-h-10 rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
               >
                 Heute aktivieren
               </button>
@@ -432,10 +436,10 @@ function CompactStreak({ streak }) {
   return (
     <div className="rounded-lg bg-slate-50 px-3 py-2 text-center dark:bg-white/5">
       <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        Streak
+        Serie
       </p>
       <p className="mt-1 text-lg font-extrabold text-slate-950 dark:text-white">
-        🚀 {safeStreak}
+        {safeStreak}
       </p>
     </div>
   )
@@ -453,7 +457,7 @@ function getWorkplaceLabel(workplaceId) {
 
 function ReplacementLimitNotice({ onOpenUpgrade }) {
   return (
-    <aside className="mb-4 rounded-lg border border-[#2563eb]/20 bg-[#2563eb]/5 p-4 dark:bg-[#2563eb]/10">
+    <aside className="mb-4 rounded-lg border border-teal-700/20 bg-teal-50 p-4 dark:border-teal-300/20 dark:bg-teal-300/10">
       <p className="text-sm font-extrabold text-slate-950 dark:text-white">
         Heute schon gewechselt
       </p>
@@ -463,7 +467,7 @@ function ReplacementLimitNotice({ onOpenUpgrade }) {
       <button
         type="button"
         onClick={onOpenUpgrade}
-        className="mt-3 min-h-10 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#1d4ed8] shadow-sm transition hover:bg-blue-50 dark:bg-white/10 dark:text-blue-100 dark:hover:bg-white/15"
+        className="mt-3 min-h-10 rounded-full bg-white px-4 py-2 text-sm font-bold text-teal-700 shadow-sm transition hover:bg-teal-50 dark:bg-white/10 dark:text-teal-100 dark:hover:bg-white/15"
       >
         Plus ansehen
       </button>
@@ -484,7 +488,7 @@ function ReminderBanner({
   })
 
   return (
-    <aside className="rounded-lg border border-[#2563eb]/15 bg-[#2563eb]/5 p-3 dark:bg-[#2563eb]/10">
+    <aside className="rounded-lg border border-teal-700/15 bg-teal-50 p-3 dark:border-teal-300/20 dark:bg-teal-300/10">
       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-sm font-extrabold text-slate-950 dark:text-white">
@@ -494,12 +498,12 @@ function ReminderBanner({
             {copy.text}
           </p>
           {copy.contextHint && (
-            <p className="mt-1 text-sm font-semibold text-[#1d4ed8] dark:text-blue-100">
+            <p className="mt-1 text-sm font-semibold text-teal-700 dark:text-teal-100">
               {copy.contextHint}
             </p>
           )}
         </div>
-        <p className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-[#1d4ed8] dark:bg-white/10 dark:text-blue-100">
+        <p className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-teal-700 dark:bg-white/10 dark:text-teal-100">
           {reminder.slotLabel}
         </p>
       </div>
@@ -533,8 +537,8 @@ function ReminderActionButton({ children, onClick, primary = false }) {
     <button
       className={`min-h-9 rounded-full px-3 py-2 text-sm font-bold transition ${
         primary
-          ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/15 hover:bg-[#1d4ed8]'
-          : 'bg-white text-slate-700 hover:text-[#2563eb] dark:bg-white/10 dark:text-slate-200'
+          ? 'bg-teal-700 text-white shadow-md shadow-teal-700/15 hover:bg-teal-800'
+          : 'bg-white text-slate-700 hover:text-teal-700 dark:bg-white/10 dark:text-slate-200'
       }`}
       onClick={onClick}
       type="button"
@@ -550,7 +554,7 @@ function WorkdayTypeSelect({ activeWorkdayType, onWorkdayTypeChange }) {
       Art des heutigen Arbeitstags
       <select
         aria-label="Art des heutigen Arbeitstags auswählen"
-        className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:border-white/10 dark:bg-[#1f1f1f] dark:text-white"
+        className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20 dark:border-white/10 dark:bg-[#17201e] dark:text-white"
         onChange={(event) => onWorkdayTypeChange(event.target.value)}
         value={activeWorkdayType}
       >
@@ -584,8 +588,8 @@ function WorkplaceSwitcher({ activeWorkplace, onWorkplaceChange, workplaces }) {
               onClick={() => onWorkplaceChange(workplace.id)}
               className={`min-h-8 px-3 py-1.5 text-sm font-bold transition ${
                 isActive
-                  ? 'rounded-md bg-[#2563eb] text-white shadow-sm shadow-[#2563eb]/15'
-                  : 'text-slate-600 hover:text-[#2563eb] dark:text-slate-300'
+                  ? 'rounded-md bg-teal-700 text-white shadow-sm shadow-teal-700/15'
+                  : 'text-slate-600 hover:text-teal-700 dark:text-slate-300'
               }`}
             >
               {workplace.label}

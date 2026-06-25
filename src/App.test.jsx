@@ -94,7 +94,7 @@ describe('App auth fallback', () => {
     await clickButtonContaining('Einstellungen')
 
     expect(document.body.textContent).toContain(
-      'Passe Profil, Routine und Erinnerungen an deinen Alltag an.',
+      'Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.',
     )
     expect(document.body.textContent).not.toContain('Bewegungsimpulse')
     expect(document.body.textContent).toContain('Darstellung: Hell')

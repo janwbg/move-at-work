@@ -211,7 +211,7 @@ describe('TodayScreen', () => {
       'Du kannst den Tag aktivieren, wenn du trotzdem Bewegungsimpulse machen möchtest.',
     )
     expect(html).not.toContain('Kleiner Wechselmoment?')
-    expect(html).not.toContain('Jetzt passend')
+    expect(html).not.toContain('Nächster Impuls')
     expect(html).not.toContain('Übung starten')
     expect(html).not.toContain('Empfehlung wechseln')
   })
@@ -263,7 +263,7 @@ describe('TodayScreen', () => {
     expect(html).toContain('Alles erledigt für heute.')
   })
 
-  it('shows the compact rocket streak safely', () => {
+  it('shows the compact active series safely', () => {
     const html = renderTodayScreen({
       progressSummary: { completedToday: 0, completedThisWeek: 0, streak: 3 },
     })
@@ -271,8 +271,9 @@ describe('TodayScreen', () => {
       progressSummary: undefined,
     })
 
-    expect(html).toContain('🚀 3')
-    expect(emptyHtml).toContain('🚀 0')
+    expect(html).toContain('Serie')
+    expect(html).toContain('>3</p>')
+    expect(emptyHtml).toContain('>0</p>')
   })
 
   it('removes the old hero, medical notice and feedback box from Today', () => {
@@ -356,9 +357,9 @@ describe('TodayScreen', () => {
     expect(html).toContain('Start-Reset')
     expect(html).toContain('Vormittag-Reset')
     expect(html.indexOf('Mittagswechsel')).toBeLessThan(
-      html.indexOf('Jetzt passend'),
+      html.indexOf('Nächster Impuls'),
     )
-    expect(html.indexOf('Jetzt passend')).toBeLessThan(
+    expect(html.indexOf('Nächster Impuls')).toBeLessThan(
       html.indexOf('Mittags-Reset'),
     )
     expect(html).not.toContain('Startgrund')
@@ -418,7 +419,7 @@ describe('TodayScreen', () => {
 
     expect(html).not.toContain('Als Nächstes')
     expect(html).not.toContain('Später heute')
-    expect(html).toContain('Jetzt passend')
+    expect(html).toContain('Nächster Impuls')
     expect(html).toContain('Öffnen')
     expect(html).not.toContain('Übung starten')
     expect(html.indexOf('Schulter-Reset')).toBeLessThan(html.indexOf('Atem-Reset'))

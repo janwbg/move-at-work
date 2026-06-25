@@ -15,7 +15,7 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
   return (
     <section className="space-y-3">
       <div className="grid gap-3 md:grid-cols-3">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <ProgressRing
               completedToday={completedToday}
@@ -35,13 +35,13 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
                 Diese Woche
               </p>
-              <p className="mt-2 text-4xl font-extrabold leading-none text-[#1d4ed8] dark:text-blue-100">
+              <p className="mt-2 text-4xl font-extrabold leading-none text-teal-700 dark:text-teal-200">
                 {completedThisWeek}
               </p>
               <p className="mt-1 text-sm font-extrabold text-slate-600 dark:text-slate-300">
@@ -51,22 +51,19 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
                 Aktive Serie
               </p>
             </div>
-            <div
+            <p
               aria-label={`${streak} ${streak === 1 ? 'aktiver Tag' : 'aktive Tage'} in Folge`}
-              className="flex items-baseline justify-center gap-1 text-4xl font-extrabold leading-none text-emerald-700 dark:text-emerald-100"
+              className="text-4xl font-extrabold leading-none text-emerald-700 dark:text-emerald-100"
             >
-              <span aria-hidden="true" className="text-2xl">
-                🚀
-              </span>
               {streak}
-            </div>
+            </p>
             <div>
               <p className="text-sm font-extrabold text-slate-700 dark:text-slate-200">
                 {streak === 1 ? 'Aktiver Tag' : 'Aktive Tage'}
@@ -101,7 +98,7 @@ function RoutineCalendar({ days }) {
   ]
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-4">
+    <article className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">
@@ -152,7 +149,7 @@ function RoutineCalendar({ days }) {
           return (
             <div
               aria-label={`${day.isToday ? 'Heute, ' : ''}${day.date}: ${stateLabel}`}
-              className={`relative flex aspect-square min-h-7 flex-col items-center justify-center rounded-md border text-[11px] font-extrabold leading-none ${getCalendarStatusClass(stateId)} ${day.isToday ? 'after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-[#2563eb]/45 after:ring-offset-1 after:ring-offset-white dark:after:ring-offset-[#121212]' : ''}`}
+              className={`relative flex aspect-square min-h-7 flex-col items-center justify-center rounded-md border text-[11px] font-extrabold leading-none ${getCalendarStatusClass(stateId)} ${day.isToday ? 'after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-teal-700/45 after:ring-offset-1 after:ring-offset-white dark:after:ring-offset-[#0f1413]' : ''}`}
               data-routine-calendar-day={day.date}
               data-routine-calendar-today={day.isToday ? 'true' : undefined}
               data-routine-source-status={day.status?.id}
@@ -223,7 +220,7 @@ export function ProgressRing({
 
   return (
     <div
-      className={`relative flex ${sizeClass} shrink-0 items-center justify-center ${isCompleteDay ? 'rounded-full bg-[#2563eb]/5 ring-4 ring-[#2563eb]/10 motion-safe:animate-pulse' : ''}`}
+      className={`relative flex ${sizeClass} shrink-0 items-center justify-center ${isCompleteDay ? 'rounded-full bg-emerald-50 ring-4 ring-emerald-100 dark:bg-emerald-400/10 dark:ring-emerald-400/10' : ''}`}
       aria-label={`${safeCompleted} von ${safeTotal} Impulse erledigt`}
     >
       <svg className={`${sizeClass} -rotate-90`} viewBox="0 0 104 104">
@@ -246,7 +243,7 @@ export function ProgressRing({
           strokeDashoffset={strokeOffset}
           strokeLinecap="round"
           strokeWidth="10"
-          className={`${isCompleteDay ? 'text-emerald-500' : 'text-[#2563eb]'} transition-all`}
+          className={`${isCompleteDay ? 'text-emerald-500 dark:text-emerald-300' : 'text-teal-700 dark:text-teal-300'} transition-all`}
         />
       </svg>
       <div className="absolute text-center">
@@ -297,7 +294,7 @@ function getCalendarStateLabel(stateId) {
 
 function getCalendarLegendDotClass(stateId) {
   const classes = {
-    active: 'bg-[#2563eb]',
+    active: 'bg-teal-700',
     complete: 'bg-emerald-500',
     neutral: 'bg-slate-300 dark:bg-slate-600',
     open: 'bg-white ring-1 ring-slate-300 dark:bg-white/10 dark:ring-white/15',
@@ -309,7 +306,7 @@ function getCalendarLegendDotClass(stateId) {
 function getCalendarStatusClass(stateId) {
   const classes = {
     active:
-      'border-[#2563eb]/30 bg-[#2563eb]/10 text-[#1d4ed8] dark:text-blue-100',
+      'border-teal-700/30 bg-teal-50 text-teal-700 dark:border-teal-300/20 dark:bg-teal-300/10 dark:text-teal-100',
     complete:
       'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/20',
     neutral:

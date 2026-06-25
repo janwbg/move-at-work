@@ -41,14 +41,14 @@ describe('SettingsScreen', () => {
     const html = renderSettings()
 
     expect(html).toContain(
-      'Passe Profil, Routine und Erinnerungen an deinen Alltag an.',
+      'Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.',
     )
     expect(html).toContain('Bewegungsprofil')
     expect(html).toContain('Arbeits-/Lernroutine')
     expect(html).toContain('Erinnerungen')
     expect(html).toContain('Konto &amp; Plus')
     expect(html).toContain('Feedback zum Praxistest')
-    expect(html).toContain('App &amp; Einrichtung')
+    expect(html).toContain('Darstellung &amp; Einrichtung')
     expect(html).toContain('Weniger sitzen · Büro · Ausgeglichen')
     expect(html).toContain('Standard: Büro')
     expect(html).toContain('data-testid="settings-icon-profile"')
@@ -99,7 +99,7 @@ describe('SettingsScreen', () => {
     await clickButtonContaining('Zurück')
 
     expect(document.body.textContent).toContain('Feedback zum Praxistest')
-    expect(document.body.textContent).toContain('App & Einrichtung')
+    expect(document.body.textContent).toContain('Darstellung & Einrichtung')
   })
 
   it('opens office setup as its own screen and returns to profile', async () => {
@@ -159,7 +159,7 @@ describe('SettingsScreen', () => {
     })
   })
 
-  it('shows the theme switch inside App & Einrichtung', async () => {
+  it('shows the theme switch inside Darstellung & Einrichtung', async () => {
     const toggleTheme = vi.fn()
     await renderInteractiveSettings({
       isDark: false,

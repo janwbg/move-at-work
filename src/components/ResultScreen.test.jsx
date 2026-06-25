@@ -45,8 +45,9 @@ describe('SuccessDialog', () => {
     expect(html).toContain('Du hast heute 1 von 5 Übungen geschafft.')
     expect(html).toContain('1/5')
     expect(html).toContain('Heute')
-    expect(html).toContain('🚀 1')
-    expect(html).toContain('Arbeitsstreak')
+    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('>1</p>')
+    expect(html).toContain('Aktive Serie')
     expect(html).toContain('Jede kurze Bewegung zählt.')
   })
 
@@ -75,7 +76,8 @@ describe('SuccessDialog', () => {
     expect(html).toContain('Kompletter Tag geschafft!')
     expect(html).toContain('Du hast heute alle 5 Impulse abgeschlossen.')
     expect(html).toContain('5/5')
-    expect(html).toContain('🚀 3')
+    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('>3</p>')
     expect(html).toContain('Starker Arbeitstag. Deine Routine wächst.')
     expect(html).not.toContain('Tagesabschluss ist erledigt.')
   })
@@ -308,13 +310,13 @@ describe('ResultScreen daily workday context helpers', () => {
 
     expect(document.body.textContent).toContain('Pausentag')
     expect(document.body.textContent).toContain('Heute aktivieren')
-    expect(document.body.textContent).not.toContain('Jetzt passend')
+    expect(document.body.textContent).not.toContain('Nächster Impuls')
 
     await clickButtonContaining('Heute aktivieren')
 
     expect(document.body.textContent).toContain('Move-at-work-Tag')
     expect(document.body.textContent).toContain('Heute pausieren')
-    expect(document.body.textContent).toContain('Jetzt passend')
+    expect(document.body.textContent).toContain('Nächster Impuls')
     expect(JSON.parse(window.localStorage.getItem(routineSettingsStorageKey))).toEqual(
       inactiveTodaySettings,
     )

@@ -25,7 +25,7 @@ function ReplacementReasonPicker({
             type="button"
             key={reason.id}
             onClick={() => onSelectReason(reason.id)}
-            className="min-h-8 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:border-[#2563eb]/40 hover:bg-white hover:text-[#2563eb] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+            className="min-h-8 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:bg-white hover:text-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
           >
             {reason.label}
           </button>
@@ -34,7 +34,7 @@ function ReplacementReasonPicker({
       <button
         type="button"
         onClick={onCancel}
-        className="mt-3 min-h-8 rounded-full px-1 text-sm font-bold text-slate-500 transition hover:text-[#2563eb] dark:text-slate-400"
+        className="mt-3 min-h-8 rounded-full px-1 text-sm font-bold text-slate-500 transition hover:text-teal-700 dark:text-slate-400"
       >
         Abbrechen
       </button>
