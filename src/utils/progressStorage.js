@@ -267,6 +267,18 @@ export function getRoutineDayStatus({
     isRoutineActiveDay(date, routineSettings) ||
     isManuallyActiveDay(normalizedProgress, date)
 
+  if (completedCount >= 5) {
+    return { id: 'complete', completedCount, label: 'Kompletter Tag' }
+  }
+
+  if (completedCount >= 3) {
+    return { id: 'strong', completedCount, label: 'Starker Tag' }
+  }
+
+  if (completedCount >= 1) {
+    return { id: 'held', completedCount, label: 'Routine gehalten' }
+  }
+
   if (paused) {
     return {
       id: 'pause',
@@ -292,18 +304,6 @@ export function getRoutineDayStatus({
       label: 'Neutraler Tag',
       neutral: true,
     }
-  }
-
-  if (completedCount >= 5) {
-    return { id: 'complete', completedCount, label: 'Kompletter Tag' }
-  }
-
-  if (completedCount >= 3) {
-    return { id: 'strong', completedCount, label: 'Starker Tag' }
-  }
-
-  if (completedCount >= 1) {
-    return { id: 'held', completedCount, label: 'Routine gehalten' }
   }
 
   return {
@@ -422,6 +422,10 @@ function getPreviousRoutineDay(progress, date, routineSettings) {
 }
 
 function isCountableRoutineDay(progress, date, routineSettings) {
+  if (getCompletedIdsForDate(progress, date).length > 0) {
+    return true
+  }
+
   return (
     (isRoutineActiveDay(date, routineSettings) || isManuallyActiveDay(progress, date)) &&
     !isPauseDay(progress, date)

@@ -174,8 +174,8 @@ describe('ResultScreen daily workday context helpers', () => {
 
     await clickButtonContaining('Fortschritt ansehen')
 
-    expect(document.body.textContent).toContain('Routine-Kalender')
-    expect(document.body.textContent).toContain('Heute erledigt')
+    expect(document.body.textContent).toContain('Aktivitätskalender')
+    expect(document.body.textContent).toContain('Heute')
     expect(document.body.textContent).not.toContain('Stark gemacht!')
   })
 
@@ -194,8 +194,9 @@ describe('ResultScreen daily workday context helpers', () => {
     await clickButtonContaining('Homeoffice')
     await clickButtonContaining('Fortschritt')
 
-    expect(document.body.textContent).toContain('1 von 5 Microbreaks erledigt')
-    expect(document.body.textContent).toContain('Routine gehalten.')
+    expect(document.body.textContent).toContain('1/5')
+    expect(document.body.textContent).toContain('Routine gestartet')
+    expect(document.body.textContent).not.toContain('Microbreaks')
   })
 
   it('respects inactive routine weekdays as pause days until today is activated', async () => {

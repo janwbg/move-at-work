@@ -1,9 +1,13 @@
 // @vitest-environment happy-dom
 
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthProvider.jsx'
 import App from './App.jsx'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 describe('App auth fallback', () => {
   beforeEach(() => {
@@ -14,6 +18,7 @@ describe('App auth fallback', () => {
   })
 
   afterEach(() => {
+    document.body.innerHTML = ''
     window.localStorage.clear()
     vi.restoreAllMocks()
   })
@@ -47,6 +52,30 @@ describe('App auth fallback', () => {
     expect(html).toContain('Dein individueller Tagesplan')
     expect(html).toContain('Move-at-work-Tag')
   })
+
+  it('keeps the global header hidden on the Progress screen after onboarding', async () => {
+    window.localStorage.setItem(
+      'move-at-work-onboarding',
+      JSON.stringify(createCompleteAnswers()),
+    )
+
+    await act(async () => {
+      createRoot(document.body.appendChild(document.createElement('div'))).render(
+        <AuthProvider client={null}>
+          <App />
+        </AuthProvider>,
+      )
+    })
+
+    await clickButtonContaining('Fortschritt')
+
+    expect(document.body.textContent).toContain('Aktivitätskalender')
+    expect(document.body.textContent).not.toContain(
+      'Bewegungsimpulse für den Arbeitstag',
+    )
+    expect(document.body.textContent).not.toContain('Dunkel')
+    expect(document.body.textContent).not.toContain('Hell')
+  })
 })
 
 function createCompleteAnswers() {
@@ -62,4 +91,16 @@ function createCompleteAnswers() {
       homeoffice: ['no-equipment'],
     },
   }
+}
+
+async function clickButtonContaining(text) {
+  const button = [...document.querySelectorAll('button')].find((candidate) =>
+    candidate.textContent.includes(text),
+  )
+
+  expect(button).toBeTruthy()
+
+  await act(async () => {
+    button.click()
+  })
 }

@@ -290,6 +290,107 @@ describe('progressStorage helpers', () => {
     expect(statusesByDate['2026-05-08']).toBe('missed')
   })
 
+  it('keeps a past complete day complete after its weekday becomes neutral', () => {
+    const calendarDays = getRoutineCalendarDays({
+      date: new Date(2026, 4, 15),
+      progress: {
+        completedByDate: {
+          '2026-05-13': ['a', 'b', 'c', 'd', 'e'],
+        },
+      },
+      routineSettings: {
+        activeWeekdays: [1, 2, 4, 5],
+      },
+    })
+
+    expect(getStatusByDate(calendarDays, '2026-05-13')).toBe('complete')
+  })
+
+  it('keeps a past active day active after its weekday becomes neutral', () => {
+    const calendarDays = getRoutineCalendarDays({
+      date: new Date(2026, 4, 15),
+      progress: {
+        completedByDate: {
+          '2026-05-13': ['a'],
+        },
+      },
+      routineSettings: {
+        activeWeekdays: [1, 2, 4, 5],
+      },
+    })
+
+    expect(getStatusByDate(calendarDays, '2026-05-13')).toBe('held')
+  })
+
+  it('allows today with no completed exercises to become neutral', () => {
+    const today = new Date(2026, 4, 16)
+    const calendarDays = getRoutineCalendarDays({
+      date: today,
+      progress: { completedByDate: {} },
+      routineSettings: {
+        activeWeekdays: [1, 2, 3, 4, 5],
+      },
+    })
+    const summary = calculateProgressSummary(
+      { completedByDate: {} },
+      today,
+      { activeWeekdays: [1, 2, 3, 4, 5] },
+    )
+
+    expect(calendarDays.at(-1).status).toMatchObject({
+      id: 'neutral',
+      neutral: true,
+    })
+    expect(summary.todayStatus).toMatchObject({
+      id: 'pause',
+      neutral: true,
+    })
+  })
+
+  it('keeps today active when completed exercises exist despite a pause day', () => {
+    const today = new Date(2026, 4, 13)
+    const progress = setPauseDay(
+      {
+        completedByDate: {
+          '2026-05-13': ['a'],
+        },
+      },
+      today,
+      true,
+    )
+    const calendarDays = getRoutineCalendarDays({
+      date: today,
+      progress,
+    })
+
+    expect(calendarDays.at(-1).status).toMatchObject({
+      id: 'held',
+      completedCount: 1,
+    })
+  })
+
+  it('keeps today complete when five completed exercises exist despite a pause day', () => {
+    const today = new Date(2026, 4, 13)
+    const progress = setPauseDay(
+      {
+        completedByDate: {
+          '2026-05-13': ['a', 'b', 'c', 'd', 'e'],
+        },
+      },
+      today,
+      true,
+    )
+    const calendarDays = getRoutineCalendarDays({
+      date: today,
+      progress,
+    })
+
+    expect(calendarDays.at(-1).status).toMatchObject({
+      id: 'complete',
+      completedCount: 5,
+    })
+  })
+
   it('remembers when the complete-day success was shown for a date', () => {
     const date = new Date(2026, 4, 13)
     const progress = markCompleteDayCelebration({ completedByDate: {} }, date)
@@ -330,6 +431,21 @@ describe('progressStorage helpers', () => {
 
     expect(calculateProgressSummary(progress, new Date(2026, 4, 11)).streak).toBe(2)
   })
+
+  it('keeps free days and pause days neutral for the active streak', () => {
+    const progress = setPauseDay(
+      {
+        completedByDate: {
+          '2026-05-08': ['friday'],
+          '2026-05-12': ['tuesday'],
+        },
+      },
+      new Date(2026, 4, 11),
+      true,
+    )
+
+    expect(calculateProgressSummary(progress, new Date(2026, 4, 12)).streak).toBe(2)
+  })
 })
 
 function createLocalStorage() {
@@ -339,4 +455,8 @@ function createLocalStorage() {
     getItem: (key) => store.get(key) ?? null,
     setItem: (key, value) => store.set(key, String(value)),
   }
+}
+
+function getStatusByDate(calendarDays, date) {
+  return calendarDays.find((day) => day.date === date)?.status.id
 }

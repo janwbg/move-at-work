@@ -1,27 +1,18 @@
 import ProgressSummary from './ProgressSummary.jsx'
 
-function ProgressScreen({ feedbackSummary, summary, totalToday }) {
+function ProgressScreen({ summary, totalToday }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <section className="rounded-2xl bg-[#2563eb] p-6 text-white shadow-xl shadow-[#2563eb]/20 sm:p-8">
-        <p className="text-sm font-bold uppercase tracking-normal text-blue-100">
+    <div className="mx-auto max-w-4xl space-y-4">
+      <header className="px-1">
+        <h1 className="text-3xl font-extrabold tracking-normal text-slate-950 dark:text-white">
           Fortschritt
-        </p>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-normal sm:text-4xl">
-          Jede kurze Bewegung zählt.
         </h1>
-        <p className="mt-4 max-w-2xl leading-7 text-blue-50">
-          Dein Fortschritt bleibt lokal in diesem Browser gespeichert und zeigt
-          dir, wie regelmäßig du an deinen Arbeits- und Lerntagen kurze
-          Sitzphasen unterbrichst. Pausentage brechen deine Routine nicht.
+        <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+          Kleine Bewegungsimpulse, die sich über deine Woche summieren.
         </p>
-      </section>
+      </header>
 
-      <ProgressSummary
-        feedbackSummary={feedbackSummary}
-        summary={summary}
-        totalToday={totalToday}
-      />
+      <ProgressSummary summary={summary} totalToday={totalToday} />
     </div>
   )
 }

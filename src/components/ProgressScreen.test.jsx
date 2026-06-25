@@ -3,193 +3,123 @@ import { describe, expect, it } from 'vitest'
 import ProgressScreen from './ProgressScreen.jsx'
 
 describe('ProgressScreen', () => {
-  it('shows the workday progress values from the provided summary without duplicates', () => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        summary={{
-          completedToday: 3,
-          completedThisWeek: 12,
-          routineWeek: {
-            completedDays: 3,
-            plannedDays: 4,
-          },
-          streak: 4,
-          todayStatus: {
-            id: 'strong',
-            label: 'Starker Tag',
-          },
-        }}
-        totalToday={5}
-      />,
-    )
+  it('renders the quiet screen title without the old blue banner', () => {
+    const html = renderProgressScreen()
 
     expect(html).toContain('Fortschritt')
-    expect(html).toContain('3/5')
-    expect(html).toContain('3 von 5 Microbreaks erledigt')
-    expect(html).toContain('12')
-    expect(html).toContain('4 Arbeitstage in Folge')
-    expect(html).toContain('Starker Tag.')
-    expect(html).toContain('<svg')
-    expect(html).toContain('Arbeits-/Lernroutine')
-    expect(html).toContain('Aktive Woche')
     expect(html).toContain(
-      'Diese Woche hast du 3 von 4 aktiven Arbeits-/Lerntagen geschafft.',
+      'Kleine Bewegungsimpulse, die sich über deine Woche summieren.',
     )
-    expect(html).toContain('Pausentage brechen deine Routine nicht.')
-    expect(html).not.toContain('Tagesstreak')
-    expect(countOccurrences(html, 'Heute erledigt')).toBe(1)
-    expect(countOccurrences(html, 'Aktive Woche')).toBe(1)
-    expect(countOccurrences(html, 'Arbeits-/Lernroutine')).toBe(1)
+    expect(html).not.toContain('Jede kurze Bewegung')
+    expect(html).not.toContain('Dein Fortschritt bleibt lokal')
+    expect(html).not.toContain('shadow-[#2563eb]/20')
+  })
+
+  it('renders the three compact KPI cards', () => {
+    const html = renderProgressScreen({
+      completedToday: 3,
+      completedThisWeek: 12,
+      streak: 4,
+      todayStatus: {
+        id: 'strong',
+        label: 'Starker Tag',
+      },
+    })
+
+    expect(html).toContain('Heute')
+    expect(html).toContain('Diese Woche')
+    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('Starker Tag')
+    expect(html).toContain('Impulse')
+    expect(html).toContain('Aktive Tage')
+    expect(html).toContain('Freie Tage bleiben neutral.')
+  })
+
+  it('shows the today progress ring without duplicate Microbreak copy', () => {
+    const html = renderProgressScreen({
+      completedToday: 5,
+      completedThisWeek: 9,
+      streak: 3,
+      todayStatus: {
+        id: 'complete',
+        label: 'Kompletter Tag',
+      },
+    })
+
+    expect(html).toContain('<svg')
+    expect(html).toContain('5/5')
+    expect(html).toContain('Kompletter Tag')
+    expect(html).toContain('5 von 5 Impulse erledigt')
+    expect(html).not.toContain('5 von 5 Microbreaks erledigt')
+    expect(html).not.toContain('Microbreaks')
+  })
+
+  it('uses the rocket for the active streak', () => {
+    const html = renderProgressScreen({
+      completedToday: 1,
+      completedThisWeek: 4,
+      streak: 1,
+    })
+
+    expect(html).toContain('🚀')
+    expect(html).toContain('Aktiver Tag')
+  })
+
+  it.each([
+    [0, 'Noch offen'],
+    [1, 'Routine gestartet'],
+    [2, 'Routine gestartet'],
+    [3, 'Starker Tag'],
+    [4, 'Starker Tag'],
+    [5, 'Kompletter Tag'],
+  ])('uses the requested today status for %i completed impulses', (completedToday, label) => {
+    const html = renderProgressScreen({
+      completedToday,
+      completedThisWeek: completedToday,
+      streak: completedToday > 0 ? 1 : 0,
+      todayStatus: {
+        id: getStatusId(completedToday),
+        label,
+      },
+    })
+
+    expect(html).toContain(`${completedToday}/5`)
+    expect(html).toContain(label)
   })
 
   it.each([
     [0, 5, '0/5'],
     [1, 5, '1/5'],
     [5, 5, '5/5'],
-    [0, 0, 'Noch kein Tagesplan verfügbar'],
+    [0, 0, '0/0'],
   ])('renders the progress ring safely for %i of %i', (completedToday, totalToday, expectedText) => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        summary={{
-          completedToday,
-          completedThisWeek: completedToday,
-          routineWeek: {
-            completedDays: completedToday > 0 ? 1 : 0,
-            plannedDays: 1,
-          },
-          streak: completedToday > 0 ? 1 : 0,
-        }}
-        totalToday={totalToday}
-      />,
+    const html = renderProgressScreen(
+      {
+        completedToday,
+        completedThisWeek: completedToday,
+        streak: completedToday > 0 ? 1 : 0,
+      },
+      totalToday,
     )
 
     expect(html).toContain('<svg')
     expect(html).toContain(expectedText)
   })
 
-  it.each([
-    [0, 'open', 'Start'],
-    [1, 'held', 'Routine'],
-    [3, 'strong', 'Starker Tag'],
-    [5, 'complete', 'Kompletter Tag'],
-  ])('shows the progress ring state for %i completed', (completedToday, statusId, label) => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        summary={{
-          completedToday,
-          completedThisWeek: completedToday,
-          routineWeek: {
-            completedDays: completedToday > 0 ? 1 : 0,
-            plannedDays: 1,
-          },
-          streak: completedToday > 0 ? 1 : 0,
-          todayStatus: {
-            id: statusId,
-            label,
-          },
-        }}
-        totalToday={5}
-      />,
-    )
+  it('shows the activity calendar without weekly quota text', () => {
+    const html = renderProgressScreen({
+      completedToday: 5,
+      completedThisWeek: 9,
+      routineCalendar: createRoutineCalendar(),
+      streak: 3,
+      todayStatus: {
+        id: 'complete',
+        label: 'Kompletter Tag',
+      },
+    })
 
-    expect(html).toContain(`${completedToday}/5`)
-    expect(html).toContain(label)
-
-    if (statusId === 'complete') {
-      expect(html).toContain('✓')
-    }
-  })
-
-  it('does not show the recommendation feedback summary', () => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        feedbackSummary={{
-          total: 4,
-          fit: 3,
-          notFit: 1,
-          mostCommonReason: 'Keine Zeit',
-        }}
-        summary={{
-          completedToday: 2,
-          completedThisWeek: 5,
-          routineWeek: {
-            completedDays: 2,
-            plannedDays: 3,
-          },
-          streak: 2,
-        }}
-        totalToday={5}
-      />,
-    )
-
-    expect(html).not.toContain('Empfehlungsfeedback')
-    expect(html).not.toContain('Gespeichert')
-    expect(html).not.toContain('Hat gepasst')
-    expect(html).not.toContain('Eher nicht')
-    expect(html).not.toContain('Häufigster Grund')
-    expect(html).toContain('Heute erledigt')
-    expect(html).toContain('Aktive Woche')
-    expect(html).toContain('Arbeits-/Lernroutine')
-  })
-
-  it('shows a subtle progress message with benefit feedback', () => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        feedbackSummary={{
-          total: 4,
-          fit: 2,
-          notFit: 1,
-          mostCommonReason: '',
-          benefitTotal: 3,
-          positiveBenefitCount: 3,
-        }}
-        summary={{
-          completedToday: 2,
-          completedThisWeek: 6,
-          routineWeek: {
-            completedDays: 3,
-            plannedDays: 4,
-          },
-          streak: 2,
-        }}
-        totalToday={5}
-      />,
-    )
-
-    expect(html).toContain('Diese Woche hast du 6 kurze Resets abgeschlossen.')
-    expect(html).toContain(
-      '3x hast du dich danach wacher, entspannter, fokussierter oder lockerer gefühlt.',
-    )
-    expect(html).not.toContain('100 %')
-    expect(html).not.toContain('Sitzzeit vermieden')
-  })
-
-  it('shows a compact 28-day routine calendar with all routine statuses', () => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        summary={{
-          completedToday: 5,
-          completedThisWeek: 9,
-          routineCalendar: createRoutineCalendar(),
-          routineWeek: {
-            completedDays: 3,
-            plannedDays: 4,
-          },
-          streak: 3,
-          todayStatus: {
-            id: 'complete',
-            label: 'Kompletter Tag',
-          },
-        }}
-        totalToday={5}
-      />,
-    )
-
-    expect(html).toContain('Routine-Kalender')
-    expect(html).toContain('Letzte 28 Tage')
-    expect(html).toContain(
-      'Nur aktive Arbeits-/Lerntage zählen. Pausentage bleiben neutral.',
-    )
+    expect(html).toContain('Aktivitätskalender')
+    expect(html).toContain('Freie Tage und Pausentage bleiben neutral.')
     expect(html).toContain('data-routine-weekday="Mo"')
     expect(html).toContain('data-routine-weekday="Di"')
     expect(html).toContain('data-routine-weekday="Mi"')
@@ -201,75 +131,98 @@ describe('ProgressScreen', () => {
     expect(countOccurrences(html, 'data-routine-calendar-day=')).toBe(28)
     expect(html).toContain('data-routine-calendar-today="true"')
     expect(html).toContain('Heute')
-    expect(html).toContain('data-routine-status="held"')
-    expect(html).toContain('data-routine-status="strong"')
+    expect(html).not.toContain('Diese Woche: 1 von 3 geplanten Tagen aktiv')
+    expect(html).not.toContain('geplanten Tagen aktiv')
+    expect(html).not.toContain('aktiven Arbeits-/Lerntagen')
+  })
+
+  it('reduces the calendar legend to complete, active, open, and neutral', () => {
+    const html = renderProgressScreen({
+      completedToday: 5,
+      completedThisWeek: 9,
+      routineCalendar: createRoutineCalendar(),
+      streak: 3,
+    })
+
+    expect(html).toContain('Komplett')
+    expect(html).toContain('Aktiv')
+    expect(html).toContain('Offen')
+    expect(html).toContain('Neutral')
+    expect(html.indexOf('Komplett')).toBeLessThan(html.indexOf('Aktiv'))
+    expect(html.indexOf('Aktiv')).toBeLessThan(html.indexOf('Offen'))
+    expect(html.indexOf('Offen')).toBeLessThan(html.indexOf('Neutral'))
     expect(html).toContain('data-routine-status="complete"')
-    expect(html).toContain('data-routine-status="pause"')
+    expect(html).toContain('data-routine-status="active"')
     expect(html).toContain('data-routine-status="neutral"')
-    expect(html).toContain('data-routine-status="missed"')
-    expect(html).toContain('Routine')
-    expect(html).toContain('Nicht geschafft')
+    expect(html).toContain('data-routine-status="open"')
+    expect(html).not.toContain('Nicht geschafft')
     expect(html).not.toContain('Verpasst')
+    expect(html).not.toContain('data-routine-status="missed"')
+    expect(html).not.toContain('data-routine-status="strong"')
+    expect(html).not.toContain('data-routine-status="held"')
   })
 
-  it('shows a gentle progress message without benefit feedback', () => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        feedbackSummary={{
-          total: 0,
-          fit: 0,
-          notFit: 0,
-          mostCommonReason: '',
-          benefitTotal: 0,
-          positiveBenefitCount: 0,
-        }}
-        summary={{
-          completedToday: 0,
-          completedThisWeek: 0,
-          routineWeek: {
-            completedDays: 0,
-            plannedDays: 1,
-          },
-          streak: 0,
-        }}
-        totalToday={5}
-      />,
-    )
+  it('does not show the recommendation feedback summary', () => {
+    const html = renderProgressScreen({
+      completedToday: 2,
+      completedThisWeek: 5,
+      streak: 2,
+    })
 
-    expect(html).toContain(
-      'Jeder kurze Reset zählt - auch ohne perfekte Routine.',
-    )
-  })
-
-  it.each([
-    ['held', 'Routine gehalten.'],
-    ['strong', 'Starker Tag.'],
-    ['complete', 'Kompletter Tag.'],
-    ['pause', 'Heute ist Pausentag. Deine Routine bleibt erhalten.'],
-    ['open', 'Ein kurzer Reset reicht, um deine Routine heute zu halten.'],
-  ])('shows the %s day status message', (statusId, message) => {
-    const html = renderToStaticMarkup(
-      <ProgressScreen
-        summary={{
-          completedToday: statusId === 'open' || statusId === 'pause' ? 0 : 1,
-          completedThisWeek: 1,
-          routineWeek: {
-            completedDays: 1,
-            plannedDays: 1,
-          },
-          streak: 1,
-          todayStatus: {
-            id: statusId,
-            label: message,
-          },
-        }}
-        totalToday={5}
-      />,
-    )
-
-    expect(html).toContain(message)
+    expect(html).not.toContain('Empfehlungsfeedback')
+    expect(html).not.toContain('Gespeichert')
+    expect(html).not.toContain('Hat gepasst')
+    expect(html).not.toContain('Eher nicht')
+    expect(html).not.toContain('Häufigster Grund')
   })
 })
+
+function renderProgressScreen(summaryOverrides = {}, totalToday = 5) {
+  return renderToStaticMarkup(
+    <ProgressScreen
+      feedbackSummary={{
+        total: 0,
+        fit: 0,
+        notFit: 0,
+        mostCommonReason: '',
+        benefitTotal: 0,
+        positiveBenefitCount: 0,
+      }}
+      summary={{
+        completedToday: 0,
+        completedThisWeek: 0,
+        routineCalendar: [],
+        routineWeek: {
+          completedDays: 0,
+          plannedDays: 0,
+        },
+        streak: 0,
+        todayStatus: {
+          id: 'open',
+          label: 'Offen',
+        },
+        ...summaryOverrides,
+      }}
+      totalToday={totalToday}
+    />,
+  )
+}
+
+function getStatusId(completedToday) {
+  if (completedToday >= 5) {
+    return 'complete'
+  }
+
+  if (completedToday >= 3) {
+    return 'strong'
+  }
+
+  if (completedToday >= 1) {
+    return 'held'
+  }
+
+  return 'open'
+}
 
 function countOccurrences(value, search) {
   return value.split(search).length - 1

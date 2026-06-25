@@ -95,7 +95,8 @@ function App() {
     window.localStorage.setItem(storageKey, JSON.stringify(answers))
   }, [answers])
 
-  const hideHeader = step === 'result' && resultActiveTab === 'today'
+  const hideHeader =
+    step === 'result' && ['today', 'progress'].includes(resultActiveTab)
 
   return (
     <main className="min-h-svh bg-[#f7f8fb] text-slate-950 transition-colors dark:bg-[#121212] dark:text-white">
