@@ -1,25 +1,29 @@
+import BrandLogo from './BrandLogo.jsx'
+import { APP_NAME, BRAND_CLAIM } from '../data/brand.js'
+
 const benefits = [
-  'Kurze Impulse statt langer Unterbrechung',
-  'Ohne Sportkleidung oder Extra-Planung',
-  'Passend zu Büro, Homeoffice und Lernen',
+  'Ohne Workout.',
+  'Ohne Umziehen.',
+  'Ohne Extra-Termin.',
 ]
 
 function StartScreen({ onStart }) {
   return (
     <section className="w-full max-w-3xl text-center">
-      <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-700 text-2xl font-extrabold text-white shadow-lg shadow-teal-700/20 sm:h-20 sm:w-20 sm:text-3xl">
-        M
-      </div>
-
-      <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
-        Move at work
+      <BrandLogo
+        className="justify-center"
+        markClassName="h-16 w-16 sm:h-20 sm:w-20"
+        textClassName="sr-only"
+      />
+      <p className="mt-7 text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
+        {APP_NAME}
       </p>
       <h1 className="mx-auto mt-3 max-w-2xl text-4xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-6xl">
-        Sitzphasen unterbrechen, ohne aus dem Arbeitstag rauszukommen.
+        {BRAND_CLAIM}
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
-        Kleine Bewegungsimpulse für deinen Arbeits- oder Lerntag. Ruhig,
-        passend und ohne daraus ein zusätzliches To-do zu machen.
+        {APP_NAME} gibt dir kurze Bewegungsimpulse für lange Schreibtischtage —
+        passend zu deinem Tag, deiner Umgebung und deiner Zeit.
       </p>
 
       <div className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3">
@@ -43,7 +47,7 @@ function StartScreen({ onStart }) {
         onClick={onStart}
         className="mt-9 w-full rounded-full bg-teal-700 px-7 py-4 text-base font-bold text-white shadow-lg shadow-teal-700/20 transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 sm:w-auto"
       >
-        Bewegungsplan erstellen
+        Loslegen
       </button>
     </section>
   )

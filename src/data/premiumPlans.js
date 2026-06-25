@@ -1,58 +1,50 @@
 export const plusPlan = {
   title: 'Move at work Plus',
   tagline:
-    'Mehr Freiheit für deinen Tagesplan — mit unbegrenzten Wechseln und frühem Zugang zu neuen Funktionen.',
+    'Passe Move at work noch besser an deinen Tag an.',
   prices: [
     {
-      id: 'monthly',
-      label: 'Monatlich',
-      value: '2,99 € / Monat',
+      id: 'free',
+      label: 'Kostenlos starten',
+      value: 'Heute enthalten',
     },
     {
-      id: 'yearly',
-      label: 'Jährlich',
-      value: '19,99 € / Jahr',
+      id: 'plus',
+      label: 'Mehr Anpassung',
+      value: 'Geplant',
     },
   ],
-  earlyAccessNote: 'Early-Access-Preis während der Weiterentwicklung.',
+  earlyAccessNote: 'Plus ist aktuell vorbereitet, aber noch nicht kaufbar.',
   includedToday: [
-    'unbegrenzt Empfehlungen wechseln',
-    'neue Plus-Funktionen zuerst erhalten',
-    'Weiterentwicklung von Move at work unterstützen',
+    'Mit der kostenlosen Version bekommst du täglich passende Bewegungsimpulse für deinen Schreibtischtag.',
+    'Plus ist für alle gedacht, die ihre Empfehlungen später noch flexibler anpassen möchten.',
   ],
   comparisonRows: [
     {
-      feature: '5 Empfehlungen',
-      free: 'ja',
-      plus: 'ja',
-    },
-    {
-      feature: 'Reminder',
-      free: 'ja',
-      plus: 'ja',
-    },
-    {
-      feature: 'Fortschritt',
-      free: 'ja',
-      plus: 'ja',
-    },
-    {
-      feature: 'Empfehlungen wechseln',
+      feature: 'Mehr Wechselmöglichkeiten',
       free: '1x/Tag',
-      plus: 'unbegrenzt',
+      plus: 'geplant',
     },
     {
-      feature: 'neue Plus-Funktionen zuerst',
-      free: 'nein',
-      plus: 'ja',
+      feature: 'Mehr Personalisierung',
+      free: 'Basis',
+      plus: 'geplant',
+    },
+    {
+      feature: 'Erweiterte Routinen',
+      free: 'Basis',
+      plus: 'geplant',
+    },
+    {
+      feature: 'Bessere Anpassung an deinen Tageskontext',
+      free: 'Basis',
+      plus: 'geplant',
     },
   ],
   plannedNext: [
-    'erweiterte Fortschrittsansicht',
-    'spezielle Programme',
-    'Favoriten und Verlauf',
-    'eigene Routinen',
-    'Visuals/Motion-Anleitungen',
+    'Mehr Wechselmöglichkeiten',
+    'Mehr Personalisierung',
+    'Erweiterte Routinen',
+    'Bessere Anpassung an deinen Tageskontext',
   ],
 }
-

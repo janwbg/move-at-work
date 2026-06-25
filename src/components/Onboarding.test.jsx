@@ -25,15 +25,15 @@ describe('Onboarding', () => {
     expect(steps[0]).toMatchObject({
       kind: 'landing',
       question:
-        'Kleine Impulse, die in deinen Tag passen.',
+        'Sitzphasen unterbrechen, ohne aus dem Arbeitstag rauszukommen.',
     })
     expect(steps[1]).toMatchObject({
       kind: 'goal',
-      question: 'Was möchtest du mit Move at work erreichen?',
+      question: 'Wobei soll dich Move at work unterstützen?',
     })
     expect(steps[2]).toMatchObject({
       kind: 'workplaces',
-      question: 'Wo arbeitest du regelmäßig?',
+      question: 'Wo findet dein Schreibtischtag meistens statt?',
     })
   })
 
@@ -44,11 +44,10 @@ describe('Onboarding', () => {
     })
 
     expect(html).toContain(
-      'Kleine Impulse, die in deinen Tag passen.',
+      'Sitzphasen unterbrechen, ohne aus dem Arbeitstag rauszukommen.',
     )
-    expect(html).toContain('Passt in deinen Arbeitstag')
-    expect(html).toContain('Keine Planung nötig')
-    expect(html).toContain('Ohne Extra-Aufwand')
+    expect(html).toContain('Ohne Workout.')
+    expect(html).toContain('Ohne Umziehen. Ohne Extra-Termin.')
     expect(html).not.toContain('Zurück')
   })
 
@@ -67,7 +66,7 @@ describe('Onboarding', () => {
       initialCurrentIndex: 2,
     })
 
-    expect(html).toContain('Wo arbeitest du regelmäßig?')
+    expect(html).toContain('Wo findet dein Schreibtischtag meistens statt?')
     expect(html).toContain('Büro')
     expect(html).toContain('Homeoffice')
     expect(html).not.toContain('Beides')
@@ -93,10 +92,10 @@ describe('Onboarding', () => {
       'final',
     ])
     expect(steps.map((step) => step.question)).toContain(
-      'Was steht dir im Büro zur Verfügung?',
+      'Was hast du im Büro zur Verfügung?',
     )
     expect(steps.map((step) => step.question)).toContain(
-      'Wo startest du meistens in den Tag?',
+      'Welcher Ort ist dein Standard?',
     )
   })
 
@@ -115,20 +114,20 @@ describe('Onboarding', () => {
     expect(html).not.toContain('%</span>')
   })
 
-  it('shows the updated goal cards without the habit goal', () => {
+  it('shows the updated goal cards including routine', () => {
     const html = renderOnboarding({
       answers: { goal: 'sit-less' },
       initialCurrentIndex: 1,
     })
 
     expect(html).toContain('Weniger sitzen')
-    expect(html).toContain('Mehr Energie im Arbeitstag')
-    expect(html).toContain('Rücken &amp; Nacken entlasten')
-    expect(html).toContain('Konzentration verbessern')
+    expect(html).toContain('Mehr Bewegung')
+    expect(html).toContain('Rücken &amp; Haltung')
+    expect(html).toContain('Fokus &amp; Energie')
+    expect(html).toContain('Routine aufbauen')
     expect(html).toContain(
-      'Kleine Unterbrechungen statt stundenlangem Durchsitzen.',
+      'Sitzphasen regelmäßiger unterbrechen.',
     )
-    expect(html).not.toContain('Bewegung zur Gewohnheit machen')
   })
 
   it('keeps goal cards clickable and accessible', async () => {
@@ -137,9 +136,9 @@ describe('Onboarding', () => {
       initialCurrentIndex: 1,
     })
 
-    await clickButton('Mehr Energie im Arbeitstag')
+    await clickButton('Mehr Bewegung')
 
-    expect(getButtonByText('Mehr Energie im Arbeitstag').getAttribute('aria-pressed')).toBe(
+    expect(getButtonByText('Mehr Bewegung').getAttribute('aria-pressed')).toBe(
       'true',
     )
     expect(getButtonByText('Weniger sitzen').getAttribute('aria-pressed')).toBe(
@@ -160,15 +159,13 @@ describe('Onboarding', () => {
       initialCurrentIndex: 3,
     })
 
-    expect(document.body.textContent).toContain('Dein Büro-Setup')
-    expect(document.body.textContent).toContain('Was steht dir im Büro zur Verfügung?')
+    expect(document.body.textContent).toContain('Was hast du im Büro zur Verfügung?')
     expect(document.body.textContent).toContain('Schritt 1 von 2 · Büro')
 
     await clickButton('Weiter')
 
-    expect(document.body.textContent).toContain('Dein Homeoffice-Setup')
     expect(document.body.textContent).toContain(
-      'Was steht dir im Homeoffice zur Verfügung?',
+      'Was hast du im Homeoffice zur Verfügung?',
     )
     expect(document.body.textContent).toContain('Schritt 2 von 2 · Homeoffice')
   })
@@ -206,9 +203,9 @@ describe('Onboarding', () => {
       initialCurrentIndex: 4,
     })
 
-    expect(officeHtml).toContain('Dein Büro-Setup')
+    expect(officeHtml).toContain('Was hast du im Büro zur Verfügung?')
     expect(officeHtml).toContain('Schritt 1 von 2 · Büro')
-    expect(homeofficeHtml).toContain('Dein Homeoffice-Setup')
+    expect(homeofficeHtml).toContain('Was hast du im Homeoffice zur Verfügung?')
     expect(homeofficeHtml).toContain('Schritt 2 von 2 · Homeoffice')
   })
 
@@ -227,9 +224,9 @@ describe('Onboarding', () => {
       initialCurrentIndex: 3,
     })
 
-    expect(officeHtml).toContain('Dein Büro-Setup')
+    expect(officeHtml).toContain('Was hast du im Büro zur Verfügung?')
     expect(officeHtml).not.toContain('Schritt 1 von 2')
-    expect(homeofficeHtml).toContain('Dein Homeoffice-Setup')
+    expect(homeofficeHtml).toContain('Was hast du im Homeoffice zur Verfügung?')
     expect(homeofficeHtml).not.toContain('Schritt 1 von 2')
   })
 
@@ -427,7 +424,7 @@ describe('Onboarding', () => {
 
     await clickButton('Weiter')
 
-    expect(document.body.textContent).toContain('Wo startest du meistens in den Tag?')
+    expect(document.body.textContent).toContain('Welcher Ort ist dein Standard?')
   })
 
   it('shows office before homeoffice in the default workplace step', () => {
@@ -512,7 +509,7 @@ describe('Onboarding', () => {
 
     expect(workdayIndex).toBeLessThan(intensityIndex)
     expect(html).toContain(
-      'Wenn dein Tag mal anders läuft, kannst du das direkt im Tagesplan ändern.',
+      'Wähle, was sich für deinen Alltag realistisch anfühlt.',
     )
   })
 
@@ -523,7 +520,7 @@ describe('Onboarding', () => {
       initialCurrentIndex: steps.length - 1,
     })
 
-    expect(html).toContain('Meinen Plan generieren')
+    expect(html).toContain('Tagesplan ansehen')
     expect(html).not.toContain('Move at work Plus')
   })
 
@@ -537,7 +534,7 @@ describe('Onboarding', () => {
       initialCurrentIndex: steps.length - 1,
       onComplete: complete,
     })
-    await clickButton('Meinen Plan generieren')
+    await clickButton('Tagesplan ansehen')
 
     expect(document.body.textContent).toContain(
       'Dein persönlicher Tagesplan wird generiert.',

@@ -102,11 +102,11 @@ describe('notificationService', () => {
       settings: enabledSettings,
       slotId: 'morning',
       tag: 'move-at-work-2026-06-17-morning',
-      title: 'Kleiner Wechselmoment?',
+      title: 'Zeit für einen kurzen Reset?',
     })
 
     expect(notification).toBeTruthy()
-    expect(NotificationApi).toHaveBeenCalledWith('Kleiner Wechselmoment?', {
+    expect(NotificationApi).toHaveBeenCalledWith('Zeit für einen kurzen Reset?', {
       body: 'Dein Impuls ist offen.',
       tag: 'move-at-work-2026-06-17-morning',
     })

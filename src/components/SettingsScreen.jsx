@@ -155,7 +155,7 @@ function SettingsScreen({
           description="Steuere, wann und wie dich Move at work erinnert."
           icon="reminders"
           onBack={() => setActiveView(settingsViews.overview)}
-          title="Erinnerungen"
+          title="Reminder"
         />
         <ReminderSettings onSettingsChange={setReminderSettings} />
       </SettingsLayout>
@@ -192,7 +192,7 @@ function SettingsScreen({
           Einstellungen
         </h1>
         <p className="max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-          Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.
+          Passe Move at work an deinen Alltag an.
         </p>
       </section>
 
@@ -202,7 +202,7 @@ function SettingsScreen({
           icon="profile"
           onAction={() => setActiveView(settingsViews.profile)}
           summary={getProfileSummary(normalizedAnswers)}
-          title="Bewegungsprofil"
+          title="Dein Profil"
         />
         <SettingsCard
           actionLabel="Bearbeiten"
@@ -216,7 +216,7 @@ function SettingsScreen({
           icon="reminders"
           onAction={() => setActiveView(settingsViews.reminders)}
           summary={getReminderSummary(reminderSettings, notificationStatus)}
-          title="Erinnerungen"
+          title="Reminder"
         />
         <SettingsCard
           icon="account"
@@ -248,7 +248,9 @@ function SettingsScreen({
         />
         <SettingsCard
           icon="feedback"
-          summary={['Frühe Version testen und Feedback geben']}
+          summary={[
+            'Du testest eine frühe Version von Move at work. Dein Feedback hilft, Empfehlungen verständlicher, passender und alltagstauglicher zu machen.',
+          ]}
           title="Feedback zum Praxistest"
           actions={
             <a
@@ -268,7 +270,7 @@ function SettingsScreen({
             'Onboarding neu starten',
             'Fortschritt bleibt erhalten.',
           ]}
-          title="Darstellung & Einrichtung"
+          title="Setup"
           actions={
             <>
               <button
@@ -289,6 +291,13 @@ function SettingsScreen({
           }
         />
       </section>
+
+      <p className="rounded-lg bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-white/5 dark:text-slate-300">
+        Move at work ersetzt keine medizinische Beratung. Führe Bewegungen nur
+        aus, wenn sie sich sicher und angenehm anfühlen. Bei Schmerzen,
+        Verletzungen oder gesundheitlichen Einschränkungen brich ab oder frage
+        medizinisches Fachpersonal.
+      </p>
     </SettingsLayout>
   )
 }

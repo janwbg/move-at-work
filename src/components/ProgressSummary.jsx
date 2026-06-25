@@ -26,7 +26,7 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
             />
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
-                Heute
+                Heute erledigt
               </p>
               <p className="mt-1 text-base font-extrabold text-slate-950 dark:text-white">
                 {getTodayKpiLabel(completedToday)}
@@ -39,7 +39,7 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
-                Diese Woche
+                Aktive Woche
               </p>
               <p className="mt-2 text-4xl font-extrabold leading-none text-teal-700 dark:text-teal-200">
                 {completedThisWeek}
@@ -55,7 +55,7 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-normal text-slate-500 dark:text-slate-400">
-                Aktive Serie
+                Arbeits-/Lernroutine
               </p>
             </div>
             <p
@@ -66,7 +66,7 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
             </p>
             <div>
               <p className="text-sm font-extrabold text-slate-700 dark:text-slate-200">
-                {streak === 1 ? 'Aktiver Tag' : 'Aktive Tage'}
+                Arbeitsstreak
               </p>
               <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 Freie Tage bleiben neutral.
@@ -102,7 +102,7 @@ function RoutineCalendar({ days }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">
-            Aktivitätskalender
+            Aktive Woche
           </h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">
             Freie Tage und Pausentage bleiben neutral.
@@ -181,10 +181,10 @@ function getTodayKpiLabel(completedToday) {
   }
 
   if (completedToday >= 1) {
-    return 'Routine gestartet'
+    return 'Routine gehalten'
   }
 
-  return 'Noch offen'
+  return 'Offen'
 }
 
 export function ProgressRing({
@@ -319,9 +319,9 @@ function getCalendarStatusClass(stateId) {
 
 function getRingStatusLabel(statusId, percentage) {
   const labels = {
-    held: 'Routine gestartet',
-    open: 'Noch offen',
-    pause: 'Neutral',
+    held: 'Routine gehalten',
+    open: 'Offen',
+    pause: 'Pausentag',
     strong: 'Starker Tag',
   }
 

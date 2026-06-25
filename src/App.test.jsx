@@ -31,7 +31,7 @@ describe('App auth fallback', () => {
     )
 
     expect(html).toContain('Move at work')
-    expect(html).toContain('Bewegungsplan erstellen')
+    expect(html).toContain('Sitzphasen unterbrechen, ohne aus dem Arbeitstag rauszukommen.')
   })
 
   it('hides the global header on the Today screen after onboarding', () => {
@@ -49,8 +49,8 @@ describe('App auth fallback', () => {
     expect(html).not.toContain('Bewegungsimpulse für den Arbeitstag')
     expect(html).not.toContain('Dunkel')
     expect(html).not.toContain('Hell')
-    expect(html).toContain('Dein individueller Tagesplan')
-    expect(html).toContain('Move-at-work-Tag')
+    expect(html).toContain('Dein Tagesplan')
+    expect(html).toContain('Move at work Tag')
   })
 
   it('keeps the global header hidden on the Progress screen after onboarding', async () => {
@@ -67,9 +67,9 @@ describe('App auth fallback', () => {
       )
     })
 
-    await clickButtonContaining('Fortschritt')
+    await clickButtonContaining('Routine')
 
-    expect(document.body.textContent).toContain('Aktivitätskalender')
+    expect(document.body.textContent).toContain('Deine Routine')
     expect(document.body.textContent).not.toContain(
       'Bewegungsimpulse für den Arbeitstag',
     )
@@ -94,7 +94,7 @@ describe('App auth fallback', () => {
     await clickButtonContaining('Einstellungen')
 
     expect(document.body.textContent).toContain(
-      'Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.',
+      'Passe Move at work an deinen Alltag an.',
     )
     expect(document.body.textContent).not.toContain('Bewegungsimpulse')
     expect(document.body.textContent).toContain('Darstellung: Hell')

@@ -71,17 +71,17 @@ describe('DailyScheduleCard', () => {
     const html = renderCard()
 
     expect(html).toContain('Übung öffnen')
-    expect(html).toContain('aria-label="Empfehlung wechseln"')
+    expect(html).toContain('aria-label="Andere Empfehlung"')
     expect(html).toContain('⟳')
     expect(html.indexOf('Übung öffnen')).toBeLessThan(
-      html.indexOf('Empfehlung wechseln'),
+      html.indexOf('Andere Empfehlung'),
     )
   })
 
   it('does not offer replacement for completed recommendations', () => {
     const html = renderCard({ completed: true })
 
-    expect(html).not.toContain('aria-label="Empfehlung wechseln"')
+    expect(html).not.toContain('aria-label="Andere Empfehlung"')
     expect(html).not.toContain('⟳')
   })
 
@@ -91,8 +91,8 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Schulterkreisen')
     expect(html).toContain('Morgens')
     expect(html).toContain('2 Minuten · Mobilisieren')
-    expect(html).toContain('Öffnen')
-    expect(html).toContain('aria-label="Empfehlung wechseln"')
+    expect(html).toContain('Übung öffnen')
+    expect(html).toContain('aria-label="Andere Empfehlung"')
     expect(html).toContain('Erledigt')
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
@@ -108,7 +108,7 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Erledigt')
     expect(html).not.toContain('>Übung öffnen<')
     expect(html).not.toContain('Als erledigt markieren')
-    expect(html).not.toContain('aria-label="Empfehlung wechseln"')
+    expect(html).not.toContain('aria-label="Andere Empfehlung"')
     expect(html).not.toContain('⟳')
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
@@ -134,7 +134,7 @@ describe('DailyScheduleCard', () => {
       isReplacementOpen: true,
     })
 
-    expect(html).toContain('Empfehlung wechseln')
+    expect(html).toContain('Andere Empfehlung')
     expect(html).not.toContain('Was passt gerade nicht?')
   })
 })

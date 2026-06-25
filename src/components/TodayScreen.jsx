@@ -19,12 +19,13 @@ import {
   resumeRemindersForDay,
   saveDailyReminderState,
 } from '../utils/reminderStorage.js'
+import { BRAND_CLAIM } from '../data/brand.js'
 
 const todayWorkdayOptions = [
   { id: 'focus-heavy', label: 'Fokusarbeit' },
-  { id: 'meeting-heavy', label: 'Meetings' },
+  { id: 'meeting-heavy', label: 'Meetingtag' },
   { id: 'mixed-day', label: 'Gemischt' },
-  { id: 'study-day', label: 'Lernen' },
+  { id: 'study-day', label: 'Lern- oder Studientag' },
   { id: 'tight-schedule', label: 'Wenig Zeit' },
 ]
 
@@ -103,6 +104,7 @@ function TodayScreen({
     completedIds.includes(section.id),
   )
   const completedCount = completedSections.length
+  const openCount = Math.max(plan.dailySchedule.length - completedCount, 0)
   const activeScheduleIndex = isPauseDay
     ? null
     : getActiveScheduleIndex({
@@ -274,7 +276,7 @@ function TodayScreen({
               {formatTodayDate(now)}
             </p>
             <p className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-              <span>{isPauseDay ? 'Pausentag' : 'Move-at-work-Tag'}</span>
+              <span>{isPauseDay ? 'Pausentag' : 'Move at work Tag'}</span>
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
                 ·
               </span>
@@ -299,18 +301,23 @@ function TodayScreen({
         <div className="mb-4 flex flex-col gap-3">
           <div>
             <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-              Dein individueller Tagesplan
+              Dein Tagesplan
             </h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-              Der nächste passende Impuls steht oben im Fokus, der Rest bleibt
-              chronologisch und ruhig erreichbar.
+              Kurze Bewegungsimpulse für einen bewegteren Schreibtischtag.
+            </p>
+            <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-teal-700 dark:text-teal-200">
+              {BRAND_CLAIM}
             </p>
           </div>
 
           <div className="grid gap-3 rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04] md:grid-cols-[1fr_auto] md:items-center">
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-                Du arbeitest heute im {activeWorkplaceLabel}
+                Heute arbeitest du hier: {activeWorkplaceLabel}
+              </p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Gilt nur für deinen heutigen Plan.
               </p>
               {canSwitchWorkplace && (
                 <WorkplaceSwitcher
@@ -353,14 +360,15 @@ function TodayScreen({
                 Heute ist Pausentag.
               </p>
               <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-                Du kannst den Tag aktivieren, wenn du trotzdem Bewegungsimpulse machen möchtest.
+                Deine Routine darf auch Pausen haben. Wenn du möchtest, kannst
+                du den Tagesplan trotzdem wieder aktivieren.
               </p>
               <button
                 type="button"
                 onClick={handlePauseDayToggle}
                 className="mt-3 min-h-10 rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
               >
-                Heute aktivieren
+                Tagesplan aktivieren
               </button>
             </div>
           )}
@@ -377,14 +385,23 @@ function TodayScreen({
             </div>
           )}
 
-          <div className="grid gap-2">
+          <div>
+            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <h3 className="text-lg font-extrabold text-slate-950 dark:text-white">
+                Deine Empfehlungen
+              </h3>
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                {openCount} offen · {completedCount} erledigt
+              </p>
+            </div>
+            <div className="grid gap-2">
             {scheduleEntries.map(({ index, section }) => {
               const completed = completedIds.includes(section.id)
               const active = !completed && index === activeScheduleIndex
 
               return (
                 <DailyScheduleCard
-                  actionLabel="Öffnen"
+                  actionLabel="Übung öffnen"
                   canReplace={canReplaceRecommendation}
                   compact={!active || completed}
                   completed={completed}
@@ -402,6 +419,7 @@ function TodayScreen({
                 />
               )
             })}
+            </div>
           </div>
         </div>
       </section>
@@ -459,10 +477,10 @@ function ReplacementLimitNotice({ onOpenUpgrade }) {
   return (
     <aside className="mb-4 rounded-lg border border-teal-700/20 bg-teal-50 p-4 dark:border-teal-300/20 dark:bg-teal-300/10">
       <p className="text-sm font-extrabold text-slate-950 dark:text-white">
-        Heute schon gewechselt
+        Dein heutiger Wechsel ist aufgebraucht.
       </p>
       <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-200">
-        In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.
+        Mit Plus kannst du Empfehlungen später flexibler anpassen.
       </p>
       <button
         type="button"
@@ -551,9 +569,12 @@ function ReminderActionButton({ children, onClick, primary = false }) {
 function WorkdayTypeSelect({ activeWorkdayType, onWorkdayTypeChange }) {
   return (
     <label className="flex flex-col gap-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-      Art des heutigen Arbeitstags
+      Heute eher
+      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+        Passt nur den heutigen Tagesplan an.
+      </span>
       <select
-        aria-label="Art des heutigen Arbeitstags auswählen"
+        aria-label="Heutige Tagesart auswählen"
         className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20 dark:border-white/10 dark:bg-[#17201e] dark:text-white"
         onChange={(event) => onWorkdayTypeChange(event.target.value)}
         value={activeWorkdayType}

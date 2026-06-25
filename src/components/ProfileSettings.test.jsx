@@ -41,7 +41,7 @@ describe('ProfileSettings', () => {
     expect(html).toContain('Ziel &amp; Tageslogik')
     expect(html).toContain('Ziel')
     expect(html).toContain('Intensität')
-    expect(html).toContain('Typischer Arbeitstag')
+    expect(html).toContain('Typischer Tag')
     expect(html).toContain('Büro')
     expect(html).toContain('Homeoffice')
     expect(html).toContain('Standard-Arbeitsort')

@@ -41,15 +41,15 @@ describe('SettingsScreen', () => {
     const html = renderSettings()
 
     expect(html).toContain(
-      'Passe Profil, Routine, Erinnerungen und Darstellung an deinen Alltag an.',
+      'Passe Move at work an deinen Alltag an.',
     )
-    expect(html).toContain('Bewegungsprofil')
+    expect(html).toContain('Dein Profil')
     expect(html).toContain('Arbeits-/Lernroutine')
-    expect(html).toContain('Erinnerungen')
+    expect(html).toContain('Reminder')
     expect(html).toContain('Konto &amp; Plus')
     expect(html).toContain('Feedback zum Praxistest')
-    expect(html).toContain('Darstellung &amp; Einrichtung')
-    expect(html).toContain('Weniger sitzen · Büro · Ausgeglichen')
+    expect(html).toContain('Setup')
+    expect(html).toContain('Routine aufbauen · Büro · Normal')
     expect(html).toContain('Standard: Büro')
     expect(html).toContain('data-testid="settings-icon-profile"')
     expect(html).toContain('data-testid="settings-icon-routine"')
@@ -91,7 +91,7 @@ describe('SettingsScreen', () => {
     )
     expect(document.body.textContent).toContain('Ziel')
     expect(document.body.textContent).toContain('Intensität')
-    expect(document.body.textContent).toContain('Typischer Arbeitstag')
+    expect(document.body.textContent).toContain('Typischer Tag')
     expect(document.body.textContent).toContain('Büro')
     expect(document.body.textContent).toContain('Homeoffice')
     expect(document.body.textContent).not.toContain('Feedback zum Praxistest')
@@ -99,7 +99,7 @@ describe('SettingsScreen', () => {
     await clickButtonContaining('Zurück')
 
     expect(document.body.textContent).toContain('Feedback zum Praxistest')
-    expect(document.body.textContent).toContain('Darstellung & Einrichtung')
+    expect(document.body.textContent).toContain('Setup')
   })
 
   it('opens office setup as its own screen and returns to profile', async () => {
@@ -116,7 +116,7 @@ describe('SettingsScreen', () => {
 
     await clickButtonContaining('Zurück')
 
-    expect(document.body.textContent).toContain('Bewegungsprofil')
+    expect(document.body.textContent).toContain('Dein Profil')
     expect(document.body.textContent).toContain('Arbeitsorte')
     expect(document.body.textContent).not.toContain('Feedback zum Praxistest')
   })
@@ -153,13 +153,13 @@ describe('SettingsScreen', () => {
     await clickNthButtonContaining('Bearbeiten', 1)
     await clickButtonContaining('Sa')
 
-    expect(document.body.textContent).not.toContain('Bewegungsprofil')
+    expect(document.body.textContent).not.toContain('Dein Profil')
     expect(changeRoutine).toHaveBeenCalledWith({
       activeWeekdays: [1, 2, 3, 4, 5, 6],
     })
   })
 
-  it('shows the theme switch inside Darstellung & Einrichtung', async () => {
+  it('shows the theme switch inside Setup', async () => {
     const toggleTheme = vi.fn()
     await renderInteractiveSettings({
       isDark: false,
@@ -200,7 +200,7 @@ describe('SettingsScreen', () => {
     await clickButtonContaining('Anpassen')
 
     expect(document.body.textContent).toContain('Steuere, wann und wie dich Move at work erinnert.')
-    expect(document.body.textContent).toContain('Erinnerungen aktivieren')
+    expect(document.body.textContent).toContain('Reminder aktivieren')
     expect(document.body.textContent).toContain('Sanft')
     expect(document.body.textContent).toContain('Normal')
     expect(document.body.textContent).toContain('Aktiv')

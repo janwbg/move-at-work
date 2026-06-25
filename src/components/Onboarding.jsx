@@ -48,19 +48,9 @@ const reminderOptions = [
 
 const landingBenefits = [
   {
-    icon: '↔',
-    title: 'Passt in deinen Arbeitstag',
-    text: 'Kurze Impulse, die sich in typische Arbeitsphasen einfügen.',
-  },
-  {
     icon: '✓',
-    title: 'Keine Planung nötig',
-    text: 'Move at work stellt deinen Tagesplan ruhig und passend zusammen.',
-  },
-  {
-    icon: '•',
-    title: 'Ohne Extra-Aufwand',
-    text: 'Kein Workout-Gefühl, kein schlechtes Gewissen, kein großer Umbau.',
+    title: 'Ohne Workout.',
+    text: 'Ohne Umziehen. Ohne Extra-Termin.',
   },
 ]
 
@@ -223,7 +213,7 @@ function Onboarding({
       </div>
 
       {currentStep.kind === 'landing' && (
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3">
           {landingBenefits.map((benefit) => (
             <article
               key={benefit.title}
@@ -244,16 +234,23 @@ function Onboarding({
       )}
 
       {currentStep.kind === 'workplaces' && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {workplaceOptions.map((workplace) => (
-            <OptionCard
-              key={workplace.id}
-              active={getSelectedWorkplaces(answers, true).includes(workplace.id)}
-              label={workplace.label}
-              onClick={() => toggleWorkplace(workplace.id)}
-              type="checkbox"
-            />
-          ))}
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {workplaceOptions.map((workplace) => (
+              <OptionCard
+                key={workplace.id}
+                active={getSelectedWorkplaces(answers, true).includes(workplace.id)}
+                description={workplace.description}
+                label={workplace.label}
+                onClick={() => toggleWorkplace(workplace.id)}
+                type="checkbox"
+              />
+            ))}
+          </div>
+          <p className="rounded-lg bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-600 dark:bg-white/5 dark:text-slate-300">
+            Büro & Homeoffice: Wähle beide Orte aus, wenn du regelmäßig
+            wechselst.
+          </p>
         </div>
       )}
 
@@ -389,8 +386,8 @@ function Onboarding({
 
       {currentStep.kind === 'final' && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-          Dein Plan startet mit fünf kurzen Impulsen für deinen heutigen
-          Arbeits- oder Lerntag.
+          Du bekommst kurze Empfehlungen, die zu deinem Schreibtischtag passen
+          — damit Bewegung nicht noch ein zusätzlicher Termin wird.
         </div>
       )}
 
@@ -498,12 +495,15 @@ function SetupWorkplaceContext({ answers, step }) {
             </p>
           )}
           <h1 className="mt-1 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
-            Dein {workplaceLabel}-Setup
+            Was hast du {step.workplace === 'homeoffice' ? 'im Homeoffice' : 'im Büro'} zur Verfügung?
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
-            Was steht dir{' '}
-            {step.workplace === 'homeoffice' ? 'im Homeoffice' : 'im Büro'} zur
-            Verfügung?
+            Wähle alles aus, was für kurze Bewegungsimpulse realistisch nutzbar
+            ist.
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-teal-700 dark:text-teal-200">
+            Keine Sorge: Move at work schlägt dir nur Übungen vor, die zu
+            deinem Umfeld passen.
           </p>
         </div>
       </div>
@@ -553,7 +553,7 @@ function getNextButtonLabel(step) {
   }
 
   if (step.kind === 'final') {
-    return 'Meinen Plan generieren'
+    return 'Tagesplan ansehen'
   }
 
   return 'Weiter'

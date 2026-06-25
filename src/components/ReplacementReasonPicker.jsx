@@ -19,6 +19,9 @@ function ReplacementReasonPicker({
       >
         {title}
       </p>
+      <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+        Move at work sucht dir eine passendere Empfehlung für diesen Moment.
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {replacementReasonOptions.map((reason) => (
           <button
@@ -36,7 +39,7 @@ function ReplacementReasonPicker({
         onClick={onCancel}
         className="mt-3 min-h-8 rounded-full px-1 text-sm font-bold text-slate-500 transition hover:text-teal-700 dark:text-slate-400"
       >
-        Abbrechen
+        Zurück
       </button>
     </div>
   )

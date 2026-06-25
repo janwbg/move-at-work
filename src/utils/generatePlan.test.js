@@ -438,7 +438,7 @@ describe('generatePlan', () => {
       currentWorkdayType: 'does-not-exist',
     })
 
-    expect(plan.summary).toContain('viel fokusarbeit')
+    expect(plan.summary).toContain('fokusarbeit')
   })
 
   it('uses currentWorkdayType for low-time recommendations', () => {
@@ -450,7 +450,7 @@ describe('generatePlan', () => {
       currentWorkdayType: 'tight-schedule',
     })
 
-    expect(plan.summary).toContain('wenig zeit / enge taktung')
+    expect(plan.summary).toContain('wenig zeit')
     expect(
       plan.dailySchedule.filter((section) => getLongestDuration(section.duration) <= 3)
         .length,

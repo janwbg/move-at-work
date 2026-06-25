@@ -385,6 +385,7 @@ function ResultScreen({
     saveProgress(progressToSave)
     setSuccessState({
       isCompleteDaySuccess: showCompleteDaySuccess,
+      section,
       summary: nextSummary,
       title: section.title,
       totalToday: plan.dailySchedule.length,
@@ -415,6 +416,28 @@ function ResultScreen({
 
   function handleCloseUpgrade() {
     setActiveTab(upgradeReturnTab)
+  }
+
+  function handleCompletionFeedback(feedback) {
+    const section = successState?.section
+
+    if (!section) {
+      return
+    }
+
+    setRecommendationFeedback(
+      recordRecommendationFeedback({
+        ...createRecommendationFeedbackContext({
+          activeWorkPhase,
+          activeWorkdayType,
+          activeWorkplace,
+          fallbackIntensity: normalizedAnswers.fitnessLevel,
+          section,
+        }),
+        feedback,
+        action: 'completed',
+      }),
+    )
   }
 
   return (
@@ -473,7 +496,9 @@ function ResultScreen({
 
       {successState && (
         <SuccessDialog
+          feedbackUrl={FEEDBACK_URL}
           isCompleteDaySuccess={successState.isCompleteDaySuccess}
+          onFeedback={handleCompletionFeedback}
           summary={successState.summary}
           title={successState.title}
           totalToday={successState.totalToday}
@@ -534,23 +559,22 @@ function getStatusForCompletedCount(todayStatus, completedToday) {
 }
 
 export function SuccessDialog({
+  feedbackUrl,
   isCompleteDaySuccess = false,
   onClose,
+  onFeedback = () => {},
   onOpenProgress = () => {},
   summary,
   title,
   totalToday,
 }) {
+  const [feedbackState, setFeedbackState] = useState('')
   const completedToday = Math.min(summary.completedToday, totalToday)
-  const headline = isCompleteDaySuccess
-    ? 'Kompletter Tag geschafft!'
-    : 'Stark gemacht!'
-  const progressText = isCompleteDaySuccess
-    ? `Du hast heute alle ${totalToday} Impulse abgeschlossen.`
-    : `Du hast heute ${completedToday} von ${totalToday} Übungen geschafft.`
-  const closingText = isCompleteDaySuccess
-    ? 'Starker Arbeitstag. Deine Routine wächst.'
-    : 'Jede kurze Bewegung zählt.'
+
+  function submitFeedback(feedback) {
+    setFeedbackState(feedback)
+    onFeedback(feedback)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 px-4 py-5 backdrop-blur-sm sm:items-center">
@@ -567,7 +591,7 @@ export function SuccessDialog({
           id="success-title"
           className="mt-4 text-2xl font-extrabold tracking-normal text-slate-950 dark:text-white"
         >
-          {headline}
+          Sitzphase unterbrochen.
         </p>
         {!isCompleteDaySuccess && (
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
@@ -575,20 +599,59 @@ export function SuccessDialog({
           </p>
         )}
         <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
-          {progressText}
+          Gut gemacht — du bleibst dran.
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3 text-left">
           <ProgressStatCard label="Heute" value={`${completedToday}/${totalToday}`} />
           <ProgressStatCard
-            label="Aktive Serie"
+            label="Arbeitsstreak"
             value={String(Math.max(summary.streak, 0))}
           />
         </div>
 
-        <p className="mt-4 text-sm font-bold leading-6 text-emerald-800 dark:text-emerald-100">
-          {closingText}
-        </p>
+        <section className="mt-5 rounded-lg bg-slate-50 p-3 text-left dark:bg-white/5">
+          <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+            Hat diese Empfehlung gerade gepasst?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => submitFeedback('fit')}
+              className="min-h-9 rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+            >
+              Ja, hat gepasst
+            </button>
+            <button
+              type="button"
+              onClick={() => submitFeedback('not-fit')}
+              className="min-h-9 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+            >
+              Eher nicht
+            </button>
+          </div>
+          {feedbackState === 'fit' && (
+            <p className="mt-3 text-sm font-semibold leading-6 text-emerald-700 dark:text-emerald-200">
+              Danke dir. Das hilft Move at work, Empfehlungen weiter zu
+              verbessern.
+            </p>
+          )}
+          {feedbackState === 'not-fit' && (
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+              Danke für dein Feedback. Was hat nicht gepasst?
+            </p>
+          )}
+          {feedbackUrl && (
+            <a
+              href={feedbackUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex text-sm font-bold text-teal-700 underline-offset-4 hover:underline dark:text-teal-200"
+            >
+              Mehr Feedback geben
+            </a>
+          )}
+        </section>
 
         <div className="mt-5 grid gap-2">
           <button
@@ -603,7 +666,7 @@ export function SuccessDialog({
             onClick={onOpenProgress}
             className="min-h-11 w-full rounded-full border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-teal-700/40 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-white/10 dark:text-slate-200"
           >
-            Fortschritt ansehen
+            Routine ansehen
           </button>
         </div>
       </div>

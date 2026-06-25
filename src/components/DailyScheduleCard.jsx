@@ -137,13 +137,13 @@ function DailyScheduleCard({
               featured ? 'min-h-11 px-5 py-3' : 'min-h-8 px-3 py-1.5'
             }`}
           >
-            {isCompactOpen ? 'Öffnen' : actionLabel}
+            {actionLabel}
           </button>
           {!completed && (
             <button
               type="button"
-              aria-label="Empfehlung wechseln"
-              title="Empfehlung wechseln"
+              aria-label="Andere Empfehlung"
+              title="Andere Empfehlung"
               onClick={openReplacementDialog}
               className={`${isCompactOpen ? 'min-h-8 w-8' : 'min-h-10 w-10'} flex items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-teal-700/40 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-white/10 dark:text-slate-300`}
             >

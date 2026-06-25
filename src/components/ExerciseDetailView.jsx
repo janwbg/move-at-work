@@ -104,7 +104,7 @@ function ExerciseDetailView({
             onClick={onBack}
             className="inline-flex min-h-9 items-center rounded-full px-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
-            ← Zurück
+            ← Zurück zum Tagesplan
           </button>
         </div>
 
@@ -130,7 +130,10 @@ function ExerciseDetailView({
             )}
             {completed && (
               <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-100">
-                Diese Übung hast du heute erledigt.
+                Diese Übung ist erledigt.
+                <span className="mt-1 block font-semibold">
+                  Sitzphase unterbrochen. Gut gemacht — du bleibst dran.
+                </span>
               </p>
             )}
           </header>
@@ -221,7 +224,7 @@ function ExerciseDetailView({
                 onClick={openReplacementDialog}
                 className="text-sm font-bold text-slate-600 transition hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700 dark:text-slate-300"
               >
-                Passt gerade nicht? Andere Empfehlung wählen
+                Andere Empfehlung
               </button>
 
               {replacementLimitNotice}
@@ -323,7 +326,7 @@ function DetailBadge({ children, tone = 'neutral' }) {
 
 function getTimerStateHint({ completed, timerState }) {
   if (completed) {
-    return 'Diese Übung ist abgeschlossen; Timer und Wechsel bleiben gesperrt.'
+    return 'Diese Übung ist erledigt; Timer und Wechsel bleiben gesperrt.'
   }
 
   if (timerState === 'running') {

@@ -12,24 +12,24 @@ export function getReminderCopy({
 }) {
   const copies = {
     'focus-heavy': {
-      title: 'Passt gerade ein kurzer Reset?',
-      text: 'Nur 60 Sekunden, falls es gerade in deine Fokusphase passt.',
+      title: 'Zeit für einen kurzen Reset?',
+      text: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
     'meeting-heavy': {
-      title: 'Zwischen zwei Terminen?',
-      text: 'Ein kurzer, diskreter Impuls wartet, falls der Moment passt.',
+      title: 'Kurze Bewegungspause?',
+      text: 'Diese Empfehlung hilft dir, deine Sitzphase zu unterbrechen.',
     },
     'mixed-day': {
-      title: 'Kleiner Wechselmoment?',
-      text: `${getSlotImpulseLabel(reminder)} ist noch offen, wenn es gerade reinpasst.`,
+      title: 'Zeit für einen kurzen Reset?',
+      text: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
     'study-day': {
-      title: 'Kurzer Lern-Reset?',
-      text: 'Ein ruhiger Wechsel kann warten, bis es in deinen Lernfluss passt.',
+      title: 'Kurze Bewegungspause?',
+      text: 'Diese Empfehlung hilft dir, deine Sitzphase zu unterbrechen.',
     },
     'tight-schedule': {
-      title: 'Nur kurz, falls es passt.',
-      text: 'Heute lieber etwas ruhiger? Du kannst die Impulse pausieren.',
+      title: 'Zeit für einen kurzen Reset?',
+      text: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
   }
 
@@ -44,24 +44,24 @@ export function getReminderNotificationCopy({
 } = {}) {
   const copies = {
     'focus-heavy': {
-      title: 'Passt gerade ein kurzer Reset?',
-      body: 'Nur 60 Sekunden, falls es gerade reinpasst.',
+      title: 'Zeit für einen kurzen Reset?',
+      body: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
     'meeting-heavy': {
-      title: 'Zwischen zwei Terminen?',
-      body: 'Ein kurzer, diskreter Impuls wartet, falls der Moment passt.',
+      title: 'Kurze Bewegungspause?',
+      body: 'Diese Empfehlung hilft dir, deine Sitzphase zu unterbrechen.',
     },
     'mixed-day': {
-      title: 'Kleiner Wechselmoment?',
-      body: 'Dein nächster Impuls ist offen, wenn es gerade passt.',
+      title: 'Zeit für einen kurzen Reset?',
+      body: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
     'study-day': {
-      title: 'Kurzer Lern-Reset?',
-      body: 'Ein ruhiger Wechsel wartet, falls er gerade passt.',
+      title: 'Kurze Bewegungspause?',
+      body: 'Diese Empfehlung hilft dir, deine Sitzphase zu unterbrechen.',
     },
     'tight-schedule': {
-      title: 'Nur kurz, falls es passt.',
-      body: 'Du kannst die Impulse heute auch pausieren.',
+      title: 'Zeit für einen kurzen Reset?',
+      body: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     },
   }
 
@@ -110,17 +110,6 @@ export function applyReminderBannerAction({
   }
 
   return null
-}
-
-function getSlotImpulseLabel(reminder) {
-  const labels = {
-    afternoon: 'Dein Nachmittagsimpuls',
-    lunch_transition: 'Dein Mittagsimpuls',
-    morning: 'Dein Vormittagsimpuls',
-    wrap_up: 'Dein Tagesabschlussimpuls',
-  }
-
-  return labels[reminder?.slotId] ?? 'Dein nächster Bewegungsimpuls'
 }
 
 function getReminderContextHint({ activeWorkplace, reminder }) {

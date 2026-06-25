@@ -1,12 +1,16 @@
+import BrandLogo from './BrandLogo.jsx'
+import { BRAND_SHORT_DESCRIPTION } from '../data/brand.js'
+
 function AppHeader({ isDark, onToggleTheme }) {
   return (
     <header className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-bold uppercase tracking-normal text-teal-700 dark:text-teal-300">
-          Move at work
-        </p>
+        <BrandLogo
+          markClassName="h-8 w-8"
+          textClassName="text-base text-slate-950 dark:text-white"
+        />
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Bewegungsimpulse für den Arbeitstag
+          {BRAND_SHORT_DESCRIPTION}
         </p>
       </div>
 

@@ -35,7 +35,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
             Bewegungsprofil
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-            Bewegungsprofil
+            Dein Profil
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
             Passe Ziel, Arbeitsorte und Setups an.
@@ -76,7 +76,7 @@ function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) 
               onChange={(fitnessLevel) => updateAnswer({ fitnessLevel })}
             />
             <SelectField
-              label="Typischer Arbeitstag"
+              label="Typischer Tag"
               value={normalizedAnswers.situation}
               options={workdayOptions}
               onChange={(situation) => updateAnswer({ situation })}

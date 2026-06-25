@@ -19,12 +19,12 @@ export const workplaceOptions = [
     id: 'office',
     label: 'Büro',
     description:
-      'Ich arbeite regelmäßig im Büro oder an einem festen Arbeitsplatz im Unternehmen.',
+      'Für Arbeitsplätze mit Kolleginnen, Meetings und gemeinsam genutzten Bereichen.',
   },
   {
     id: 'homeoffice',
     label: 'Homeoffice',
-    description: 'Ich arbeite regelmäßig von zuhause.',
+    description: 'Für Tage zuhause mit etwas mehr Flexibilität.',
   },
 ]
 
@@ -34,26 +34,33 @@ export const goalOptions = [
     label: 'Weniger sitzen',
     icon: '⇅',
     description:
-      'Kleine Unterbrechungen statt stundenlangem Durchsitzen.',
+      'Sitzphasen regelmäßiger unterbrechen.',
   },
   {
     id: 'more-energy',
-    label: 'Mehr Energie im Arbeitstag',
-    icon: '⚡',
-    description: 'Kurze Aktivierungen, wenn Kopf und Körper müde werden.',
+    label: 'Mehr Bewegung',
+    icon: '↝',
+    description: 'Kleine Bewegungsimpulse in deinen Tag bringen.',
   },
   {
     id: 'back-neck',
-    label: 'Rücken & Nacken entlasten',
+    label: 'Rücken & Haltung',
     icon: '⤴',
-    description: 'Sanfte Impulse für typische Schreibtisch-Belastungen.',
+    description:
+      'Verspannungen vorbeugen und den Körper zwischendurch lockern.',
   },
   {
     id: 'focus',
-    label: 'Konzentration verbessern',
+    label: 'Fokus & Energie',
     icon: '◎',
     description:
-      'Mini-Pausen, die deine Konzentrationsfähigkeit wieder verbessern.',
+      'Kurze Resets für lange Arbeits- oder Lernphasen.',
+  },
+  {
+    id: 'habit',
+    label: 'Routine aufbauen',
+    icon: '↻',
+    description: 'Dranbleiben, ohne dich zu überfordern.',
   },
 ]
 
@@ -129,19 +136,19 @@ export const intensityOptions = [
   {
     id: 'gentle',
     label: 'Sanft',
-    description: 'Sehr einfache Bewegungen mit wenig Anstrengung.',
+    description: 'Ruhige Impulse mit niedriger Hürde.',
   },
   {
     id: 'balanced',
-    label: 'Ausgeglichen',
+    label: 'Normal',
     description:
-      'Alltagstaugliche Bewegung, die aktiviert, aber nicht überfordert.',
+      'Eine ausgewogene Mischung für deinen Schreibtischtag.',
   },
   {
     id: 'active',
-    label: 'Aktiv',
+    label: 'Aktiver',
     description:
-      'Dynamischere Impulse, längere Gehphasen und etwas mehr Intensität.',
+      'Mehr Bewegung, wenn du bewusst öfter rauskommen willst.',
   },
 ]
 
@@ -150,32 +157,32 @@ export const fitnessLevelOptions = intensityOptions
 export const workdayOptions = [
   {
     id: 'focus-heavy',
-    label: 'Viel Fokusarbeit',
-    description: 'Du arbeitest häufig längere Zeit konzentriert an Aufgaben.',
+    label: 'Fokusarbeit',
+    description: 'Für längere konzentrierte Arbeitsphasen.',
   },
   {
     id: 'meeting-heavy',
-    label: 'Viele Meetings',
+    label: 'Meetingtag',
     description:
-      'Dein Tag besteht oft aus Terminen, Abstimmungen oder Calls.',
+      'Für Tage mit vielen Terminen und wenig Raum.',
   },
   {
     id: 'mixed-day',
-    label: 'Gemischter Arbeitstag',
+    label: 'Gemischt',
     description:
-      'Dein Tag wechselt zwischen Fokusarbeit, Meetings und Pausen.',
+      'Wenn dein Tag aus Fokus, Meetings und kurzen Pausen besteht.',
   },
   {
     id: 'study-day',
     label: 'Lern- oder Studientag',
     description:
-      'Du lernst, liest oder arbeitest konzentriert mit kurzen Aktivierungsimpulsen.',
+      'Für lange Schreib-, Lern- oder Bibliothekstage.',
   },
   {
     id: 'tight-schedule',
-    label: 'Wenig Zeit / enge Taktung',
+    label: 'Wenig Zeit',
     description:
-      'Dein Tag ist dicht getaktet und braucht besonders kurze, unauffällige Impulse.',
+      'Für enge Tage, an denen kurze Impulse besonders wichtig sind.',
   },
 ]
 

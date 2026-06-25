@@ -8,9 +8,9 @@ describe('ReminderSettings', () => {
   it('renders the reminder toggle with its description', () => {
     const html = renderSettings()
 
-    expect(html).toContain('Erinnerungen aktivieren')
+    expect(html).toContain('Reminder aktivieren')
     expect(html).toContain(
-      'Move at work erinnert dich in passenden Tagesfenstern an offene Bewegungsimpulse.',
+      'Move at work kann dich sanft daran erinnern, kurze',
     )
   })
 
@@ -49,7 +49,7 @@ describe('ReminderSettings', () => {
     expect(html).toContain('Für heute pausieren')
     expect(html).not.toContain('Bis morgen pausieren')
     expect(html).toContain('Erinnerungen pausiert bis morgen.')
-    expect(html).toContain('Pause beenden')
+    expect(html).toContain('Reminder wieder aktivieren')
   })
 
   it('hides system notification settings while reminders are disabled', () => {

@@ -17,17 +17,18 @@ const reminderModes = [
   {
     id: 'gentle',
     label: 'Sanft',
-    description: 'Wenige Hinweise',
+    description: 'Wenige Erinnerungen für einen ruhigen Start.',
   },
   {
     id: 'normal',
     label: 'Normal',
-    description: 'Sinnvolle Grundbegleitung',
+    description: 'Ausgewogene Erinnerungen für deinen Schreibtischtag.',
   },
   {
     id: 'active',
     label: 'Aktiv',
-    description: 'Mehr Hinweise über den Tag verteilt',
+    description:
+      'Mehr Impulse, wenn du bewusst öfter in Bewegung kommen möchtest.',
   },
 ]
 
@@ -117,11 +118,11 @@ function ReminderSettings({
             Reminder
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-            Bewegungsimpulse passend erinnern
+            Reminder
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Move at work erinnert dich in passenden Tagesfenstern an offene
-            Bewegungsimpulse.
+            Move at work kann dich sanft daran erinnern, kurze
+            Bewegungsimpulse in deinen Tag einzubauen.
           </p>
         </div>
 
@@ -132,13 +133,13 @@ function ReminderSettings({
             onChange={(event) => handleToggle(event.target.checked)}
             className="h-4 w-4 accent-teal-700"
           />
-          Erinnerungen aktivieren
+          Reminder aktivieren
         </label>
       </div>
 
       <div className="mt-5">
         <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-          Erinnerungsmodus
+          Wie oft möchtest du erinnert werden?
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {reminderModes.map((mode) => {
@@ -180,7 +181,7 @@ function ReminderSettings({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-              Nicht-stören
+              Nicht stören
             </p>
             {pauseStatus && (
               <p className="mt-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -194,7 +195,7 @@ function ReminderSettings({
               onClick={endPause}
               type="button"
             >
-              Pause beenden
+              Reminder wieder aktivieren
             </button>
           )}
         </div>

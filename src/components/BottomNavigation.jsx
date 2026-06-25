@@ -1,6 +1,6 @@
 const tabs = [
   { id: 'today', label: 'Heute', icon: '●' },
-  { id: 'progress', label: 'Fortschritt', icon: '↗' },
+  { id: 'progress', label: 'Routine', icon: '↗' },
   { id: 'settings', label: 'Einstellungen', icon: '⚙' },
 ]
 

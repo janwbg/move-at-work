@@ -3,33 +3,33 @@ import { describe, expect, it } from 'vitest'
 import UpgradeScreen from './UpgradeScreen.jsx'
 
 describe('UpgradeScreen', () => {
-  it('renders the title, prices and early-access note', () => {
+  it('renders the title, positioning and availability note', () => {
     const html = renderUpgradeScreen()
 
     expect(html).toContain('Move at work Plus')
-    expect(html).toContain('2,99 € / Monat')
-    expect(html).toContain('19,99 € / Jahr')
-    expect(html).toContain('Early-Access-Preis während der Weiterentwicklung.')
+    expect(html).toContain('Mehr Anpassung')
+    expect(html).toContain('Geplant')
+    expect(html).toContain('Plus ist aktuell vorbereitet, aber noch nicht kaufbar.')
   })
 
-  it('shows Free vs. Plus replacement limits', () => {
+  it('shows Free vs. planned Plus positioning', () => {
     const html = renderUpgradeScreen()
 
     expect(html).toContain('Free vs. Plus')
-    expect(html).toContain('Empfehlungen wechseln')
+    expect(html).toContain('Mehr Wechselmöglichkeiten')
     expect(html).toContain('1x/Tag')
-    expect(html).toContain('unbegrenzt')
+    expect(html).toContain('geplant')
   })
 
   it('marks planned features as planned instead of available today', () => {
     const html = renderUpgradeScreen()
 
-    expect(html).toContain('Als Nächstes geplant')
+    expect(html).toContain('Geplant')
     expect(html).toContain(
       'Diese Funktionen sind geplant und noch nicht Teil des aktuellen Plus-Umfangs.',
     )
-    expect(html).toContain('erweiterte Fortschrittsansicht')
-    expect(html).toContain('eigene Routinen')
+    expect(html).toContain('Erweiterte Routinen')
+    expect(html).toContain('Bessere Anpassung an deinen Tageskontext')
   })
 
   it('shows active status for Plus users', () => {
@@ -61,7 +61,7 @@ describe('UpgradeScreen', () => {
     const html = renderUpgradeScreen()
 
     expect(html).toContain('Plus wird vorbereitet')
-    expect(html).toContain('Checkout folgt im nächsten Schritt')
+    expect(html).toContain('Plus ist aktuell vorbereitet, aber noch nicht kaufbar.')
     expect(html).toContain('disabled=""')
     expect(html).not.toContain('stripe')
     expect(html).not.toContain('checkout.stripe')

@@ -9,7 +9,7 @@ describe('BottomNavigation', () => {
     )
 
     expect(html).toContain('Heute')
-    expect(html).toContain('Fortschritt')
+    expect(html).toContain('Routine')
     expect(html).toContain('Einstellungen')
     expect(html).toContain('aria-current="page"')
   })

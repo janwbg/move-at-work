@@ -25,7 +25,7 @@ function UpgradeScreen({
           </button>
         )}
         <p className="text-sm font-bold uppercase tracking-normal text-teal-100">
-          Upgrade
+          Move at work Plus
         </p>
         <h1 className="mt-3 text-3xl font-extrabold tracking-normal sm:text-4xl">
           {plan.title}
@@ -117,7 +117,7 @@ function UpgradeScreen({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
         <h2 className="text-xl font-extrabold tracking-normal text-slate-950 dark:text-white">
-          Als Nächstes geplant
+          Geplant
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
           Diese Funktionen sind geplant und noch nicht Teil des aktuellen Plus-Umfangs.
@@ -142,14 +142,14 @@ function UpgradeScreen({
               Plus wird vorbereitet
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Checkout folgt im nächsten Schritt.
+              Plus ist aktuell vorbereitet, aber noch nicht kaufbar.
             </p>
             <button
               type="button"
               disabled
               className="mt-4 min-h-11 cursor-not-allowed rounded-full bg-teal-700 px-5 py-3 text-sm font-bold text-white opacity-80"
             >
-              Checkout folgt im nächsten Schritt
+              Geplant
             </button>
           </>
         )}

@@ -14,13 +14,11 @@ describe('profileOptions', () => {
   it('contains the final goal options', () => {
     expect(goalOptions.map((option) => option.label)).toEqual([
       'Weniger sitzen',
-      'Mehr Energie im Arbeitstag',
-      'Rücken & Nacken entlasten',
-      'Konzentration verbessern',
+      'Mehr Bewegung',
+      'Rücken & Haltung',
+      'Fokus & Energie',
+      'Routine aufbauen',
     ])
-    expect(goalOptions.map((option) => option.label)).not.toContain(
-      'Bewegung zur Gewohnheit machen',
-    )
   })
 
   it('contains the final setup options', () => {
@@ -86,15 +84,15 @@ describe('profileOptions', () => {
   it('contains the final intensity and workday options', () => {
     expect(intensityOptions.map((option) => option.label)).toEqual([
       'Sanft',
-      'Ausgeglichen',
-      'Aktiv',
+      'Normal',
+      'Aktiver',
     ])
     expect(workdayOptions.map((option) => option.label)).toEqual([
-      'Viel Fokusarbeit',
-      'Viele Meetings',
-      'Gemischter Arbeitstag',
+      'Fokusarbeit',
+      'Meetingtag',
+      'Gemischt',
       'Lern- oder Studientag',
-      'Wenig Zeit / enge Taktung',
+      'Wenig Zeit',
     ])
   })
 
@@ -166,7 +164,7 @@ describe('profileOptions', () => {
   })
 
   it('migrates old habit and small equipment values safely', () => {
-    expect(normalizeProfileAnswers({ goal: 'habit' }).goal).toBe('sit-less')
+    expect(normalizeProfileAnswers({ goal: 'habit' }).goal).toBe('habit')
     expect(
       normalizeProfileAnswers({
         setup: ['Kleines Bewegungsequipment'],

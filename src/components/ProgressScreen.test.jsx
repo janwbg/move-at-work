@@ -6,9 +6,9 @@ describe('ProgressScreen', () => {
   it('renders the quiet screen title without the old blue banner', () => {
     const html = renderProgressScreen()
 
-    expect(html).toContain('Fortschritt')
+    expect(html).toContain('Deine Routine')
     expect(html).toContain(
-      'Ein ruhiger Blick auf deine Arbeits- und Lernroutine.',
+      'Sieh, wie du Sitzphasen unterbrichst',
     )
     expect(html).not.toContain('Jede kurze Bewegung')
     expect(html).not.toContain('Dein Fortschritt bleibt lokal')
@@ -26,12 +26,12 @@ describe('ProgressScreen', () => {
       },
     })
 
-    expect(html).toContain('Heute')
-    expect(html).toContain('Diese Woche')
-    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('Heute erledigt')
+    expect(html).toContain('Aktive Woche')
+    expect(html).toContain('Arbeits-/Lernroutine')
     expect(html).toContain('Starker Tag')
     expect(html).toContain('Impulse')
-    expect(html).toContain('Aktive Tage')
+    expect(html).toContain('Arbeitsstreak')
     expect(html).toContain('Freie Tage bleiben neutral.')
   })
 
@@ -62,13 +62,13 @@ describe('ProgressScreen', () => {
     })
 
     expect(html).not.toContain('🚀')
-    expect(html).toContain('Aktiver Tag')
+    expect(html).toContain('aktiver Tag')
   })
 
   it.each([
-    [0, 'Noch offen'],
-    [1, 'Routine gestartet'],
-    [2, 'Routine gestartet'],
+    [0, 'Offen'],
+    [1, 'Routine gehalten'],
+    [2, 'Routine gehalten'],
     [3, 'Starker Tag'],
     [4, 'Starker Tag'],
     [5, 'Kompletter Tag'],
@@ -118,7 +118,7 @@ describe('ProgressScreen', () => {
       },
     })
 
-    expect(html).toContain('Aktivitätskalender')
+    expect(html).toContain('Aktive Woche')
     expect(html).toContain('Freie Tage und Pausentage bleiben neutral.')
     expect(html).toContain('data-routine-weekday="Mo"')
     expect(html).toContain('data-routine-weekday="Di"')

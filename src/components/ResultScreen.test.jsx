@@ -40,26 +40,24 @@ describe('SuccessDialog', () => {
   it('shows a positive completion moment with exercise name and compact progress', () => {
     const html = renderSuccessDialog()
 
-    expect(html).toContain('Stark gemacht!')
+    expect(html).toContain('Sitzphase unterbrochen.')
     expect(html).toContain('Schulter-Reset ist erledigt.')
-    expect(html).toContain('Du hast heute 1 von 5 Übungen geschafft.')
+    expect(html).toContain('Gut gemacht')
     expect(html).toContain('1/5')
     expect(html).toContain('Heute')
-    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('Arbeitsstreak')
     expect(html).toContain('>1</p>')
-    expect(html).toContain('Aktive Serie')
-    expect(html).toContain('Jede kurze Bewegung zählt.')
+    expect(html).toContain('Hat diese Empfehlung gerade gepasst?')
   })
 
-  it('does not render feedback elements in the success dialog', () => {
+  it('renders feedback elements in the success dialog', () => {
     const html = renderSuccessDialog()
 
     expect(html).not.toContain('Wie fühlst du dich jetzt?')
-    expect(html).not.toContain('Hat diese Empfehlung gerade gepasst?')
     expect(html).not.toContain('War die Empfehlung hilfreich?')
-    expect(html).not.toContain('Feedback geben')
-    expect(html).not.toContain('Ja, hat gepasst')
-    expect(html).not.toContain('Eher nicht')
+    expect(html).toContain('Hat diese Empfehlung gerade gepasst?')
+    expect(html).toContain('Ja, hat gepasst')
+    expect(html).toContain('Eher nicht')
   })
 
   it('shows the complete-day success variant for 5 of 5', () => {
@@ -73,12 +71,10 @@ describe('SuccessDialog', () => {
       title: 'Tagesabschluss',
     })
 
-    expect(html).toContain('Kompletter Tag geschafft!')
-    expect(html).toContain('Du hast heute alle 5 Impulse abgeschlossen.')
+    expect(html).toContain('Sitzphase unterbrochen.')
     expect(html).toContain('5/5')
-    expect(html).toContain('Aktive Serie')
+    expect(html).toContain('Arbeitsstreak')
     expect(html).toContain('>3</p>')
-    expect(html).toContain('Starker Arbeitstag. Deine Routine wächst.')
     expect(html).not.toContain('Tagesabschluss ist erledigt.')
   })
 
@@ -95,7 +91,7 @@ describe('SuccessDialog', () => {
     const onOpenProgress = vi.fn()
     await renderInteractiveSuccessDialog({ onOpenProgress })
 
-    await clickButtonContaining('Fortschritt ansehen')
+    await clickButtonContaining('Routine ansehen')
 
     expect(onOpenProgress).toHaveBeenCalledTimes(1)
   })
@@ -111,8 +107,8 @@ describe('ResultScreen daily workday context helpers', () => {
       />,
     )
 
-    expect(html).toContain('Art des heutigen Arbeitstags')
-    expect(html).toContain('<option value="meeting-heavy" selected="">Meetings</option>')
+    expect(html).toContain('Heute eher')
+    expect(html).toContain('<option value="meeting-heavy" selected="">Meetingtag</option>')
     expect(html).toContain('self-start')
   })
 
@@ -211,8 +207,8 @@ describe('ResultScreen daily workday context helpers', () => {
     )
 
     expect(html).toContain('Move at work Plus')
-    expect(html).toContain('2,99 € / Monat')
-    expect(html).toContain('Plus wird vorbereitet')
+    expect(html).toContain('Geplant')
+    expect(html).toContain('Plus ist aktuell vorbereitet, aber noch nicht kaufbar.')
   })
 
   it('navigates from the success dialog to the progress screen', async () => {
@@ -220,13 +216,13 @@ describe('ResultScreen daily workday context helpers', () => {
 
     await clickButtonContaining('Erledigt')
 
-    expect(document.body.textContent).toContain('Stark gemacht!')
+    expect(document.body.textContent).toContain('Sitzphase unterbrochen.')
 
-    await clickButtonContaining('Fortschritt ansehen')
+    await clickButtonContaining('Routine ansehen')
 
-    expect(document.body.textContent).toContain('Aktivitätskalender')
-    expect(document.body.textContent).toContain('Heute')
-    expect(document.body.textContent).not.toContain('Stark gemacht!')
+    expect(document.body.textContent).toContain('Deine Routine')
+    expect(document.body.textContent).toContain('Heute erledigt')
+    expect(document.body.textContent).not.toContain('Sitzphase unterbrochen.')
   })
 
   it('keeps today and progress counts aligned after switching workplace', async () => {
@@ -242,10 +238,10 @@ describe('ResultScreen daily workday context helpers', () => {
     expect(document.body.textContent).toContain('1/5')
 
     await clickButtonContaining('Homeoffice')
-    await clickButtonContaining('Fortschritt')
+    await clickButtonContaining('Routine')
 
     expect(document.body.textContent).toContain('1/5')
-    expect(document.body.textContent).toContain('Routine gestartet')
+    expect(document.body.textContent).toContain('Routine gehalten')
     expect(document.body.textContent).not.toContain('Microbreaks')
   })
 
@@ -314,7 +310,7 @@ describe('ResultScreen daily workday context helpers', () => {
 
     await clickButtonContaining('Heute aktivieren')
 
-    expect(document.body.textContent).toContain('Move-at-work-Tag')
+    expect(document.body.textContent).toContain('Move at work Tag')
     expect(document.body.textContent).toContain('Heute pausieren')
     expect(document.body.textContent).toContain('Nächster Impuls')
     expect(JSON.parse(window.localStorage.getItem(routineSettingsStorageKey))).toEqual(
@@ -489,7 +485,7 @@ function countOccurrences(value, search) {
 
 function getWorkdaySelect() {
   return document.querySelector(
-    'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+    'select[aria-label="Heutige Tagesart auswählen"]',
   )
 }
 

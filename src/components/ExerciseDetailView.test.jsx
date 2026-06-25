@@ -50,10 +50,10 @@ describe('ExerciseDetailView', () => {
   it('shows a quieter back action and the main exercise actions for open exercises', () => {
     const html = renderDetail()
 
-    expect(html).toContain('← Zurück')
+    expect(html).toContain('← Zurück zum Tagesplan')
     expect(html).toContain('Timer starten')
     expect(html).toContain('Als erledigt markieren')
-    expect(html).toContain('Passt gerade nicht? Andere Empfehlung wählen')
+    expect(html).toContain('Andere Empfehlung')
   })
 
   it('separates a final practice hint from the numbered steps', () => {
@@ -176,11 +176,11 @@ describe('ExerciseDetailView', () => {
     const html = renderDetail({
       canReplace: false,
       initialReplaceDialogOpen: true,
-      replacementLimitNotice: <p>Heute schon gewechselt</p>,
+      replacementLimitNotice: <p>Dein heutiger Wechsel ist aufgebraucht.</p>,
     })
 
     expect(html).toContain('Andere Empfehlung')
-    expect(html).toContain('Heute schon gewechselt')
+    expect(html).toContain('Dein heutiger Wechsel ist aufgebraucht.')
     expect(html).not.toContain('Was passt gerade nicht?')
   })
 
@@ -188,7 +188,7 @@ describe('ExerciseDetailView', () => {
     const html = renderDetail({ completed: true })
 
     expect(html).toContain('Erledigt')
-    expect(html).toContain('Diese Übung hast du heute erledigt.')
+    expect(html).toContain('Diese Übung ist erledigt.')
     expect(html).toContain('Schulterkreisen')
     expect(html).toContain('So geht')
   })
@@ -250,13 +250,13 @@ describe('ExerciseDetailView', () => {
     await renderInteractiveDetail({
       canReplace: false,
       onReplaceBlocked,
-      replacementLimitNotice: <p>Heute schon gewechselt</p>,
+      replacementLimitNotice: <p>Dein heutiger Wechsel ist aufgebraucht.</p>,
     })
 
     await clickButtonContaining('Andere Empfehlung')
 
     expect(onReplaceBlocked).toHaveBeenCalledTimes(1)
-    expect(document.body.textContent).toContain('Heute schon gewechselt')
+    expect(document.body.textContent).toContain('Dein heutiger Wechsel ist aufgebraucht.')
     expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 })

@@ -192,7 +192,7 @@ describe('TodayScreen', () => {
     const html = renderTodayScreen()
 
     expect(html).toContain('Mittwoch, 24. Juni')
-    expect(html).toContain('Move-at-work-Tag')
+    expect(html).toContain('Move at work Tag')
     expect(html).toContain('Heute pausieren')
   })
 
@@ -208,9 +208,9 @@ describe('TodayScreen', () => {
     expect(html).toContain('Heute aktivieren')
     expect(html).toContain('Heute ist Pausentag.')
     expect(html).toContain(
-      'Du kannst den Tag aktivieren, wenn du trotzdem Bewegungsimpulse machen möchtest.',
+      'Deine Routine darf auch Pausen haben.',
     )
-    expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Zeit für einen kurzen Reset?')
     expect(html).not.toContain('Nächster Impuls')
     expect(html).not.toContain('Übung starten')
     expect(html).not.toContain('Empfehlung wechseln')
@@ -294,9 +294,9 @@ describe('TodayScreen', () => {
   it('keeps the daily schedule focused on the individual plan', () => {
     const html = renderTodayScreen()
 
-    expect(html).toContain('Dein individueller Tagesplan')
-    expect(html).toContain('Du arbeitest heute im Büro')
-    expect(html).toContain('Art des heutigen Arbeitstags')
+    expect(html).toContain('Dein Tagesplan')
+    expect(html).toContain('Heute arbeitest du hier: Büro')
+    expect(html).toContain('Heute eher')
     expect(html).toContain('Schulter-Reset')
     expect(html).toContain('Atem-Reset')
   })
@@ -384,7 +384,7 @@ describe('TodayScreen', () => {
 
     expect(html).not.toContain('Weitere passende')
     expect(html).not.toContain('Zusätzlicher Impuls')
-    expect(countOccurrences(html, 'Öffnen')).toBe(5)
+    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
     expect(html).not.toContain('Übung starten')
   })
 
@@ -395,7 +395,7 @@ describe('TodayScreen', () => {
     })
 
     expect(html).toContain('0/5')
-    expect(countOccurrences(html, 'Öffnen')).toBe(5)
+    expect(countOccurrences(html, 'Übung öffnen')).toBe(5)
     expect(html).not.toContain('Übung starten')
   })
 
@@ -406,9 +406,9 @@ describe('TodayScreen', () => {
       plan: createPlan(5),
     })
 
-    expect(html).toContain('Heute schon gewechselt')
+    expect(html).toContain('Dein heutiger Wechsel ist aufgebraucht.')
     expect(html).toContain(
-      'In Free ist 1 Wechsel pro Tag enthalten. Mit Move at work Plus kannst du Empfehlungen unbegrenzt austauschen.',
+      'Mit Plus kannst du Empfehlungen später flexibler anpassen.',
     )
     expect(html).toContain('Plus ansehen')
     expect(html).not.toContain('Was passt gerade nicht?')
@@ -420,7 +420,7 @@ describe('TodayScreen', () => {
     expect(html).not.toContain('Als Nächstes')
     expect(html).not.toContain('Später heute')
     expect(html).toContain('Nächster Impuls')
-    expect(html).toContain('Öffnen')
+    expect(html).toContain('Übung öffnen')
     expect(html).not.toContain('Übung starten')
     expect(html.indexOf('Schulter-Reset')).toBeLessThan(html.indexOf('Atem-Reset'))
   })
@@ -430,7 +430,7 @@ describe('TodayScreen', () => {
 
     expect(html).toContain('Atem-Reset')
     expect(html).toContain('2 Minuten · Atmen')
-    expect(html).toContain('Öffnen')
+    expect(html).toContain('Übung öffnen')
     expect(html).not.toContain('Ruhiger Fokusimpuls.')
   })
 
@@ -444,7 +444,7 @@ describe('TodayScreen', () => {
     expect(html).toContain('Erledigt')
     expect(html).toContain('Schulter-Reset')
     expect(html).toContain('Atem-Reset')
-    expect(html).not.toContain('>Übung öffnen<')
+    expect(countOccurrences(html, 'Übung öffnen')).toBeGreaterThanOrEqual(1)
     expect(html).not.toContain('Als erledigt markieren')
     expect(html).not.toContain('Offen')
   })
@@ -456,7 +456,7 @@ describe('TodayScreen', () => {
     })
 
     expect(html).toContain('Alles erledigt für heute.')
-    expect(html).not.toContain('offen ·')
+    expect(html).toContain('0 offen · 2 erledigt')
   })
 
   it('shows the workplace switch inside the daily schedule context', () => {
@@ -467,7 +467,7 @@ describe('TodayScreen', () => {
     expect(html).toContain('aria-label="Arbeitsort heute auswählen"')
     expect(html).toContain('Büro</button>')
     expect(html).toContain('Homeoffice</button>')
-    expect(html.indexOf('Dein individueller Tagesplan')).toBeLessThan(
+    expect(html.indexOf('Dein Tagesplan')).toBeLessThan(
       html.indexOf('Arbeitsort heute auswählen'),
     )
   })
@@ -502,13 +502,13 @@ describe('TodayScreen', () => {
       activeWorkdayType: 'study-day',
     })
 
-    expect(html).toContain('Art des heutigen Arbeitstags')
-    expect(html).toContain('aria-label="Art des heutigen Arbeitstags auswählen"')
+    expect(html).toContain('Heute eher')
+    expect(html).toContain('aria-label="Heutige Tagesart auswählen"')
     expect(html).toContain('<select')
     expect(html).toContain('<option value="focus-heavy">Fokusarbeit</option>')
-    expect(html).toContain('<option value="meeting-heavy">Meetings</option>')
+    expect(html).toContain('<option value="meeting-heavy">Meetingtag</option>')
     expect(html).toContain('<option value="mixed-day">Gemischt</option>')
-    expect(html).toContain('<option value="study-day" selected="">Lernen</option>')
+    expect(html).toContain('<option value="study-day" selected="">Lern- oder Studientag</option>')
     expect(html).toContain('<option value="tight-schedule">Wenig Zeit</option>')
   })
 
@@ -529,7 +529,7 @@ describe('TodayScreen', () => {
 
     await clickButtonContaining('Schulter-Reset')
 
-    expect(document.body.textContent).toContain('Diese Übung hast du heute erledigt.')
+    expect(document.body.textContent).toContain('Diese Übung ist erledigt.')
     expect(document.body.textContent).toContain('So geht')
     expect(document.body.textContent).not.toContain('Timer starten')
     expect(document.body.textContent).not.toContain('Andere Empfehlung')
@@ -573,7 +573,7 @@ describe('TodayScreen', () => {
     const onWorkdayTypeChange = vi.fn()
     await renderInteractiveTodayScreen({ onWorkdayTypeChange })
     const select = document.querySelector(
-      'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+      'select[aria-label="Heutige Tagesart auswählen"]',
     )
 
     await act(async () => {
@@ -632,7 +632,7 @@ describe('TodayScreen', () => {
     const [firstButton] = getReplacementButtons()
 
     await clickElement(firstButton)
-    await clickButtonContaining('Öffnen')
+    await clickButtonContaining('Übung öffnen')
 
     expect(document.body.textContent).toContain('So geht')
     expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
@@ -648,7 +648,7 @@ describe('TodayScreen', () => {
     const [firstButton] = getReplacementButtons()
 
     await clickElement(firstButton)
-    await clickButtonContaining('Abbrechen')
+    await clickButtonContaining('Zurück')
 
     expect(getReplacementDialogs()).toHaveLength(0)
 
@@ -678,7 +678,7 @@ describe('TodayScreen', () => {
     await clickElement(firstButton)
 
     const select = document.querySelector(
-      'select[aria-label="Art des heutigen Arbeitstags auswählen"]',
+      'select[aria-label="Heutige Tagesart auswählen"]',
     )
     await act(async () => {
       select.value = 'study-day'
@@ -700,21 +700,21 @@ describe('TodayScreen', () => {
     await clickElement(firstButton)
 
     expect(onReplacementBlocked).toHaveBeenCalledTimes(1)
-    expect(document.body.textContent).toContain('Heute schon gewechselt')
+    expect(document.body.textContent).toContain('Dein heutiger Wechsel ist aufgebraucht.')
     expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 
   it('shows the reminder banner compactly for a due open slot', () => {
     const html = renderTodayScreen(withDueReminder())
 
-    expect(html).toContain('Kleiner Wechselmoment?')
+    expect(html).toContain('Zeit für einen kurzen Reset?')
     expect(html).toContain(
-      'Dein Vormittagsimpuls ist noch offen, wenn es gerade reinpasst.',
+      'Ein kleiner Bewegungsimpuls passt jetzt gut.',
     )
-    expect(html.indexOf('Als Nächstes')).toBeLessThan(
-      html.indexOf('Kleiner Wechselmoment?'),
+    expect(html.indexOf('Zeit für einen kurzen Reset?')).toBeLessThan(
+      html.indexOf('Deine Empfehlungen'),
     )
-    expect(html.indexOf('Kleiner Wechselmoment?')).toBeLessThan(
+    expect(html.indexOf('Deine Empfehlungen')).toBeLessThan(
       html.indexOf('Schulter-Reset'),
     )
     expect(html).toContain('Übung öffnen')
@@ -723,10 +723,10 @@ describe('TodayScreen', () => {
   })
 
   it.each([
-    ['focus-heavy', 'Passt gerade ein kurzer Reset?'],
-    ['meeting-heavy', 'Zwischen zwei Terminen?'],
-    ['study-day', 'Kurzer Lern-Reset?'],
-    ['tight-schedule', 'Nur kurz, falls es passt.'],
+    ['focus-heavy', 'Zeit für einen kurzen Reset?'],
+    ['meeting-heavy', 'Kurze Bewegungspause?'],
+    ['study-day', 'Kurze Bewegungspause?'],
+    ['tight-schedule', 'Zeit für einen kurzen Reset?'],
   ])('shows fitting reminder copy for %s', (activeWorkdayType, title) => {
     const html = renderTodayScreen(withDueReminder({ activeWorkdayType }))
 
@@ -763,7 +763,7 @@ describe('TodayScreen', () => {
     expect(actionResult.state.snoozedSlots.morning).toBe(
       new Date(2026, 5, 17, 10, 0).toISOString(),
     )
-    expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Zeit für einen kurzen Reset?')
   })
 
   it('snoozes for 30 minutes and hides the banner', () => {
@@ -781,7 +781,7 @@ describe('TodayScreen', () => {
     expect(actionResult.state.snoozedSlots.morning).toBe(
       new Date(2026, 5, 17, 10, 15).toISOString(),
     )
-    expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Zeit für einen kurzen Reset?')
   })
 
   it('pauses reminders for today without creating a slot skip', () => {
@@ -799,7 +799,7 @@ describe('TodayScreen', () => {
     expect(actionResult.state.skippedSlots).not.toContain('morning')
     expect(actionResult.state.skipCounts.morning).toBeUndefined()
     expect(actionResult.state.pausedForDay).toBe(true)
-    expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Zeit für einen kurzen Reset?')
   })
 
   it('skips the current morning slot so a later open slot can remind today', () => {
@@ -883,7 +883,7 @@ describe('TodayScreen', () => {
       withDueReminder({ completedIds: ['morning-reset'] }),
     )
 
-    expect(html).not.toContain('Kleiner Wechselmoment?')
+    expect(html).not.toContain('Zeit für einen kurzen Reset?')
   })
 
   it('creates compact reminder copy for office and homeoffice', () => {
@@ -988,8 +988,8 @@ describe('TodayScreen', () => {
       state: createDailyReminderState(morningNow()),
     })
 
-    expect(NotificationApi).toHaveBeenCalledWith('Passt gerade ein kurzer Reset?', {
-      body: 'Nur 60 Sekunden, falls es gerade reinpasst.',
+    expect(NotificationApi).toHaveBeenCalledWith('Zeit für einen kurzen Reset?', {
+      body: 'Ein kleiner Bewegungsimpuls passt jetzt gut.',
       tag: 'move-at-work-2026-06-17-morning',
     })
     expect(nextState.lastReminderShownAt.morning).toBe(morningNow().toISOString())
@@ -1117,7 +1117,7 @@ async function clickElement(element) {
 }
 
 function getReplacementButtons() {
-  return [...document.querySelectorAll('button[aria-label="Empfehlung wechseln"]')]
+  return [...document.querySelectorAll('button[aria-label="Andere Empfehlung"]')]
 }
 
 function getReplacementDialogs() {
