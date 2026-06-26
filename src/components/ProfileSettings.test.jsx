@@ -48,6 +48,8 @@ describe('ProfileSettings', () => {
     expect(html).toContain('Setup bearbeiten')
     expect(html).toContain('data-testid="workplace-icon-office"')
     expect(html).toContain('data-testid="workplace-icon-homeoffice"')
+    expect(html).toContain('data-icon-name="goal-sit-less"')
+    expect(html).toContain('data-icon-name="workday-mixed"')
   })
 
   it('does not show setup options inside the profile editor', () => {
@@ -114,6 +116,9 @@ describe('ProfileSettings', () => {
     expect(html).toContain('Höhenverstellbarer Schreibtisch')
     expect(html).toContain('Walking Pad')
     expect(html).toContain('Widerstandsband')
+    expect(html).toContain('data-testid="setup-icon-no-equipment"')
+    expect(html).toContain('data-icon-name="setup-none"')
+    expect(html).toContain('data-icon-name="setup-walking-pad"')
     expect(html).not.toContain('Setup im Homeoffice')
   })
 })

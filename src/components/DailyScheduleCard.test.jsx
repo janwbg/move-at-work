@@ -67,15 +67,12 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('Offen')
   })
 
-  it('shows a discreet replacement icon button next to the open action', () => {
+  it('keeps daily cards focused on opening the exercise', () => {
     const html = renderCard()
 
     expect(html).toContain('Übung öffnen')
-    expect(html).toContain('aria-label="Andere Empfehlung"')
-    expect(html).toContain('⟳')
-    expect(html.indexOf('Übung öffnen')).toBeLessThan(
-      html.indexOf('Andere Empfehlung'),
-    )
+    expect(html).not.toContain('aria-label="Andere Empfehlung"')
+    expect(html).not.toContain('>Erledigt</button>')
   })
 
   it('does not offer replacement for completed recommendations', () => {
@@ -92,8 +89,8 @@ describe('DailyScheduleCard', () => {
     expect(html).toContain('Morgens')
     expect(html).toContain('2 Minuten · Mobilisieren')
     expect(html).toContain('Übung öffnen')
-    expect(html).toContain('aria-label="Andere Empfehlung"')
-    expect(html).toContain('Erledigt')
+    expect(html).not.toContain('aria-label="Andere Empfehlung"')
+    expect(html).not.toContain('>Erledigt</button>')
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
 
@@ -113,13 +110,13 @@ describe('DailyScheduleCard', () => {
     expect(html).not.toContain('Hilft beim Start in den Arbeitstag.')
   })
 
-  it('can show compact replacement reasons on the card', () => {
+  it('does not show replacement reasons on the card', () => {
     const html = renderCard({ isReplacementOpen: true })
 
-    expect(html).toContain('Was passt gerade nicht?')
-    expect(html).toContain('Ich habe wenig Zeit')
-    expect(html).toContain('Zu auffällig')
-    expect(html).toContain('Setup passt nicht')
+    expect(html).not.toContain('Was passt gerade nicht?')
+    expect(html).not.toContain('Ich habe wenig Zeit')
+    expect(html).not.toContain('Zu auffällig')
+    expect(html).not.toContain('Setup passt nicht')
     expect(html).not.toContain('Keine Zeit')
     expect(html).not.toContain('Lieber kürzer')
     expect(html).not.toContain('Arbeitssituation')
@@ -134,7 +131,7 @@ describe('DailyScheduleCard', () => {
       isReplacementOpen: true,
     })
 
-    expect(html).toContain('Andere Empfehlung')
+    expect(html).not.toContain('Andere Empfehlung')
     expect(html).not.toContain('Was passt gerade nicht?')
   })
 })

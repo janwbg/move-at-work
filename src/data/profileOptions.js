@@ -18,12 +18,14 @@ export const workplaceOptions = [
   {
     id: 'office',
     label: 'Büro',
+    icon: 'workplace-office',
     description:
       'Für Arbeitsplätze mit Kolleginnen, Meetings und gemeinsam genutzten Bereichen.',
   },
   {
     id: 'homeoffice',
     label: 'Homeoffice',
+    icon: 'workplace-homeoffice',
     description: 'Für Tage zuhause mit etwas mehr Flexibilität.',
   },
 ]
@@ -32,35 +34,29 @@ export const goalOptions = [
   {
     id: 'sit-less',
     label: 'Weniger sitzen',
-    icon: '⇅',
+    icon: 'goal-sit-less',
     description:
       'Sitzphasen regelmäßiger unterbrechen.',
   },
   {
     id: 'more-energy',
     label: 'Mehr Bewegung',
-    icon: '↝',
+    icon: 'goal-motion',
     description: 'Kleine Bewegungsimpulse in deinen Tag bringen.',
   },
   {
     id: 'back-neck',
     label: 'Rücken & Haltung',
-    icon: '⤴',
+    icon: 'goal-back',
     description:
       'Verspannungen vorbeugen und den Körper zwischendurch lockern.',
   },
   {
     id: 'focus',
     label: 'Fokus & Energie',
-    icon: '◎',
+    icon: 'goal-focus',
     description:
       'Kurze Resets für lange Arbeits- oder Lernphasen.',
-  },
-  {
-    id: 'habit',
-    label: 'Routine aufbauen',
-    icon: '↻',
-    description: 'Dranbleiben, ohne dich zu überfordern.',
   },
 ]
 
@@ -68,65 +64,65 @@ export const setupOptions = [
   {
     id: 'no-equipment',
     label: 'Kein besonderes Equipment',
-    icon: '▱',
+    icon: 'setup-none',
     description: 'Normaler Schreibtisch und Stuhl reichen aus.',
   },
   {
     id: 'standing-desk',
     label: 'Höhenverstellbarer Schreibtisch',
-    icon: '↕',
+    icon: 'setup-desk',
     description: 'Für Sitz-Steh-Wechsel und kurze Stehphasen.',
   },
   {
     id: 'walking-pad',
     label: 'Walking Pad',
-    icon: '↝',
+    icon: 'setup-walking-pad',
     description: 'Für langsames Gehen während geeigneter Aufgaben.',
   },
   {
     id: 'space',
     label: 'Platz für kurze Übungen',
-    icon: '▢',
+    icon: 'setup-space',
     description:
       'Für Mobilisation und kurze Bewegungspausen neben dem Schreibtisch.',
   },
   {
     id: 'hallway',
     label: 'Flur in der Nähe',
-    icon: '→',
+    icon: 'setup-hallway',
     description:
       'Du kannst kurze Gehpausen oder Wege im Büro/Homeoffice nutzen.',
   },
   {
     id: 'stairs',
     label: 'Treppe in der Nähe',
-    icon: '▟',
+    icon: 'setup-stairs',
     description:
       'Du kannst Treppen für kurze aktivierende Bewegungsimpulse nutzen.',
   },
   {
     id: 'resistance_band',
     label: 'Widerstandsband',
-    icon: '〰',
+    icon: 'setup-band',
     description:
       'Für kurze Zug- und Mobilisationsimpulse am Arbeitsplatz.',
   },
   {
     id: 'balance_cushion',
     label: 'Balancekissen',
-    icon: '◒',
+    icon: 'setup-cushion',
     description: 'Für kleine Sitz- und Stabilitätswechsel.',
   },
   {
     id: 'exercise_ball',
     label: 'Gymnastikball',
-    icon: '●',
+    icon: 'setup-ball',
     description: 'Für sanfte Mobilisation und kurze Lockerungsimpulse.',
   },
   {
     id: 'ergonomic-support',
     label: 'Ergonomische Sitz- oder Stehhilfe',
-    icon: '▥',
+    icon: 'setup-ergonomic',
     description:
       'Fuer kurze Sitz-, Steh- und Gewichtswechsel mit vorhandener Unterstuetzung.',
   },
@@ -158,29 +154,34 @@ export const workdayOptions = [
   {
     id: 'focus-heavy',
     label: 'Fokusarbeit',
+    icon: 'workday-focus',
     description: 'Für längere konzentrierte Arbeitsphasen.',
   },
   {
     id: 'meeting-heavy',
     label: 'Meetingtag',
+    icon: 'workday-meeting',
     description:
       'Für Tage mit vielen Terminen und wenig Raum.',
   },
   {
     id: 'mixed-day',
     label: 'Gemischt',
+    icon: 'workday-mixed',
     description:
       'Wenn dein Tag aus Fokus, Meetings und kurzen Pausen besteht.',
   },
   {
     id: 'study-day',
     label: 'Lern- oder Studientag',
+    icon: 'workday-study',
     description:
       'Für lange Schreib-, Lern- oder Bibliothekstage.',
   },
   {
     id: 'tight-schedule',
     label: 'Wenig Zeit',
+    icon: 'workday-tight',
     description:
       'Für enge Tage, an denen kurze Impulse besonders wichtig sind.',
   },
@@ -227,6 +228,8 @@ const goalAliases = {
   'Weniger sitzen': 'sit-less',
   'gegen Verspannungen': 'back-neck',
   habit: 'sit-less',
+  routine: 'sit-less',
+  Routine: 'sit-less',
   'mehr Bewegung': 'sit-less',
   'mehr Energie': 'more-energy',
 }

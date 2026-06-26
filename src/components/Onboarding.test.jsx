@@ -46,8 +46,12 @@ describe('Onboarding', () => {
     expect(html).toContain(
       'Sitzphasen unterbrechen, ohne aus dem Arbeitstag rauszukommen.',
     )
-    expect(html).toContain('Ohne Workout.')
-    expect(html).toContain('Ohne Umziehen. Ohne Extra-Termin.')
+    expect(html).toContain('Passt in deinen Tagesablauf')
+    expect(html).toContain('Keine Planung nötig')
+    expect(html).toContain('Besser fühlen, besser arbeiten')
+    expect(html).not.toContain('Ohne Workout.')
+    expect(html).not.toContain('Ohne Umziehen')
+    expect(html).not.toContain('Ohne Extra-Termin')
     expect(html).not.toContain('Zurück')
   })
 
@@ -69,6 +73,8 @@ describe('Onboarding', () => {
     expect(html).toContain('Wo findet dein Schreibtischtag meistens statt?')
     expect(html).toContain('Büro')
     expect(html).toContain('Homeoffice')
+    expect(html).toContain('data-icon-name="workplace-office"')
+    expect(html).toContain('data-icon-name="workplace-homeoffice"')
     expect(html).not.toContain('Beides')
   })
 
@@ -114,7 +120,7 @@ describe('Onboarding', () => {
     expect(html).not.toContain('%</span>')
   })
 
-  it('shows the updated goal cards including routine', () => {
+  it('shows the updated goal cards without routine as a selectable goal', () => {
     const html = renderOnboarding({
       answers: { goal: 'sit-less' },
       initialCurrentIndex: 1,
@@ -124,10 +130,12 @@ describe('Onboarding', () => {
     expect(html).toContain('Mehr Bewegung')
     expect(html).toContain('Rücken &amp; Haltung')
     expect(html).toContain('Fokus &amp; Energie')
-    expect(html).toContain('Routine aufbauen')
+    expect(html).not.toContain('Routine aufbauen')
     expect(html).toContain(
       'Sitzphasen regelmäßiger unterbrechen.',
     )
+    expect(html).toContain('data-icon-name="goal-sit-less"')
+    expect(html).toContain('data-icon-name="goal-motion"')
   })
 
   it('keeps goal cards clickable and accessible', async () => {
@@ -513,6 +521,21 @@ describe('Onboarding', () => {
     )
   })
 
+  it('adds pictograms to typical day options', () => {
+    const steps = getOnboardingSteps(officeOnlyAnswers())
+    const workdayIndex = steps.findIndex((step) => step.kind === 'workday')
+    const html = renderOnboarding({
+      answers: officeOnlyAnswers(),
+      initialCurrentIndex: workdayIndex,
+    })
+
+    expect(html).toContain('data-icon-name="workday-focus"')
+    expect(html).toContain('data-icon-name="workday-meeting"')
+    expect(html).toContain('data-icon-name="workday-mixed"')
+    expect(html).toContain('data-icon-name="workday-study"')
+    expect(html).toContain('data-icon-name="workday-tight"')
+  })
+
   it('shows the final generation button without upgrade copy', () => {
     const steps = getOnboardingSteps(officeOnlyAnswers())
     const html = renderOnboarding({
@@ -520,7 +543,10 @@ describe('Onboarding', () => {
       initialCurrentIndex: steps.length - 1,
     })
 
-    expect(html).toContain('Tagesplan ansehen')
+    expect(html).toContain('Dein Bewegungsplan kann nun generiert werden.')
+    expect(html).toContain('Du bekommst kurze Empfehlungen, die zu deinem Schreibtischtag passen.')
+    expect(html).toContain('Tagesplan generieren')
+    expect(countOccurrences(html, 'Du bekommst kurze Empfehlungen')).toBe(1)
     expect(html).not.toContain('Move at work Plus')
   })
 
@@ -534,7 +560,7 @@ describe('Onboarding', () => {
       initialCurrentIndex: steps.length - 1,
       onComplete: complete,
     })
-    await clickButton('Tagesplan ansehen')
+    await clickButton('Tagesplan generieren')
 
     expect(document.body.textContent).toContain(
       'Dein persönlicher Tagesplan wird generiert.',
@@ -646,4 +672,8 @@ function getButtonByText(label) {
   return [...document.querySelectorAll('button')].find((element) =>
     element.textContent.includes(label),
   )
+}
+
+function countOccurrences(value, search) {
+  return value.split(search).length - 1
 }

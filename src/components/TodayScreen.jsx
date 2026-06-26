@@ -82,7 +82,6 @@ function TodayScreen({
     replacementLimitNoticeVisible,
     setReplacementLimitNoticeVisible,
   ] = useState(initialReplacementLimitNoticeVisible)
-  const [openReplacementSlotId, setOpenReplacementSlotId] = useState(null)
   const [liveNow, setLiveNow] = useState(() => new Date())
   const now = currentDate ?? liveNow
   const [reminderSettings] = useState(
@@ -184,48 +183,30 @@ function TodayScreen({
   ])
 
   function completeFromDetail(section) {
-    setOpenReplacementSlotId(null)
     setSelectedDetailIndex(null)
     updateReminderState(markExerciseCompleted(currentReminderState, now))
     onComplete(section)
   }
 
-  function completeFromSchedule(section) {
-    setOpenReplacementSlotId(null)
-    updateReminderState(markExerciseCompleted(currentReminderState, now))
-    onComplete(section)
-  }
-
   function handleReplacementBlocked() {
-    setOpenReplacementSlotId(null)
     setReplacementLimitNoticeVisible(true)
     onReplacementBlocked()
   }
 
   function replaceRecommendation(index, reason) {
-    setOpenReplacementSlotId(null)
     setReplacementLimitNoticeVisible(false)
     onReplaceRecommendation(index, reason)
   }
 
-  function toggleReplacementMenu(sectionId) {
-    setOpenReplacementSlotId((currentId) =>
-      currentId === sectionId ? null : sectionId,
-    )
-  }
-
   function openScheduleDetail(index) {
-    setOpenReplacementSlotId(null)
     setSelectedDetailIndex(index)
   }
 
   function handleWorkplaceChange(workplace) {
-    setOpenReplacementSlotId(null)
     onWorkplaceChange?.(workplace)
   }
 
   function handleWorkdayTypeChange(workdayType) {
-    setOpenReplacementSlotId(null)
     onWorkdayTypeChange(workdayType)
   }
 
@@ -245,7 +226,6 @@ function TodayScreen({
     updateReminderState(result.state)
 
     if (typeof result.detailIndex === 'number') {
-      setOpenReplacementSlotId(null)
       setSelectedDetailIndex(result.detailIndex)
     }
   }
@@ -253,7 +233,6 @@ function TodayScreen({
   function handlePauseDayToggle() {
     const nextPauseState = !isPauseDay
 
-    setOpenReplacementSlotId(null)
     updateReminderState(
       nextPauseState
         ? pauseRemindersForDay(currentReminderState, now)
@@ -402,18 +381,11 @@ function TodayScreen({
               return (
                 <DailyScheduleCard
                   actionLabel="Übung öffnen"
-                  canReplace={canReplaceRecommendation}
                   compact={!active || completed}
                   completed={completed}
                   featured={active}
-                  isReplacementOpen={openReplacementSlotId === section.id}
                   key={section.id}
-                  onCloseReplacement={() => setOpenReplacementSlotId(null)}
-                  onComplete={() => completeFromSchedule(section)}
                   onOpenDetails={() => openScheduleDetail(index)}
-                  onReplace={(reason) => replaceRecommendation(index, reason)}
-                  onReplaceBlocked={handleReplacementBlocked}
-                  onToggleReplacement={() => toggleReplacementMenu(section.id)}
                   paused={isPauseDay}
                   section={section}
                 />
@@ -430,7 +402,6 @@ function TodayScreen({
           completed={completedIds.includes(selectedDetailSection.id)}
           key={selectedDetailSection.id}
           onBack={() => {
-            setOpenReplacementSlotId(null)
             setSelectedDetailIndex(null)
           }}
           onComplete={() => completeFromDetail(selectedDetailSection)}
@@ -454,7 +425,7 @@ function CompactStreak({ streak }) {
   return (
     <div className="rounded-lg bg-slate-50 px-3 py-2 text-center dark:bg-white/5">
       <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        Serie
+        🚀 Serie
       </p>
       <p className="mt-1 text-lg font-extrabold text-slate-950 dark:text-white">
         {safeStreak}

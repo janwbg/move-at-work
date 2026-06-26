@@ -21,6 +21,7 @@ import {
   saveReminderSettings,
 } from '../utils/reminderStorage.js'
 import OptionCard from './OptionCard.jsx'
+import LineIcon from './LineIcon.jsx'
 import { getOnboardingSteps } from './onboardingSteps.js'
 
 const reminderOptions = [
@@ -48,9 +49,19 @@ const reminderOptions = [
 
 const landingBenefits = [
   {
-    icon: '✓',
-    title: 'Ohne Workout.',
-    text: 'Ohne Umziehen. Ohne Extra-Termin.',
+    icon: 'benefit-calendar',
+    title: 'Passt in deinen Tagesablauf',
+    text: 'Bewegungsimpulse, die um deinen Kalender herum funktionieren.',
+  },
+  {
+    icon: 'benefit-check',
+    title: 'Keine Planung nötig',
+    text: 'Vorgeplante Routinen für verschiedene Arbeitstage.',
+  },
+  {
+    icon: 'benefit-heart',
+    title: 'Besser fühlen, besser arbeiten',
+    text: 'Kleine Pausen, die im Alltag einen spürbaren Unterschied machen.',
   },
 ]
 
@@ -220,7 +231,7 @@ function Onboarding({
               className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-teal-700 shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:text-teal-200 dark:shadow-none">
-                {benefit.icon}
+                <LineIcon className="h-5 w-5" name={benefit.icon} />
               </div>
               <h2 className="mt-4 text-base font-extrabold text-slate-950 dark:text-white">
                 {benefit.title}
@@ -241,6 +252,7 @@ function Onboarding({
                 key={workplace.id}
                 active={getSelectedWorkplaces(answers, true).includes(workplace.id)}
                 description={workplace.description}
+                icon={workplace.icon}
                 label={workplace.label}
                 onClick={() => toggleWorkplace(workplace.id)}
                 type="checkbox"
@@ -295,6 +307,7 @@ function Onboarding({
             <OptionCard
               key={workplace}
               active={answers.defaultWorkplace === workplace}
+              icon={workplace === 'homeoffice' ? 'workplace-homeoffice' : 'workplace-office'}
               label={workplace === 'homeoffice' ? 'Homeoffice' : 'Büro'}
               onClick={() =>
                 updateAnswer({
@@ -363,6 +376,7 @@ function Onboarding({
               key={situation.id}
               active={answers.situation === situation.id}
               description={situation.description}
+              icon={situation.icon}
               label={situation.label}
               onClick={() => updateAnswer({ situation: situation.id })}
             />
@@ -384,12 +398,7 @@ function Onboarding({
         </div>
       )}
 
-      {currentStep.kind === 'final' && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-          Du bekommst kurze Empfehlungen, die zu deinem Schreibtischtag passen
-          — damit Bewegung nicht noch ein zusätzlicher Termin wird.
-        </div>
-      )}
+      {currentStep.kind === 'final' && null}
 
       <div
         className={`mt-7 flex flex-col-reverse gap-3 sm:flex-row ${
@@ -486,7 +495,10 @@ function SetupWorkplaceContext({ answers, step }) {
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-xl text-teal-700 shadow-sm shadow-slate-200/70 dark:bg-white/10 dark:text-teal-200 dark:shadow-none">
-          {step.workplace === 'homeoffice' ? '⌂' : '▦'}
+          <LineIcon
+            className="h-6 w-6"
+            name={step.workplace === 'homeoffice' ? 'workplace-homeoffice' : 'workplace-office'}
+          />
         </div>
         <div>
           {setupSteps > 1 && (
@@ -553,7 +565,7 @@ function getNextButtonLabel(step) {
   }
 
   if (step.kind === 'final') {
-    return 'Tagesplan ansehen'
+    return 'Tagesplan generieren'
   }
 
   return 'Weiter'

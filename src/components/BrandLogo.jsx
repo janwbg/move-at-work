@@ -20,19 +20,19 @@ function BrandLogo({
         fill="none"
         viewBox="0 0 64 64"
       >
-        <rect height="64" rx="18" width="64" fill="#0f766e" />
+        <rect height="64" rx="20" width="64" fill="#0f766e" />
         <path
-          d="M15 43V22.5c0-2.6 3.3-3.7 4.9-1.7l9.3 11.7 9.3-11.7c1.6-2 4.9-.9 4.9 1.7V43"
+          d="M14 43V22c0-2.7 3.4-3.8 5-1.7l11.2 14.2L45 20.3c1.7-1.6 4.5-.4 4.5 2v20.6"
           stroke="#ecfdf5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="6"
+          strokeWidth="5.5"
         />
         <path
-          d="M16 48c9.2-3.2 18.9-3.2 29 0"
+          d="M13 48c8.7-5.2 19.6-5.8 32.5-1.7 2.5.8 4.1 1.1 5.8.6"
           stroke="#99f6e4"
           strokeLinecap="round"
-          strokeWidth="5"
+          strokeWidth="4.8"
         />
       </svg>
       {!isMarkOnly && (
@@ -45,4 +45,3 @@ function BrandLogo({
 }
 
 export default BrandLogo
-

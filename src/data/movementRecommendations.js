@@ -9,7 +9,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -54,7 +53,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -102,7 +100,6 @@ export const movementRecommendations = [
       "sit-less",
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -150,7 +147,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -197,7 +193,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -240,7 +235,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "sit-less",
-      "habit",
       "more-energy"
     ],
     suitableWorkplaces: [
@@ -289,7 +283,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -337,7 +330,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office"
@@ -382,7 +374,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office"
@@ -426,7 +417,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -472,7 +462,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -516,7 +505,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -604,7 +592,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -650,7 +637,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "homeoffice"
@@ -695,7 +681,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "homeoffice"
@@ -739,7 +724,6 @@ export const movementRecommendations = [
     intensity: "balanced",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -783,7 +767,6 @@ export const movementRecommendations = [
     movementType: "mobilize",
     intensity: "gentle",
     suitableGoals: [
-      "habit",
       "focus",
       "back-neck"
     ],
@@ -830,7 +813,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -878,7 +860,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -924,7 +905,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1012,7 +992,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1058,7 +1037,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1103,7 +1081,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1149,7 +1126,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1195,7 +1171,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1288,7 +1263,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1333,7 +1307,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1376,7 +1349,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1420,7 +1392,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1465,7 +1436,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1513,7 +1483,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1559,7 +1528,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1603,7 +1571,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1649,7 +1616,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1694,7 +1660,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "sit-less",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -1741,7 +1706,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1788,7 +1752,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1833,7 +1796,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1879,7 +1841,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1925,7 +1886,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -1970,7 +1930,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2016,7 +1975,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2060,7 +2018,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "sit-less",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -2109,7 +2066,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2156,7 +2112,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2202,7 +2157,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2247,7 +2201,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2290,7 +2243,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2336,7 +2288,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2381,7 +2332,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2425,7 +2375,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -2469,7 +2418,6 @@ export const movementRecommendations = [
     intensity: "balanced",
     suitableGoals: [
       "sit-less",
-      "habit",
       "more-energy"
     ],
     suitableWorkplaces: [
@@ -2556,7 +2504,6 @@ export const movementRecommendations = [
     movementType: "walk",
     intensity: "gentle",
     suitableGoals: [
-      "habit",
       "sit-less",
       "focus"
     ],
@@ -2602,7 +2549,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "focus",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2646,7 +2592,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2691,7 +2636,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2734,7 +2678,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "sit-less",
-      "habit",
       "more-energy"
     ],
     suitableWorkplaces: [
@@ -2767,7 +2710,7 @@ export const movementRecommendations = [
     ],
     reason: "Einfacher Anker für regelmäßige Bewegung.",
     explanation: "Der Impuls nutzt eine ohnehin sinnvolle Handlung und macht Bewegung leichter zur Gewohnheit.",
-    similarityGroup: "habit-water-walk",
+    similarityGroup: "sitless-water-walk",
     priority: 88
   },
   {
@@ -2779,7 +2722,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -2826,7 +2768,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2870,7 +2811,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -2915,7 +2855,6 @@ export const movementRecommendations = [
     intensity: "balanced",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -2961,7 +2900,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3006,7 +2944,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -3050,7 +2987,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -3096,7 +3032,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "sit-less",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3141,7 +3076,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3187,7 +3121,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "more-energy",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3231,7 +3164,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "back-neck",
-      "habit",
       "focus"
     ],
     suitableWorkplaces: [
@@ -3275,7 +3207,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -3320,7 +3251,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3363,7 +3293,6 @@ export const movementRecommendations = [
     movementType: "mobilize",
     intensity: "gentle",
     suitableGoals: [
-      "habit",
       "focus",
       "back-neck"
     ],
@@ -3409,7 +3338,6 @@ export const movementRecommendations = [
     intensity: "active",
     suitableGoals: [
       "more-energy",
-      "habit",
       "sit-less"
     ],
     suitableWorkplaces: [
@@ -3453,7 +3381,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3499,7 +3426,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3547,7 +3473,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "back-neck",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3593,7 +3518,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -3639,7 +3563,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "sit-less",
-      "habit",
       "focus"
     ],
     suitableWorkplaces: [
@@ -3686,7 +3609,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3732,7 +3654,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -3779,7 +3700,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3824,7 +3744,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -3870,7 +3789,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "back-neck",
-      "habit",
       "focus"
     ],
     suitableWorkplaces: [
@@ -3917,7 +3835,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -3963,7 +3880,6 @@ export const movementRecommendations = [
     intensity: "gentle",
     suitableGoals: [
       "focus",
-      "habit",
       "back-neck"
     ],
     suitableWorkplaces: [
@@ -4011,7 +3927,6 @@ export const movementRecommendations = [
       "sit-less",
       "back-neck",
       "focus",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",
@@ -4059,7 +3974,6 @@ export const movementRecommendations = [
     suitableGoals: [
       "sit-less",
       "more-energy",
-      "habit"
     ],
     suitableWorkplaces: [
       "office",

@@ -584,82 +584,48 @@ describe('TodayScreen', () => {
     expect(onWorkdayTypeChange).toHaveBeenCalledWith('study-day')
   })
 
-  it('opens only one compact replacement menu at a time', async () => {
+  it('does not expose direct replacement actions on daily cards', async () => {
     await renderInteractiveTodayScreen()
-    const [firstButton, secondButton] = getReplacementButtons()
 
-    await clickElement(firstButton)
-
-    expect(getReplacementDialogs()).toHaveLength(1)
-    expect(getReplacementDialogs()[0].getAttribute('aria-labelledby')).toContain(
-      'morning-reset-card-replace-title',
-    )
-    expect(document.body.textContent).toContain('Was passt gerade nicht?')
-    expect(document.body.textContent).toContain('Ich habe wenig Zeit')
-    expect(document.body.textContent).toContain('Zu auffällig')
-    expect(document.body.textContent).toContain('Zu wenig Platz')
-    expect(document.body.textContent).toContain('Zu anstrengend')
-    expect(document.body.textContent).toContain('Lieber ruhiger')
-    expect(document.body.textContent).toContain('Mehr Bewegung')
-    expect(document.body.textContent).toContain('Setup passt nicht')
-    expect(document.body.textContent).not.toContain('Keine Zeit')
-    expect(document.body.textContent).not.toContain('Lieber kürzer')
-    expect(document.body.textContent).not.toContain('Arbeitssituation')
-    expect(document.body.textContent).not.toContain('Umgebung')
-    expect(document.body.textContent).not.toContain('Energie und Körper')
-
-    await clickElement(secondButton)
-
-    expect(getReplacementDialogs()).toHaveLength(1)
-    expect(getReplacementDialogs()[0].getAttribute('aria-labelledby')).toContain(
-      'breathing-reset-card-replace-title',
-    )
-  })
-
-  it('closes the replacement menu when the same icon button is clicked again', async () => {
-    await renderInteractiveTodayScreen()
-    const [firstButton] = getReplacementButtons()
-
-    await clickElement(firstButton)
-    await clickElement(firstButton)
-
-    expect(getReplacementDialogs()).toHaveLength(0)
+    expect(getReplacementButtons()).toHaveLength(0)
     expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 
-  it('closes replacement menus when opening and returning from exercise details', async () => {
+  it('does not expose direct completion actions on daily cards', async () => {
     await renderInteractiveTodayScreen()
-    const [firstButton] = getReplacementButtons()
 
-    await clickElement(firstButton)
+    expect([...document.querySelectorAll('button')].some(
+      (button) => button.textContent.trim() === 'Erledigt',
+    )).toBe(false)
+  })
+
+  it('opens replacement from exercise details only', async () => {
+    await renderInteractiveTodayScreen()
+
     await clickButtonContaining('Übung öffnen')
+    await clickButtonContaining('Andere Empfehlung')
 
     expect(document.body.textContent).toContain('So geht')
-    expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
+    expect(document.body.textContent).toContain('Was passt gerade nicht?')
 
     await clickButtonContaining('Zurück')
 
     expect(document.body.textContent).not.toContain('Was passt gerade nicht?')
   })
 
-  it('closes the replacement menu via cancel and after a successful replacement', async () => {
+  it('replaces from exercise details and returns through the existing callback', async () => {
     const onReplaceRecommendation = vi.fn()
     await renderInteractiveTodayScreen({ onReplaceRecommendation })
-    const [firstButton] = getReplacementButtons()
 
-    await clickElement(firstButton)
-    await clickButtonContaining('Zurück')
-
-    expect(getReplacementDialogs()).toHaveLength(0)
-
-    await clickElement(firstButton)
+    await clickButtonContaining('Übung öffnen')
+    await clickButtonContaining('Andere Empfehlung')
     await clickButtonContaining('Ich habe wenig Zeit')
 
     expect(onReplaceRecommendation).toHaveBeenCalledWith(0, 'no-time')
     expect(getReplacementDialogs()).toHaveLength(0)
   })
 
-  it('closes the replacement menu when workplace or workday changes', async () => {
+  it('keeps workplace and workday changes independent from replacement menus', async () => {
     const onWorkplaceChange = vi.fn()
     const onWorkdayTypeChange = vi.fn()
     await renderInteractiveTodayScreen({
@@ -667,15 +633,11 @@ describe('TodayScreen', () => {
       onWorkdayTypeChange,
       workplaces: ['office', 'homeoffice'],
     })
-    const [firstButton] = getReplacementButtons()
 
-    await clickElement(firstButton)
     await clickButtonContaining('Homeoffice')
 
     expect(onWorkplaceChange).toHaveBeenCalledWith('homeoffice')
     expect(getReplacementDialogs()).toHaveLength(0)
-
-    await clickElement(firstButton)
 
     const select = document.querySelector(
       'select[aria-label="Heutige Tagesart auswählen"]',
@@ -689,15 +651,15 @@ describe('TodayScreen', () => {
     expect(getReplacementDialogs()).toHaveLength(0)
   })
 
-  it('keeps replacement blocked by the Free limit without opening the menu', async () => {
+  it('shows the Free replacement limit from exercise details', async () => {
     const onReplacementBlocked = vi.fn()
     await renderInteractiveTodayScreen({
       canReplaceRecommendation: false,
       onReplacementBlocked,
     })
-    const [firstButton] = getReplacementButtons()
 
-    await clickElement(firstButton)
+    await clickButtonContaining('Übung öffnen')
+    await clickButtonContaining('Andere Empfehlung')
 
     expect(onReplacementBlocked).toHaveBeenCalledTimes(1)
     expect(document.body.textContent).toContain('Dein heutiger Wechsel ist aufgebraucht.')

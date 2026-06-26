@@ -10,6 +10,7 @@ import {
   workplaceOptions,
   workdayOptions,
 } from '../data/profileOptions.js'
+import LineIcon from './LineIcon.jsx'
 
 function ProfileSettings({ answers, onBack, onChange, onEditSetup = () => {} }) {
   const normalizedAnswers = normalizeProfileAnswers(answers)
@@ -195,34 +196,16 @@ function SetupSummary({ setup }) {
 }
 
 function WorkplaceIcon({ workplace }) {
+  const iconName =
+    workplace === 'homeoffice' ? 'workplace-homeoffice' : 'workplace-office'
+
   return (
     <span
       aria-hidden="true"
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm dark:bg-white/10 dark:text-slate-300"
       data-testid={`workplace-icon-${workplace}`}
     >
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-      >
-        {workplace === 'homeoffice' ? (
-          <>
-            <path d="M4 11l8-7 8 7" />
-            <path d="M6 10v10h12V10" />
-            <path d="M10 20v-6h4v6" />
-          </>
-        ) : (
-          <>
-            <rect height="16" rx="2" width="12" x="6" y="4" />
-            <path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1" />
-          </>
-        )}
-      </svg>
+      <LineIcon name={iconName} />
     </span>
   )
 }
@@ -277,6 +260,13 @@ export function SetupSettingsScreen({ onBack, onToggle, setup, workplace }) {
                 onChange={() => onToggle(setupOption.id)}
                 className="h-4 w-4 accent-teal-700"
               />
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-teal-700 dark:bg-white/10 dark:text-teal-100"
+                data-testid={`setup-icon-${setupOption.id}`}
+              >
+                <LineIcon name={setupOption.icon} />
+              </span>
               <span>
                 <span className="block font-bold">{setupOption.label}</span>
                 <span className="block text-xs leading-5 text-slate-500 dark:text-slate-400">
@@ -292,11 +282,22 @@ export function SetupSettingsScreen({ onBack, onToggle, setup, workplace }) {
 }
 
 function SelectField({ helper, label, onChange, options, value }) {
+  const selectedOption = options.find((option) => option.id === value)
+
   return (
     <label className="grid gap-2">
       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
         {label}
       </span>
+      {selectedOption?.icon && (
+        <span
+          aria-hidden="true"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700 dark:bg-teal-300/10 dark:text-teal-100"
+          data-testid={`${label.toLowerCase().replaceAll(' ', '-')}-selected-icon`}
+        >
+          <LineIcon name={selectedOption.icon} />
+        </span>
+      )}
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -309,7 +310,7 @@ function SelectField({ helper, label, onChange, options, value }) {
         ))}
       </select>
       <span className="text-sm leading-5 text-slate-500 dark:text-slate-400">
-        {helper ?? options.find((option) => option.id === value)?.description}
+        {helper ?? selectedOption?.description}
       </span>
     </label>
   )

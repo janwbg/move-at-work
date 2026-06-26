@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import ProgressScreen from './ProgressScreen.jsx'
+import { ProgressRing } from './ProgressSummary.jsx'
 
 describe('ProgressScreen', () => {
   it('renders the quiet screen title without the old blue banner', () => {
@@ -54,14 +55,14 @@ describe('ProgressScreen', () => {
     expect(html).not.toContain('Microbreaks')
   })
 
-  it('shows the active streak without a gamified icon', () => {
+  it('shows the active streak with the rocket icon', () => {
     const html = renderProgressScreen({
       completedToday: 1,
       completedThisWeek: 4,
       streak: 1,
     })
 
-    expect(html).not.toContain('🚀')
+    expect(html).toContain('🚀')
     expect(html).toContain('aktiver Tag')
   })
 
@@ -104,6 +105,20 @@ describe('ProgressScreen', () => {
 
     expect(html).toContain('<svg')
     expect(html).toContain(expectedText)
+  })
+
+  it('keeps status labels outside the progress ring', () => {
+    const html = renderToStaticMarkup(
+      <ProgressRing
+        completedToday={2}
+        status={{ id: 'held', label: 'Routine gehalten' }}
+        totalToday={5}
+      />,
+    )
+
+    expect(html).toContain('2/5')
+    expect(html).not.toContain('Routine gehalten')
+    expect(html).not.toContain('Kompletter Tag')
   })
 
   it('shows the activity calendar without weekly quota text', () => {

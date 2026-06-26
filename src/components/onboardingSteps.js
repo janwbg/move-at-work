@@ -93,9 +93,9 @@ export function getOnboardingSteps(answers) {
     {
       eyebrow: 'Bereit',
       helper:
-        'Du bekommst kurze Empfehlungen, die zu deinem Schreibtischtag passen — damit Bewegung nicht noch ein zusätzlicher Termin wird.',
+        'Du bekommst kurze Empfehlungen, die zu deinem Schreibtischtag passen.',
       kind: 'final',
-      question: 'Dein Bewegungsplan ist bereit.',
+      question: 'Dein Bewegungsplan kann nun generiert werden.',
     },
   ]
 }

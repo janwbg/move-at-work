@@ -19,7 +19,6 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
           <div className="flex min-h-32 flex-col items-center justify-center gap-3">
             <ProgressRing
               completedToday={completedToday}
-              showStatusLabel={false}
               size="medium"
               status={todayStatus}
               totalToday={safeTotal}
@@ -62,6 +61,9 @@ function ProgressSummary({ summary = {}, totalToday = 0 }) {
               aria-label={`${streak} ${streak === 1 ? 'aktiver Tag' : 'aktive Tage'} in Folge`}
               className="text-4xl font-extrabold leading-none text-emerald-700 dark:text-emerald-100"
             >
+              <span aria-hidden="true" className="mr-2 text-2xl">
+                🚀
+              </span>
               {streak}
             </p>
             <div>
@@ -191,7 +193,6 @@ export function ProgressRing({
   completedToday,
   totalToday,
   compact = false,
-  showStatusLabel = true,
   size,
   status,
 }) {
@@ -199,7 +200,6 @@ export function ProgressRing({
   const safeCompleted =
     safeTotal > 0 ? Math.min(Math.max(completedToday, 0), safeTotal) : 0
   const progress = safeTotal > 0 ? safeCompleted / safeTotal : 0
-  const percentage = Math.round(progress * 100)
   const statusId = status?.id ?? getStatusIdFromProgress(safeCompleted)
   const isCompleteDay = statusId === 'complete'
   const circumference = 2 * Math.PI * 44
@@ -247,19 +247,9 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute text-center">
-        {isCompleteDay && (
-          <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-300">
-            ✓
-          </p>
-        )}
         <p className={`${valueClass} font-extrabold text-slate-950 dark:text-white`}>
           {safeTotal > 0 ? `${safeCompleted}/${safeTotal}` : '0/0'}
         </p>
-        {showStatusLabel && !(compact && isCompleteDay) && (
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            {isCompleteDay ? 'Kompletter Tag' : getRingStatusLabel(statusId, percentage)}
-          </p>
-        )}
       </div>
     </div>
   )
@@ -315,17 +305,6 @@ function getCalendarStatusClass(stateId) {
   }
 
   return classes[stateId] ?? classes.neutral
-}
-
-function getRingStatusLabel(statusId, percentage) {
-  const labels = {
-    held: 'Routine gehalten',
-    open: 'Offen',
-    pause: 'Pausentag',
-    strong: 'Starker Tag',
-  }
-
-  return labels[statusId] ?? `${percentage}%`
 }
 
 function getStatusIdFromProgress(completedToday) {

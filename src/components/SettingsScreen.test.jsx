@@ -49,7 +49,7 @@ describe('SettingsScreen', () => {
     expect(html).toContain('Konto &amp; Plus')
     expect(html).toContain('Feedback zum Praxistest')
     expect(html).toContain('Setup')
-    expect(html).toContain('Routine aufbauen · Büro · Normal')
+    expect(html).toContain('Weniger sitzen · Büro · Normal')
     expect(html).toContain('Standard: Büro')
     expect(html).toContain('data-testid="settings-icon-profile"')
     expect(html).toContain('data-testid="settings-icon-routine"')

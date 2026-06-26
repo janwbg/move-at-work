@@ -1,10 +1,23 @@
 import BrandLogo from './BrandLogo.jsx'
+import LineIcon from './LineIcon.jsx'
 import { APP_NAME, BRAND_CLAIM } from '../data/brand.js'
 
 const benefits = [
-  'Ohne Workout.',
-  'Ohne Umziehen.',
-  'Ohne Extra-Termin.',
+  {
+    icon: 'benefit-calendar',
+    title: 'Passt in deinen Tagesablauf',
+    text: 'Bewegungsimpulse, die um deinen Kalender herum funktionieren.',
+  },
+  {
+    icon: 'benefit-check',
+    title: 'Keine Planung nötig',
+    text: 'Vorgeplante Routinen für verschiedene Arbeitstage.',
+  },
+  {
+    icon: 'benefit-heart',
+    title: 'Besser fühlen, besser arbeiten',
+    text: 'Kleine Pausen, die im Alltag einen spürbaren Unterschied machen.',
+  },
 ]
 
 function StartScreen({ onStart }) {
@@ -29,14 +42,17 @@ function StartScreen({ onStart }) {
       <div className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3">
         {benefits.map((benefit) => (
           <div
-            key={benefit}
+            key={benefit.title}
             className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]"
           >
             <span className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-sm font-extrabold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
-              ✓
+              <LineIcon className="h-4 w-4" name={benefit.icon} />
             </span>
             <p className="font-bold leading-snug text-slate-900 dark:text-white">
-              {benefit}
+              {benefit.title}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {benefit.text}
             </p>
           </div>
         ))}

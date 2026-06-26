@@ -214,7 +214,7 @@ describe('ResultScreen daily workday context helpers', () => {
   it('navigates from the success dialog to the progress screen', async () => {
     await renderInteractiveResultScreen()
 
-    await clickButtonContaining('Erledigt')
+    await clickCompletionButton()
 
     expect(document.body.textContent).toContain('Sitzphase unterbrochen.')
 
@@ -232,7 +232,7 @@ describe('ResultScreen daily workday context helpers', () => {
       }),
     })
 
-    await clickButtonContaining('Erledigt')
+    await clickCompletionButton()
     await clickButtonContaining('Zurück zum Tagesplan')
 
     expect(document.body.textContent).toContain('1/5')
@@ -463,9 +463,16 @@ async function clickButtonContaining(label) {
 }
 
 async function clickCompletionButton() {
-  const button = [...document.querySelectorAll('button')].find(
+  let button = [...document.querySelectorAll('button')].find(
     (element) => element.textContent.trim() === 'Erledigt' && !element.disabled,
   )
+
+  if (!button) {
+    await clickButtonContaining('Übung öffnen')
+    button = [...document.querySelectorAll('button')].find((element) =>
+      element.textContent.includes('Als erledigt markieren'),
+    )
+  }
 
   await act(async () => {
     button.dispatchEvent(new MouseEvent('click', { bubbles: true }))

@@ -17,8 +17,10 @@ describe('profileOptions', () => {
       'Mehr Bewegung',
       'Rücken & Haltung',
       'Fokus & Energie',
-      'Routine aufbauen',
     ])
+    expect(goalOptions.map((option) => option.label)).not.toContain(
+      'Routine aufbauen',
+    )
   })
 
   it('contains the final setup options', () => {
@@ -46,7 +48,7 @@ describe('profileOptions', () => {
     expect(
       setupOptions.find((option) => option.id === 'ergonomic-support'),
     ).toMatchObject({
-      icon: '▥',
+      icon: 'setup-ergonomic',
       description:
         'Fuer kurze Sitz-, Steh- und Gewichtswechsel mit vorhandener Unterstuetzung.',
     })
@@ -164,7 +166,8 @@ describe('profileOptions', () => {
   })
 
   it('migrates old habit and small equipment values safely', () => {
-    expect(normalizeProfileAnswers({ goal: 'habit' }).goal).toBe('habit')
+    expect(normalizeProfileAnswers({ goal: 'habit' }).goal).toBe('sit-less')
+    expect(normalizeProfileAnswers({ goal: 'routine' }).goal).toBe('sit-less')
     expect(
       normalizeProfileAnswers({
         setup: ['Kleines Bewegungsequipment'],

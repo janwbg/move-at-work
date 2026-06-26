@@ -1,5 +1,3 @@
-import ReplacementReasonPicker from './ReplacementReasonPicker.jsx'
-
 const movementTypeLabels = {
   activate: 'Aktivieren',
   breathing: 'Atmen',
@@ -16,17 +14,10 @@ const movementTypeLabels = {
 
 function DailyScheduleCard({
   actionLabel = 'Übung öffnen',
-  canReplace = true,
   compact = false,
   completed,
   featured = false,
-  isReplacementOpen = false,
-  onCloseReplacement = () => {},
-  onReplaceBlocked = () => {},
-  onComplete,
   onOpenDetails,
-  onReplace = () => {},
-  onToggleReplacement = () => {},
   paused = false,
   section,
 }) {
@@ -41,29 +32,6 @@ function DailyScheduleCard({
         section={section}
       />
     )
-  }
-
-  function openReplacementDialog() {
-    if (completed) {
-      return
-    }
-
-    if (!canReplace) {
-      onCloseReplacement()
-      onReplaceBlocked()
-      return
-    }
-
-    onToggleReplacement()
-  }
-
-  function submitReplacement(reason) {
-    if (completed) {
-      return
-    }
-
-    onReplace(reason)
-    onCloseReplacement()
   }
 
   const isCompactOpen = compact && !featured
@@ -139,38 +107,7 @@ function DailyScheduleCard({
           >
             {actionLabel}
           </button>
-          {!completed && (
-            <button
-              type="button"
-              aria-label="Andere Empfehlung"
-              title="Andere Empfehlung"
-              onClick={openReplacementDialog}
-              className={`${isCompactOpen ? 'min-h-8 w-8' : 'min-h-10 w-10'} flex items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-teal-700/40 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:border-white/10 dark:text-slate-300`}
-            >
-              <span aria-hidden="true" className="text-lg leading-none">
-                ⟳
-              </span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onComplete}
-            disabled={completed}
-            className={`rounded-full border border-slate-200 text-sm font-bold text-slate-600 transition hover:border-emerald-500/40 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700 dark:border-white/10 dark:text-slate-300 dark:disabled:border-emerald-400/20 dark:disabled:bg-emerald-400/10 dark:disabled:text-emerald-100 ${
-              isCompactOpen ? 'min-h-8 px-3 py-1.5' : 'min-h-10 px-4 py-2'
-            }`}
-          >
-            {completed ? 'Erledigt' : 'Erledigt'}
-          </button>
         </div>
-      )}
-
-      {!paused && !completed && canReplace && isReplacementOpen && (
-        <ReplacementReasonPicker
-          idPrefix={`${section.id}-card`}
-          onCancel={onCloseReplacement}
-          onSelectReason={submitReplacement}
-        />
       )}
     </article>
   )
